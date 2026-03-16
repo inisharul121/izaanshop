@@ -44,7 +44,16 @@ const getProductById = async (req, res) => {
     });
 
     if (product) {
-      res.json(product);
+      // Fetch related products from same category
+      const related = await prisma.product.findMany({
+        where: {
+          categoryId: product.categoryId,
+          id: { not: product.id }
+        },
+        take: 4,
+        include: { category: true }
+      });
+      res.json({ ...product, relatedProducts: related });
     } else {
       res.status(404).json({ message: 'Product not found' });
     }
