@@ -1,23 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
 import api from '../utils/api';
 import { LayoutDashboard, ShoppingBag, Users, BarChart3, Plus, Edit, Trash2, Check, X, Filter, Ticket, CreditCard } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 
 const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = React.useState('orders');
-  const [orders, setOrders] = React.useState([]);
-  const [products, setProducts] = React.useState([]);
-  const [categories, setCategories] = React.useState([]);
-  const [coupons, setCoupons] = React.useState([]);
-  const [loading, setLoading] = React.useState(true);
-  const [showModal, setShowModal] = React.useState(false);
-  const [modalType, setModalType] = React.useState(''); // 'product', 'category', 'coupon'
-  const [editingItem, setEditingItem] = React.useState(null);
-  const [slug, setSlug] = React.useState('');
-  const [uploading, setUploading] = React.useState(false);
-  const [mainImage, setMainImage] = React.useState(null);
-  const [galleryFiles, setGalleryFiles] = React.useState([]);
+  const [activeTab, setActiveTab] = useState('orders');
+  const [orders, setOrders] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [coupons, setCoupons] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState(''); // 'product', 'category', 'coupon'
+  const [editingItem, setEditingItem] = useState(null);
+  const [slug, setSlug] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [mainImage, setMainImage] = useState(null);
+  const [galleryFiles, setGalleryFiles] = useState([]);
+
+  console.log('DEBUG: AdminDashboard rendered. setSlug is:', typeof setSlug);
 
   React.useEffect(() => {
     const fetchData = async () => {
