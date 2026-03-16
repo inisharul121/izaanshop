@@ -25,6 +25,20 @@ const ProductDetail = () => {
       setLoading(true);
       try {
         const { data } = await api.get(`/products/${slug}`);
+        
+        // Group duplicate attributes (e.g. if someone added "Color" twice)
+        if (data.attributes && data.attributes.length > 0) {
+          data.attributes = data.attributes.reduce((acc, curr) => {
+            const existing = acc.find(a => a.name.toLowerCase() === curr.name.toLowerCase());
+            if (existing) {
+              existing.options = [...new Set([...existing.options, ...curr.options])];
+            } else {
+              acc.push({ ...curr });
+            }
+            return acc;
+          }, []);
+        }
+
         setProduct(data);
         setActiveImg(0);
         // Initialize selected options if variable
@@ -90,9 +104,9 @@ const ProductDetail = () => {
     ...(product.images?.gallery || [])
   ].filter(Boolean);
 
-  const displayPrice = activeVariant ? activeVariant.price : product.price;
-  const displaySalePrice = activeVariant ? activeVariant.salePrice : product.salePrice;
-  const displayStock = activeVariant ? activeVariant.stock : product.stock;
+  const displayPrice = (activeVariant && activeVariant.price !== null) ? activeVariant.price : product.price;
+  const displaySalePrice = (activeVariant && activeVariant.salePrice !== null) ? activeVariant.salePrice : product.salePrice;
+  const displayStock = (activeVariant && activeVariant.stock !== null) ? activeVariant.stock : product.stock;
 
   const discount = displaySalePrice 
     ? Math.round(((displayPrice - displaySalePrice) / displayPrice) * 100)
@@ -214,26 +228,68 @@ const ProductDetail = () => {
               </div>
 
               {/* Variant Selectors */}
-              {product.type === 'VARIABLE' && product.attributes?.length > 0 && (
-                <div className="space-y-6 py-6 border-t border-b border-gray-100">
-                  {product.attributes.map(attr => (
-                    <div key={attr.id} className="space-y-3">
-                      <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">{attr.name}</label>
-                      <div className="flex flex-wrap gap-2">
-                        {attr.options.map(opt => (
-                          <button
-                            key={opt}
-                            onClick={() => handleOptionChange(attr.name, opt)}
-                            className={`px-6 py-2.5 rounded-xl text-xs font-bold border transition-all ${selectedOptions[attr.name] === opt ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' : 'bg-white border-gray-100 text-gray-500 hover:border-gray-200'}`}
-                          >
-                            {opt}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              {product.type === 'VARIABLE' && product.attributes?.length > 0 && (() => {
+                // CSS color lookup for known color names
+                const COLOR_MAP = {
+                  red: '#ef4444', blue: '#3b82f6', green: '#22c55e', black: '#111111',
+                  white: '#f8fafc', yellow: '#eab308', pink: '#ec4899', purple: '#a855f7',
+                  orange: '#f97316', gray: '#6b7280', grey: '#6b7280', brown: '#92400e',
+                  navy: '#1e3a5f', teal: '#14b8a6', cyan: '#06b6d4', maroon: '#7f1d1d',
+                  beige: '#d6c5a1', cream: '#fffdd0', gold: '#d97706', silver: '#94a3b8',
+                };
+                const getColorHex = (name) => COLOR_MAP[name.toLowerCase()] || null;
+
+                return (
+                  <div className="space-y-5 py-6 border-t border-b border-gray-100">
+                    {product.attributes.map(attr => {
+                      const isColor = attr.name.toLowerCase() === 'color';
+                      const selected = selectedOptions[attr.name];
+                      return (
+                        <div key={attr.id || attr.name} className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">{attr.name}</span>
+                            {selected && (
+                              <span className="text-xs font-bold text-dark">{selected}</span>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {attr.options.map(opt => {
+                              const colorHex = isColor ? getColorHex(opt) : null;
+                              const isSelected = selected === opt;
+                              if (colorHex) {
+                                // Color swatch
+                                return (
+                                  <button
+                                    key={opt}
+                                    title={opt}
+                                    onClick={() => handleOptionChange(attr.name, opt)}
+                                    className={`w-9 h-9 rounded-full border-2 transition-all relative flex items-center justify-center ${isSelected ? 'border-primary ring-2 ring-primary/30 scale-110' : 'border-transparent hover:border-gray-300 hover:scale-105'}`}
+                                    style={{ backgroundColor: colorHex }}
+                                  >
+                                    {isSelected && (
+                                      <span className="w-2.5 h-2.5 rounded-full bg-white/80 block shadow-sm" />
+                                    )}
+                                  </button>
+                                );
+                              }
+                              // Default pill chip
+                              return (
+                                <button
+                                  key={opt}
+                                  onClick={() => handleOptionChange(attr.name, opt)}
+                                  className={`px-5 py-2.5 rounded-xl text-xs font-bold border transition-all ${isSelected ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' : 'bg-white border-gray-100 text-gray-500 hover:border-gray-300'}`}
+                                >
+                                  {opt}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
 
               <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="flex items-baseline gap-3">

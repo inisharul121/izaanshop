@@ -1,18 +1,21 @@
 import React from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Package, CheckCircle, Truck, Clock, MapPin, ChevronLeft } from 'lucide-react';
 import api from '../utils/api';
 
 const OrderSuccess = () => {
   const { id } = useParams();
+  const location = useLocation();
+  // orderId may come from route param or from navigation state (guest)
+  const orderId = id || location.state?.orderId;
   const [order, setOrder] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const { data } = await api.get(`/orders/${id}`);
+        const { data } = await api.get(`/orders/${orderId}`);
         setOrder(data);
       } catch (error) {
         console.error('Order fetch failed', error);
@@ -20,8 +23,9 @@ const OrderSuccess = () => {
         setLoading(false);
       }
     };
-    fetchOrder();
-  }, [id]);
+    if (orderId) fetchOrder();
+    else setLoading(false);
+  }, [orderId]);
 
   if (loading) return <div className="p-20 text-center">Loading order details...</div>;
   if (!order) return <div className="p-20 text-center">Order not found.</div>;
@@ -33,7 +37,7 @@ const OrderSuccess = () => {
           <CheckCircle className="w-10 h-10" />
         </div>
         <h1 className="text-4xl font-extrabold text-dark mb-2">Order Confirmed!</h1>
-        <p className="text-gray-500 text-lg">Thank you for your purchase. Your order <span className="text-primary font-bold">#{id.slice(-6)}</span> has been placed.</p>
+        <p className="text-gray-500 text-lg">Thank you for your purchase. Your order <span className="text-primary font-bold">#{String(orderId).slice(-6).padStart(6,'0')}</span> has been placed.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -65,10 +69,10 @@ const OrderSuccess = () => {
               <MapPin className="w-5 h-5 text-primary" /> Delivery Details
             </h3>
             <div className="text-sm text-gray-600 space-y-2">
-              <p className="font-bold text-dark">{order.user?.name}</p>
-              <p>{order.shippingAddress.street}</p>
-              <p>{order.shippingAddress.city}, {order.shippingAddress.zipCode}</p>
-              <p>Phone: {order.user?.phone || 'N/A'}</p>
+              <p className="font-bold text-dark">{order.user?.name || order.guestName}</p>
+              <p>{order.street}, {order.city}</p>
+              <p>{order.zipCode}</p>
+              <p>Phone: {order.phone || order.guestPhone || 'N/A'}</p>
             </div>
           </div>
 

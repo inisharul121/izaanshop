@@ -131,8 +131,16 @@ model Order {
   paymentStatus   String?
   paymentEmail    String?
   
-  user            User     @relation(fields: [userId], references: [id])
-  userId          Int
+  user            User?    @relation(fields: [userId], references: [id])
+  userId          Int?
+  
+  // Guest order info (used when userId is null)
+  guestName       String?
+  guestEmail      String?
+  guestPhone      String?
+  
+  // Phone (used for both guest and logged-in orders)
+  phone           String?
   
   orderItems      OrderItem[]
   createdAt       DateTime @default(now())

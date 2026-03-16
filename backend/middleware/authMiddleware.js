@@ -32,4 +32,22 @@ const admin = (req, res, next) => {
   }
 };
 
-module.exports = { protect, admin };
+// optionalAuth: sets req.user if token present, but never blocks the request
+const optionalAuth = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer')) {
+    try {
+      const token = authHeader.split(' ')[1];
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = await prisma.user.findUnique({
+        where: { id: decoded.id },
+        select: { id: true, name: true, email: true, role: true }
+      });
+    } catch (error) {
+      req.user = null; // Invalid token — treat as guest
+    }
+  }
+  next();
+};
+
+module.exports = { protect, admin, optionalAuth };

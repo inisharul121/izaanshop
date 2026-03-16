@@ -12,17 +12,30 @@ const addOrderItems = async (req, res) => {
     taxPrice,
     shippingPrice,
     totalPrice,
+    guestName,
+    guestEmail,
+    guestPhone,
   } = req.body;
 
-  if (orderItems && orderItems.length === 0) {
-    res.status(400).json({ message: 'No order items' });
-    return;
+  if (!orderItems || orderItems.length === 0) {
+    return res.status(400).json({ message: 'No order items' });
+  }
+
+  // Require either a logged-in user or guest contact info
+  if (!req.user && (!guestName || !guestEmail)) {
+    return res.status(400).json({ message: 'Guest name and email are required for guest orders' });
   }
 
   try {
     const order = await prisma.order.create({
       data: {
-        userId: req.user.id,
+        ...(req.user ? { userId: req.user.id } : {}),
+        ...(req.user ? {} : {
+          guestName,
+          guestEmail,
+          guestPhone: guestPhone || shippingAddress?.phone || null,
+        }),
+        phone: req.user ? null : (guestPhone || shippingAddress?.phone || null),
         totalPrice,
         paymentMethod,
         itemsPrice,
@@ -37,9 +50,9 @@ const addOrderItems = async (req, res) => {
           create: orderItems.map((item) => ({
             name: item.name,
             quantity: item.quantity,
-            image: item.image,
-            price: item.price,
-            productId: item.productId,
+            image: item.image || item.images?.main || '',
+            price: item.salePrice || item.price,
+            productId: item.id || item.productId,
           })),
         },
       },
@@ -47,9 +60,11 @@ const addOrderItems = async (req, res) => {
 
     res.status(201).json(order);
   } catch (error) {
+    console.error('Order creation error:', error);
     res.status(500).json({ message: error.message });
   }
 };
+
 
 // @desc    Get order by ID
 // @route   GET /api/orders/:id
