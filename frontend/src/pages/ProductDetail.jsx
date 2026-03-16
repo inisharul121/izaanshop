@@ -31,6 +31,12 @@ const ProductDetail = () => {
   if (loading) return <div className="container mx-auto px-4 py-20 text-center">Loading product...</div>;
   if (!product) return <div className="container mx-auto px-4 py-20 text-center">Product not found. <Link to="/shop" className="text-primary underline">Go to Shop</Link></div>;
 
+  const getImageUrl = (img) => {
+    if (!img) return 'https://placehold.co/800x800/F8F9FA/2D3748?text=Product';
+    if (img.startsWith('http')) return img;
+    return `http://localhost:5001${img}`;
+  };
+
   return (
     <div className="container mx-auto px-4 py-12">
       <Link to="/shop" className="inline-flex items-center gap-2 text-gray-500 hover:text-primary transition-colors mb-8">
@@ -46,15 +52,15 @@ const ProductDetail = () => {
         >
           <div className="aspect-square bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
             <img 
-              src={product.images[0] || 'https://placehold.co/800x800/F8F9FA/2D3748?text=Product'} 
+              src={getImageUrl(product.images?.main || product.images?.[0])} 
               alt={product.name}
               className="w-full h-full object-cover"
             />
           </div>
           <div className="grid grid-cols-4 gap-4">
-            {product.images.map((img, i) => (
+            {product.images?.gallery?.map((img, i) => (
               <div key={i} className="aspect-square bg-white rounded-lg overflow-hidden border border-gray-100 cursor-pointer hover:border-primary transition-all">
-                <img src={img} alt={`Gallery ${i}`} className="w-full h-full object-cover" />
+                <img src={getImageUrl(img)} alt={`Gallery ${i}`} className="w-full h-full object-cover" />
               </div>
             ))}
           </div>

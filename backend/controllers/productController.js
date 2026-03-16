@@ -35,9 +35,11 @@ const getProducts = async (req, res) => {
 // @route   GET /api/products/:id
 // @access  Public
 const getProductById = async (req, res) => {
+  const { id } = req.params;
   try {
-    const product = await prisma.product.findUnique({
-      where: { id: Number(req.params.id) },
+    const isNumber = !isNaN(id);
+    const product = await prisma.product.findFirst({
+      where: isNumber ? { id: Number(id) } : { slug: id },
       include: { category: true }
     });
 

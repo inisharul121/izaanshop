@@ -18,6 +18,43 @@ const AdminDashboard = () => {
   const [uploading, setUploading] = useState(false);
   const [mainImage, setMainImage] = useState(null);
   const [galleryFiles, setGalleryFiles] = useState([]);
+  const [showMediaLibrary, setShowMediaLibrary] = useState(false);
+  const [mediaFiles, setMediaFiles] = useState([]);
+  const [selectingFor, setSelectingFor] = useState(null); // 'main', 'gallery'
+
+  const getImageUrl = (img) => {
+    if (!img) return 'https://placehold.co/400x400/F8F9FA/2D3748?text=Product';
+    if (img.startsWith('http')) return img;
+    return `http://localhost:5001${img}`;
+  };
+
+  const fetchMedia = async () => {
+    try {
+      const res = await api.get('/media');
+      setMediaFiles(res.data);
+      setShowMediaLibrary(true);
+    } catch (error) {
+      alert('Error fetching media');
+    }
+  };
+
+  const selectMedia = (file) => {
+    if (selectingFor === 'main') {
+      setEditingItem(prev => ({
+        ...prev,
+        images: { ...prev?.images, main: file.url }
+      }));
+    } else if (selectingFor === 'gallery') {
+      setEditingItem(prev => ({
+        ...prev,
+        images: { 
+          ...prev?.images, 
+          gallery: [...(prev?.images?.gallery || []), file.url] 
+        }
+      }));
+    }
+    setShowMediaLibrary(false);
+  };
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -274,7 +311,7 @@ const AdminDashboard = () => {
               {products.map((product) => (
                 <div key={product.id} className="group p-4 border border-gray-100 rounded-3xl hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5 transition-all">
                   <div className="aspect-square rounded-2xl overflow-hidden mb-4 bg-gray-50">
-                    <img src={product.images[0]} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                    <img src={getImageUrl(product.images?.main || product.images?.[0])} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                   </div>
                   <div className="space-y-1">
                     <p className="font-bold text-dark line-clamp-1">{product.name}</p>
@@ -296,7 +333,7 @@ const AdminDashboard = () => {
                 <div key={cat.id} className="p-4 border border-gray-100 rounded-3xl text-center space-y-3">
                   <div className="w-16 h-16 bg-primary/5 rounded-2xl flex items-center justify-center mx-auto overflow-hidden">
                     {cat.image ? (
-                      <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" />
+                      <img src={getImageUrl(cat.image)} alt={cat.name} className="w-full h-full object-cover" />
                     ) : (
                       <Filter className="w-8 h-8 text-primary" />
                     )}
@@ -449,7 +486,10 @@ const AdminDashboard = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <label className="text-xs font-bold text-gray-400 uppercase">Main Product Image</label>
+                      <label className="text-xs font-bold text-gray-400 uppercase flex justify-between">
+                        Main Image
+                        <button type="button" onClick={() => { setSelectingFor('main'); fetchMedia(); }} className="text-primary hover:underline">Select from Media</button>
+                      </label>
                       <input 
                         type="file" 
                         accept="image/*"
@@ -459,7 +499,10 @@ const AdminDashboard = () => {
                       {editingItem?.images?.main && <p className="text-[10px] text-gray-400 truncate">Current: {editingItem.images.main.split('/').pop()}</p>}
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs font-bold text-gray-400 uppercase">Gallery Images</label>
+                      <label className="text-xs font-bold text-gray-400 uppercase flex justify-between">
+                        Gallery Images
+                        <button type="button" onClick={() => { setSelectingFor('gallery'); fetchMedia(); }} className="text-primary hover:underline">Select from Media</button>
+                      </label>
                       <input 
                         type="file" 
                         multiple 
@@ -539,6 +582,37 @@ const AdminDashboard = () => {
                 </button>
               </div>
             </form>
+          </motion.div>
+        </div>
+      {/* Media Library Modal */}
+      {showMediaLibrary && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-dark/60 backdrop-blur-sm">
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+          >
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+              <h4 className="text-xl font-bold">Select Media</h4>
+              <button onClick={() => setShowMediaLibrary(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {mediaFiles.map((file, i) => (
+                <div 
+                  key={i} 
+                  onClick={() => selectMedia(file)}
+                  className="group relative aspect-square rounded-xl overflow-hidden border-2 border-transparent hover:border-primary cursor-pointer transition-all bg-gray-50"
+                >
+                  <img src={getImageUrl(file.url)} alt={file.name} className="w-full h-full object-cover" />
+                  <div className="absolute inset-x-0 bottom-0 bg-dark/80 p-2 transform translate-y-full group-hover:translate-y-0 transition-transform">
+                    <p className="text-[10px] text-white truncate text-center">{file.name}</p>
+                  </div>
+                </div>
+              ))}
+              {mediaFiles.length === 0 && <p className="col-span-full text-center py-10 text-gray-400">No media files found.</p>}
+            </div>
           </motion.div>
         </div>
       )}

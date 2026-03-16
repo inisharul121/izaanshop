@@ -11,6 +11,12 @@ const ProductCard = ({ product }) => {
     ? Math.round(((product.price - product.salePrice) / product.price) * 100)
     : null;
 
+  const getImageUrl = (img) => {
+    if (!img) return 'https://placehold.co/400x500/F8F9FA/2D3748?text=Product';
+    if (img.startsWith('http')) return img;
+    return `http://localhost:5001${img}`;
+  };
+
   return (
     <motion.div 
       whileHover={{ y: -5 }}
@@ -18,7 +24,7 @@ const ProductCard = ({ product }) => {
     >
       <Link to={`/product/${product.slug}`} className="relative block aspect-[4/5] overflow-hidden rounded-md mb-4">
         <img 
-          src={product.images[0] || 'https://placehold.co/400x500/F8F9FA/2D3748?text=Product'} 
+          src={getImageUrl(product.images?.main || product.images?.[0])} 
           alt={product.name}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />

@@ -18,6 +18,7 @@ app.use(cors({
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(cookieParser());
+app.use('/uploads', express.static('uploads'));
 
 // Database Connection
 async function connectDB() {
@@ -38,6 +39,7 @@ app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/coupons', require('./routes/couponRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
+app.use('/api/media', require('./routes/mediaRoutes'));
 
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to IzaanShop API' });
