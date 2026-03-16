@@ -22,7 +22,11 @@ const getProducts = async (req, res) => {
       take: pageSize,
       skip: pageSize * (page - 1),
       orderBy: { createdAt: 'desc' },
-      include: { category: true }
+      include: { 
+        category: true,
+        attributes: true,
+        variants: true
+      }
     });
 
     res.json({ products, page, pages: Math.ceil(count / pageSize) });
@@ -40,7 +44,11 @@ const getProductById = async (req, res) => {
     const isNumber = !isNaN(id);
     const product = await prisma.product.findFirst({
       where: isNumber ? { id: Number(id) } : { slug: id },
-      include: { category: true }
+      include: { 
+        category: true,
+        attributes: true,
+        variants: true
+      }
     });
 
     if (product) {
@@ -51,7 +59,11 @@ const getProductById = async (req, res) => {
           id: { not: product.id }
         },
         take: 4,
-        include: { category: true }
+        include: { 
+          category: true,
+          attributes: true,
+          variants: true
+        }
       });
       res.json({ ...product, relatedProducts: related });
     } else {
@@ -66,24 +78,54 @@ const getProductById = async (req, res) => {
 // @route   POST /api/products
 // @access  Private/Admin
 const createProduct = async (req, res) => {
-  const { name, price, description, category, mainImage, gallery, stock, slug, salePrice } = req.body;
+  const { 
+    name, price, description, category, mainImage, gallery, 
+    stock, slug, salePrice, type, attributes, variants 
+  } = req.body;
 
   try {
+    const productData = {
+      name,
+      price: Number(price),
+      description,
+      categoryId: Number(category),
+      images: {
+        main: mainImage,
+        gallery: gallery || []
+      },
+      stock: stock ? Number(stock) : 0,
+      slug,
+      salePrice: salePrice ? Number(salePrice) : null,
+      type: type || 'SIMPLE'
+    };
+
+    if (type === 'VARIABLE' && attributes && variants) {
+      productData.attributes = {
+        create: attributes.map(attr => ({
+          name: attr.name,
+          options: attr.options
+        }))
+      };
+      productData.variants = {
+        create: variants.map(variant => ({
+          sku: variant.sku,
+          price: Number(variant.price),
+          salePrice: variant.salePrice ? Number(variant.salePrice) : null,
+          stock: Number(variant.stock),
+          options: variant.options,
+          image: variant.image
+        }))
+      };
+    }
+
     const product = await prisma.product.create({
-      data: {
-        name,
-        price: Number(price),
-        description,
-        categoryId: Number(category),
-        images: {
-          main: mainImage,
-          gallery: gallery || []
-        },
-        stock: stock ? Number(stock) : 0,
-        slug,
-        salePrice: salePrice ? Number(salePrice) : null,
+      data: productData,
+      include: {
+        attributes: true,
+        variants: true
       }
     });
+
     res.status(201).json(product);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -94,9 +136,13 @@ const createProduct = async (req, res) => {
 // @route   PUT /api/products/:id
 // @access  Private/Admin
 const updateProduct = async (req, res) => {
-  const { name, price, description, category, mainImage, gallery, stock, slug, salePrice } = req.body;
+  const { 
+    name, price, description, category, mainImage, gallery, 
+    stock, slug, salePrice, type, attributes, variants 
+  } = req.body;
 
   try {
+    // Start by updating basic product info
     const data = {
       name,
       price: price ? Number(price) : undefined,
@@ -105,6 +151,7 @@ const updateProduct = async (req, res) => {
       stock: stock !== undefined ? Number(stock) : undefined,
       slug,
       salePrice: salePrice !== undefined ? Number(salePrice) : undefined,
+      type: type || undefined,
     };
 
     if (mainImage || gallery) {
@@ -114,13 +161,48 @@ const updateProduct = async (req, res) => {
       };
     }
 
+    // Handle variable product logic (Attributes and Variants)
+    // Simple approach: Delete existing and re-create if provided
+    if (type === 'VARIABLE') {
+      await prisma.productAttribute.deleteMany({ where: { productId: Number(req.params.id) } });
+      await prisma.productVariant.deleteMany({ where: { productId: Number(req.params.id) } });
+
+      if (attributes && variants) {
+        data.attributes = {
+          create: attributes.map(attr => ({
+            name: attr.name,
+            options: attr.options
+          }))
+        };
+        data.variants = {
+          create: variants.map(variant => ({
+            sku: variant.sku,
+            price: Number(variant.price),
+            salePrice: variant.salePrice ? Number(variant.salePrice) : null,
+            stock: Number(variant.stock),
+            options: variant.options,
+            image: variant.image
+          }))
+        };
+      }
+    } else if (type === 'SIMPLE') {
+      // In case product type was changed from VARIABLE to SIMPLE
+      await prisma.productAttribute.deleteMany({ where: { productId: Number(req.params.id) } });
+      await prisma.productVariant.deleteMany({ where: { productId: Number(req.params.id) } });
+    }
+
     const updatedProduct = await prisma.product.update({
       where: { id: Number(req.params.id) },
-      data
+      data,
+      include: {
+        attributes: true,
+        variants: true
+      }
     });
     res.json(updatedProduct);
   } catch (error) {
-    res.status(404).json({ message: 'Product not found' });
+    console.error('Update Product Error:', error);
+    res.status(500).json({ message: error.message });
   }
 };
 

@@ -37,6 +37,11 @@ model Category {
   updatedAt   DateTime  @updatedAt
 }
 
+enum ProductType {
+  SIMPLE
+  VARIABLE
+}
+
 model Product {
   id          Int      @id @default(autoincrement())
   name        String
@@ -50,6 +55,10 @@ model Product {
   rating      Float    @default(0)
   numReviews  Int      @default(0)
   
+  type        ProductType @default(SIMPLE)
+  attributes  ProductAttribute[]
+  variants    ProductVariant[]
+  
   category    Category @relation(fields: [categoryId], references: [id])
   categoryId  Int
   
@@ -57,6 +66,29 @@ model Product {
   reviews      Review[]
   orderItems   OrderItem[]
   
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ProductAttribute {
+  id        Int      @id @default(autoincrement())
+  name      String   // e.g., "Color"
+  options   Json     // e.g., ["Red", "Blue"]
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model ProductVariant {
+  id          Int      @id @default(autoincrement())
+  sku         String?  @unique
+  price       Float
+  salePrice   Float?
+  stock       Int      @default(0)
+  options     Json     // e.g., { "Color": "Red", "Size": "XL" }
+  image       String?
+  productId   Int
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItems  OrderItem[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -113,6 +145,9 @@ model OrderItem {
   quantity  Int
   image     String
   price     Float
+  
+  variantId Int?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
   
   order     Order   @relation(fields: [orderId], references: [id])
   orderId   Int

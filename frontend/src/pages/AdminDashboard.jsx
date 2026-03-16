@@ -21,6 +21,9 @@ const AdminDashboard = () => {
   const [showMediaLibrary, setShowMediaLibrary] = useState(false);
   const [mediaFiles, setMediaFiles] = useState([]);
   const [selectingFor, setSelectingFor] = useState(null); // 'main', 'gallery'
+  const [productType, setProductType] = useState('SIMPLE');
+  const [attributes, setAttributes] = useState([]); // [{ name: 'Color', options: ['Red', 'Blue'] }]
+  const [variants, setVariants] = useState([]); // [{ sku: '', price: 0, stock: 0, options: {} }]
 
   const getImageUrl = (img) => {
     if (!img) return 'https://placehold.co/400x400/F8F9FA/2D3748?text=Product';
@@ -128,6 +131,9 @@ const AdminDashboard = () => {
     setSlug(item?.slug || '');
     setMainImage(null);
     setGalleryFiles([]);
+    setProductType(item?.type || 'SIMPLE');
+    setAttributes(item?.attributes || []);
+    setVariants(item?.variants || []);
     setShowModal(true);
   };
 
@@ -143,6 +149,14 @@ const AdminDashboard = () => {
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData.entries());
     
+    // Add variants and attributes if VARIABLE
+    if (modalType === 'product') {
+      data.type = productType;
+      if (productType === 'VARIABLE') {
+        data.attributes = attributes;
+        data.variants = variants;
+      }
+    }
     try {
       setUploading(true);
 
@@ -214,6 +228,51 @@ const AdminDashboard = () => {
     } finally {
       setUploading(false);
     }
+  };
+
+  const addAttribute = () => {
+    setAttributes([...attributes, { name: '', options: [] }]);
+  };
+
+  const removeAttribute = (index) => {
+    setAttributes(attributes.filter((_, i) => i !== index));
+  };
+
+  const updateAttribute = (index, field, value) => {
+    const newAttrs = [...attributes];
+    if (field === 'options') {
+      newAttrs[index].options = value.split(',').map(s => s.trim()).filter(Boolean);
+    } else {
+      newAttrs[index].name = value;
+    }
+    setAttributes(newAttrs);
+  };
+
+  const generateVariants = () => {
+    if (attributes.length === 0) return;
+    
+    const cartesian = (...args) => args.reduce((a, b) => a.flatMap(d => b.map(e => ({ ...d, ...e }))), [{}]);
+    
+    const attrOptions = attributes.map(attr => 
+      attr.options.map(opt => ({ [attr.name]: opt }))
+    );
+
+    const generated = cartesian(...attrOptions);
+    
+    setVariants(generated.map(opt => ({
+      sku: `${slug}-${Object.values(opt).join('-')}`.toLowerCase(),
+      price: Number(editingItem?.price || 0),
+      salePrice: editingItem?.salePrice ? Number(editingItem.salePrice) : null,
+      stock: Number(editingItem?.stock || 0),
+      options: opt,
+      image: editingItem?.images?.main || ''
+    })));
+  };
+
+  const updateVariant = (index, field, value) => {
+    const newVariants = [...variants];
+    newVariants[index][field] = field === 'price' || field === 'stock' || field === 'salePrice' ? (value === '' ? null : Number(value)) : value;
+    setVariants(newVariants);
   };
 
   return (
@@ -462,20 +521,148 @@ const AdminDashboard = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-gray-400 uppercase">Regular Price</label>
-                      <input name="price" type="number" defaultValue={editingItem?.price} required className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-gray-400 uppercase">Sale Price (Optional)</label>
-                      <input name="salePrice" type="number" defaultValue={editingItem?.salePrice} className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-bold text-gray-400 uppercase">Stock Count (Optional)</label>
-                      <input name="stock" type="number" defaultValue={editingItem?.stock} className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
+                  <div className="space-y-1 py-4 border-t border-b border-gray-100">
+                    <label className="text-xs font-bold text-gray-400 uppercase">Product Type</label>
+                    <div className="flex gap-4 pt-2">
+                       <button 
+                        type="button"
+                        onClick={() => setProductType('SIMPLE')}
+                        className={`flex-1 py-3 rounded-xl text-sm font-bold border transition-all ${productType === 'SIMPLE' ? 'bg-primary/10 border-primary text-primary' : 'bg-gray-50 border-transparent text-gray-500 hover:bg-gray-100'}`}
+                       >
+                         Simple Product
+                       </button>
+                       <button 
+                        type="button"
+                        onClick={() => setProductType('VARIABLE')}
+                        className={`flex-1 py-3 rounded-xl text-sm font-bold border transition-all ${productType === 'VARIABLE' ? 'bg-primary/10 border-primary text-primary' : 'bg-gray-50 border-transparent text-gray-500 hover:bg-gray-100'}`}
+                       >
+                         Variable Product
+                       </button>
                     </div>
                   </div>
+
+                  {productType === 'VARIABLE' ? (
+                    <div className="space-y-6 animate-in fade-in slide-in-from-top-4">
+                       <div className="space-y-4">
+                         <div className="flex justify-between items-center">
+                            <label className="text-xs font-bold text-gray-400 uppercase">Attributes</label>
+                            <button type="button" onClick={addAttribute} className="text-primary text-xs font-bold flex items-center gap-1 hover:underline">
+                              <Plus className="w-3 h-3" /> Add Attribute
+                            </button>
+                         </div>
+                         {attributes.map((attr, idx) => (
+                           <div key={idx} className="p-4 bg-gray-50 rounded-2xl space-y-3 relative group">
+                             <button type="button" onClick={() => removeAttribute(idx)} className="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition-colors">
+                               <X className="w-4 h-4" />
+                             </button>
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                               <div className="space-y-1">
+                                 <label className="text-[10px] font-bold text-gray-400 uppercase">Attribute Name</label>
+                                 <input 
+                                  placeholder="e.g. Color" 
+                                  value={attr.name} 
+                                  onChange={(e) => updateAttribute(idx, 'name', e.target.value)}
+                                  className="w-full bg-white border border-gray-200 rounded-lg p-2 text-sm" 
+                                 />
+                               </div>
+                               <div className="space-y-1">
+                                 <label className="text-[10px] font-bold text-gray-400 uppercase">Options (comma separated)</label>
+                                 <input 
+                                  placeholder="Red, Blue, Green" 
+                                  value={attr.options.join(', ')} 
+                                  onChange={(e) => updateAttribute(idx, 'options', e.target.value)}
+                                  className="w-full bg-white border border-gray-200 rounded-lg p-2 text-sm" 
+                                 />
+                               </div>
+                             </div>
+                           </div>
+                         ))}
+                         {attributes.length > 0 && (
+                           <button 
+                            type="button" 
+                            onClick={generateVariants}
+                            className="w-full py-3 bg-dark text-white rounded-xl text-sm font-bold hover:bg-dark/90 transition-all flex items-center justify-center gap-2"
+                           >
+                             Generate Variants
+                           </button>
+                         )}
+                       </div>
+
+                       {variants.length > 0 && (
+                         <div className="space-y-4">
+                            <label className="text-xs font-bold text-gray-400 uppercase">Variants ({variants.length})</label>
+                            <div className="space-y-3">
+                              {variants.map((variant, vIdx) => (
+                                <div key={vIdx} className="p-4 border border-gray-100 rounded-2xl space-y-4">
+                                  <div className="flex justify-between items-center border-b border-gray-50 pb-2">
+                                     <div className="flex gap-2">
+                                        {Object.entries(variant.options).map(([key, val]) => (
+                                          <span key={key} className="px-2 py-0.5 bg-gray-100 text-[10px] font-bold text-gray-500 rounded">
+                                            {key}: {val}
+                                          </span>
+                                        ))}
+                                     </div>
+                                     <span className="text-[10px] text-gray-300 font-mono">{variant.sku || 'No SKU'}</span>
+                                  </div>
+                                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                                    <div className="space-y-1">
+                                      <label className="text-[10px] font-bold text-gray-400 uppercase">Price</label>
+                                      <input 
+                                        type="number" 
+                                        value={variant.price} 
+                                        onChange={(e) => updateVariant(vIdx, 'price', e.target.value)}
+                                        className="w-full bg-gray-50 border-none rounded-lg p-2 text-sm" 
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <label className="text-[10px] font-bold text-gray-400 uppercase">Sale Price</label>
+                                      <input 
+                                        type="number" 
+                                        value={variant.salePrice || ''} 
+                                        onChange={(e) => updateVariant(vIdx, 'salePrice', e.target.value)}
+                                        className="w-full bg-gray-50 border-none rounded-lg p-2 text-sm" 
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <label className="text-[10px] font-bold text-gray-400 uppercase">Stock</label>
+                                      <input 
+                                        type="number" 
+                                        value={variant.stock} 
+                                        onChange={(e) => updateVariant(vIdx, 'stock', e.target.value)}
+                                        className="w-full bg-gray-50 border-none rounded-lg p-2 text-sm" 
+                                      />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <label className="text-[10px] font-bold text-gray-400 uppercase">SKU</label>
+                                      <input 
+                                        value={variant.sku || ''} 
+                                        onChange={(e) => updateVariant(vIdx, 'sku', e.target.value)}
+                                        className="w-full bg-gray-50 border-none rounded-lg p-2 text-sm" 
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                         </div>
+                       )}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-400 uppercase">Regular Price</label>
+                        <input name="price" type="number" defaultValue={editingItem?.price} required className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-400 uppercase">Sale Price (Optional)</label>
+                        <input name="salePrice" type="number" defaultValue={editingItem?.salePrice} className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-bold text-gray-400 uppercase">Stock Count (Optional)</label>
+                        <input name="stock" type="number" defaultValue={editingItem?.stock} className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
+                      </div>
+                    </div>
+                  )}
 
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-gray-400 uppercase">Category</label>

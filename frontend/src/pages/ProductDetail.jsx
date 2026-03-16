@@ -16,6 +16,8 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [activeImg, setActiveImg] = useState(0);
   const [activeTab, setActiveTab] = useState('description');
+  const [selectedOptions, setSelectedOptions] = useState({});
+  const [activeVariant, setActiveVariant] = useState(null);
   const { addToCart } = useStore();
 
   useEffect(() => {
@@ -25,6 +27,14 @@ const ProductDetail = () => {
         const { data } = await api.get(`/products/${slug}`);
         setProduct(data);
         setActiveImg(0);
+        // Initialize selected options if variable
+        if (data.type === 'VARIABLE' && data.attributes?.length > 0) {
+          const initial = {};
+          data.attributes.forEach(attr => {
+            initial[attr.name] = attr.options[0];
+          });
+          setSelectedOptions(initial);
+        }
       } catch (error) {
         console.error('Error fetching product', error);
       } finally {
@@ -34,6 +44,15 @@ const ProductDetail = () => {
     fetchProduct();
     window.scrollTo(0, 0);
   }, [slug]);
+
+  useEffect(() => {
+    if (product?.type === 'VARIABLE' && product.variants) {
+      const match = product.variants.find(v => 
+        Object.entries(selectedOptions).every(([key, val]) => v.options[key] === val)
+      );
+      setActiveVariant(match);
+    }
+  }, [selectedOptions, product]);
 
   const getImageUrl = (img) => {
     if (!img) return 'https://placehold.co/800x800/F8F9FA/2D3748?text=Product';
@@ -71,9 +90,34 @@ const ProductDetail = () => {
     ...(product.images?.gallery || [])
   ].filter(Boolean);
 
-  const discount = product.salePrice 
-    ? Math.round(((product.price - product.salePrice) / product.price) * 100)
+  const displayPrice = activeVariant ? activeVariant.price : product.price;
+  const displaySalePrice = activeVariant ? activeVariant.salePrice : product.salePrice;
+  const displayStock = activeVariant ? activeVariant.stock : product.stock;
+
+  const discount = displaySalePrice 
+    ? Math.round(((displayPrice - displaySalePrice) / displayPrice) * 100)
     : null;
+
+  const handleOptionChange = (name, val) => {
+    setSelectedOptions(prev => ({ ...prev, [name]: val }));
+  };
+
+  const handleAddToCart = () => {
+    if (product.type === 'VARIABLE' && !activeVariant) {
+      alert('Please select all available options');
+      return;
+    }
+    
+    // Create a product instance with variant info for cart
+    const itemToAdd = {
+      ...product,
+      price: displayPrice,
+      salePrice: displaySalePrice,
+      selectedVariant: activeVariant,
+      selectedOptions: selectedOptions
+    };
+    addToCart(itemToAdd, quantity);
+  };
 
   return (
     <div className="bg-white min-h-screen pb-20">
@@ -147,6 +191,7 @@ const ProductDetail = () => {
                 </Link>
                 <h1 className="text-3xl md:text-4xl font-bold text-dark leading-tight mb-4">
                   {product.name}
+                  {activeVariant?.sku && <span className="block text-xs text-gray-400 font-mono mt-2">{activeVariant.sku}</span>}
                 </h1>
                 
                 <div className="flex flex-wrap items-center gap-6">
@@ -160,23 +205,45 @@ const ProductDetail = () => {
                   </div>
                   <div className="h-4 w-px bg-gray-200" />
                   <div className="flex items-center gap-2">
-                    <div className={`w-1.5 h-1.5 rounded-full ${product.stock > 0 ? 'bg-green-500' : 'bg-red-500'}`} />
-                    <span className={`text-xs font-bold uppercase tracking-wider ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
+                    <div className={`w-1.5 h-1.5 rounded-full ${displayStock > 0 ? 'bg-green-500' : 'bg-red-500'}`} />
+                    <span className={`text-xs font-bold uppercase tracking-wider ${displayStock > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {displayStock > 0 ? `In Stock (${displayStock})` : 'Out of Stock'}
                     </span>
                   </div>
                 </div>
               </div>
 
+              {/* Variant Selectors */}
+              {product.type === 'VARIABLE' && product.attributes?.length > 0 && (
+                <div className="space-y-6 py-6 border-t border-b border-gray-100">
+                  {product.attributes.map(attr => (
+                    <div key={attr.id} className="space-y-3">
+                      <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">{attr.name}</label>
+                      <div className="flex flex-wrap gap-2">
+                        {attr.options.map(opt => (
+                          <button
+                            key={opt}
+                            onClick={() => handleOptionChange(attr.name, opt)}
+                            className={`px-6 py-2.5 rounded-xl text-xs font-bold border transition-all ${selectedOptions[attr.name] === opt ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' : 'bg-white border-gray-100 text-gray-500 hover:border-gray-200'}`}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="flex items-baseline gap-3">
-                  {product.salePrice ? (
+                  {displaySalePrice ? (
                     <>
-                      <span className="text-4xl font-bold text-primary tracking-tight">{product.salePrice}৳</span>
-                      <span className="text-lg text-gray-400 line-through font-medium">{product.price}৳</span>
+                      <span className="text-4xl font-bold text-primary tracking-tight">{displaySalePrice}৳</span>
+                      <span className="text-lg text-gray-400 line-through font-medium">{displayPrice}৳</span>
                     </>
                   ) : (
-                    <span className="text-4xl font-bold text-dark tracking-tight">{product.price}৳</span>
+                    <span className="text-4xl font-bold text-dark tracking-tight">{displayPrice}৳</span>
                   )}
                 </div>
                 
@@ -199,11 +266,12 @@ const ProductDetail = () => {
 
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <button 
-                  onClick={() => addToCart(product, quantity)}
-                  className="flex-[3] py-4 bg-primary text-white rounded-xl font-bold text-base hover:bg-primary-dark transition-all flex items-center justify-center gap-3 active:scale-95"
+                  onClick={handleAddToCart}
+                  disabled={displayStock <= 0}
+                  className={`flex-[3] py-4 rounded-xl font-bold text-base transition-all flex items-center justify-center gap-3 active:scale-95 ${displayStock > 0 ? 'bg-primary text-white hover:bg-primary-dark' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
                 >
                   <ShoppingCart className="w-5 h-5" />
-                  Add To Basket
+                  {displayStock > 0 ? 'Add To Basket' : 'Out of Stock'}
                 </button>
                 <button className="flex-1 py-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all flex items-center justify-center text-gray-400 hover:text-red-500">
                   <Heart className="w-5 h-5" />
