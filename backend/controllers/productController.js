@@ -55,7 +55,7 @@ const getProductById = async (req, res) => {
 // @route   POST /api/products
 // @access  Private/Admin
 const createProduct = async (req, res) => {
-  const { name, price, description, category, images, stock, slug, salePrice } = req.body;
+  const { name, price, description, category, mainImage, gallery, stock, slug, salePrice } = req.body;
 
   try {
     const product = await prisma.product.create({
@@ -64,8 +64,11 @@ const createProduct = async (req, res) => {
         price: Number(price),
         description,
         categoryId: Number(category),
-        images: images || [],
-        stock: Number(stock),
+        images: {
+          main: mainImage,
+          gallery: gallery || []
+        },
+        stock: stock ? Number(stock) : 0,
         slug,
         salePrice: salePrice ? Number(salePrice) : null,
       }
@@ -80,21 +83,29 @@ const createProduct = async (req, res) => {
 // @route   PUT /api/products/:id
 // @access  Private/Admin
 const updateProduct = async (req, res) => {
-  const { name, price, description, category, images, stock, slug, salePrice } = req.body;
+  const { name, price, description, category, mainImage, gallery, stock, slug, salePrice } = req.body;
 
   try {
+    const data = {
+      name,
+      price: price ? Number(price) : undefined,
+      description,
+      categoryId: category ? Number(category) : undefined,
+      stock: stock !== undefined ? Number(stock) : undefined,
+      slug,
+      salePrice: salePrice !== undefined ? Number(salePrice) : undefined,
+    };
+
+    if (mainImage || gallery) {
+      data.images = {
+        main: mainImage,
+        gallery: gallery || []
+      };
+    }
+
     const updatedProduct = await prisma.product.update({
       where: { id: Number(req.params.id) },
-      data: {
-        name,
-        price: price ? Number(price) : undefined,
-        description,
-        categoryId: category ? Number(category) : undefined,
-        images,
-        stock: stock ? Number(stock) : undefined,
-        slug,
-        salePrice: salePrice ? Number(salePrice) : undefined,
-      }
+      data
     });
     res.json(updatedProduct);
   } catch (error) {

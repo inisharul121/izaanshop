@@ -83,7 +83,17 @@ const AdminDashboard = () => {
   const handleOpenModal = (type, item = null) => {
     setModalType(type);
     setEditingItem(item);
+    setSlug(item?.slug || '');
+    setMainImage(null);
+    setGalleryFiles([]);
     setShowModal(true);
+  };
+
+  const handleNameChange = (e) => {
+    const val = e.target.value;
+    if (!editingItem) {
+      setSlug(val.toLowerCase().trim().replace(/ /g, '-').replace(/[^\w-]+/g, ''));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -91,20 +101,43 @@ const AdminDashboard = () => {
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData.entries());
     
-    // Convert numerical fields
-    if (data.price) data.price = Number(data.price);
-    if (data.salePrice) data.salePrice = Number(data.salePrice);
-    else delete data.salePrice; // Remove empty string so backend uses null
-    
-    if (data.stock) data.stock = Number(data.stock);
-    if (data.category) data.category = Number(data.category);
-    if (data.discountValue) data.discountValue = Number(data.discountValue);
-    if (data.maxUses) data.maxUses = Number(data.maxUses);
-    
-    // Images array (simplified for now)
-    if (data.image) data.images = [data.image];
-
     try {
+      setUploading(true);
+
+      // Handle Image Uploads if product
+      if (modalType === 'product') {
+        let mainImageUrl = editingItem?.images?.main || '';
+        let galleryUrls = editingItem?.images?.gallery || [];
+
+        if (mainImage || galleryFiles.length > 0) {
+          const uploadData = new FormData();
+          if (mainImage) uploadData.append('image', mainImage);
+          galleryFiles.forEach(file => uploadData.append('gallery', file));
+
+          const uploadRes = await api.post('/upload', uploadData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
+          
+          if (uploadRes.data.mainImage) mainImageUrl = uploadRes.data.mainImage;
+          if (uploadRes.data.gallery.length > 0) {
+            galleryUrls = [...galleryUrls, ...uploadRes.data.gallery];
+          }
+        }
+
+        data.mainImage = mainImageUrl;
+        data.gallery = galleryUrls;
+      }
+
+      // Convert numerical fields
+      if (data.price) data.price = Number(data.price);
+      if (data.salePrice) data.salePrice = Number(data.salePrice);
+      else delete data.salePrice;
+      
+      data.stock = data.stock ? Number(data.stock) : 0;
+      if (data.category) data.category = Number(data.category);
+      if (data.discountValue) data.discountValue = Number(data.discountValue);
+      if (data.maxUses) data.maxUses = Number(data.maxUses);
+      
       if (modalType === 'product') {
         if (editingItem) {
           const res = await api.put(`/products/${editingItem.id}`, data);
@@ -133,6 +166,8 @@ const AdminDashboard = () => {
       setShowModal(false);
     } catch (error) {
       alert('Operation failed: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -374,11 +409,11 @@ const AdminDashboard = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className="text-xs font-bold text-gray-400 uppercase">Product Name</label>
-                      <input name="name" defaultValue={editingItem?.name} required className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
+                      <input name="name" defaultValue={editingItem?.name} onChange={handleNameChange} required className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs font-bold text-gray-400 uppercase">Slug</label>
-                      <input name="slug" defaultValue={editingItem?.slug} required className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
+                      <input name="slug" value={slug} onChange={(e) => setSlug(e.target.value)} required className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
                     </div>
                   </div>
 
@@ -392,8 +427,8 @@ const AdminDashboard = () => {
                       <input name="salePrice" type="number" defaultValue={editingItem?.salePrice} className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs font-bold text-gray-400 uppercase">Stock Count</label>
-                      <input name="stock" type="number" defaultValue={editingItem?.stock} required className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
+                      <label className="text-xs font-bold text-gray-400 uppercase">Stock Count (Optional)</label>
+                      <input name="stock" type="number" defaultValue={editingItem?.stock} className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
                     </div>
                   </div>
 
@@ -405,14 +440,33 @@ const AdminDashboard = () => {
                     </select>
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-400 uppercase">Main Image URL</label>
-                    <input name="image" defaultValue={editingItem?.images?.[0]} required placeholder="https://..." className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-gray-400 uppercase">Main Product Image</label>
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={(e) => setMainImage(e.target.files[0])}
+                        className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" 
+                      />
+                      {editingItem?.images?.main && <p className="text-[10px] text-gray-400 truncate">Current: {editingItem.images.main.split('/').pop()}</p>}
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-gray-400 uppercase">Gallery Images</label>
+                      <input 
+                        type="file" 
+                        multiple 
+                        accept="image/*"
+                        onChange={(e) => setGalleryFiles(Array.from(e.target.files))}
+                        className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" 
+                      />
+                      {editingItem?.images?.gallery?.length > 0 && <p className="text-[10px] text-gray-400">{editingItem.images.gallery.length} current items</p>}
+                    </div>
                   </div>
 
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-gray-400 uppercase">Description</label>
-                    <textarea name="description" defaultValue={editingItem?.description} rows="4" className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
+                    <textarea name="description" defaultValue={editingItem?.description} required rows="4" className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
                   </div>
                 </>
               ) : modalType === 'category' ? (
@@ -421,20 +475,22 @@ const AdminDashboard = () => {
                     <label className="text-xs font-bold text-gray-400 uppercase">Category Name</label>
                     <input name="name" defaultValue={editingItem?.name} required className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-400 uppercase">Slug</label>
-                    <input name="slug" defaultValue={editingItem?.slug} required className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-400 uppercase">Image URL</label>
-                    <input name="image" defaultValue={editingItem?.image} className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-gray-400 uppercase">Slug</label>
+                      <input name="slug" defaultValue={editingItem?.slug} required className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-gray-400 uppercase">Image URL</label>
+                      <input name="image" defaultValue={editingItem?.image} className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
+                    </div>
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-gray-400 uppercase">Description</label>
                     <textarea name="description" defaultValue={editingItem?.description} rows="3" className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
                   </div>
                 </>
-              ) : modalType === 'coupon' ? (
+              ) : (
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1">
@@ -443,16 +499,15 @@ const AdminDashboard = () => {
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs font-bold text-gray-400 uppercase">Discount Type</label>
-                      <select name="discountType" defaultValue={editingItem?.discountType || 'percentage'} required className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20">
-                        <option value="percentage">Percentage (%)</option>
-                        <option value="fixed">Fixed Amount (৳)</option>
+                      <select name="discountType" defaultValue={editingItem?.discountType || 'Percentage'} className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20">
+                        <option value="Percentage">Percentage (%)</option>
+                        <option value="Fixed">Fixed Amount (৳)</option>
                       </select>
                     </div>
                   </div>
-
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-1">
-                      <label className="text-xs font-bold text-gray-400 uppercase">Discount Value</label>
+                      <label className="text-xs font-bold text-gray-400 uppercase">Value</label>
                       <input name="discountValue" type="number" defaultValue={editingItem?.discountValue} required className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
                     </div>
                     <div className="space-y-1">
@@ -461,15 +516,19 @@ const AdminDashboard = () => {
                     </div>
                     <div className="space-y-1">
                       <label className="text-xs font-bold text-gray-400 uppercase">Expiry Date</label>
-                      <input name="expiryDate" type="date" defaultValue={editingItem?.expiryDate ? format(new Date(editingItem.expiryDate), 'yyyy-MM-dd') : ''} className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
+                      <input name="expiryDate" type="date" defaultValue={editingItem?.expiryDate?.split('T')[0]} className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
                     </div>
                   </div>
                 </>
-              ) : null}
+              )}
 
               <div className="pt-4">
-                <button type="submit" className="w-full btn-primary py-4 rounded-2xl font-bold shadow-lg shadow-primary/20">
-                  {editingItem ? 'Save Changes' : `Create ${modalType.charAt(0).toUpperCase() + modalType.slice(1)}`}
+                <button 
+                  type="submit" 
+                  disabled={uploading}
+                  className={`w-full py-4 rounded-2xl font-bold text-white transition-all shadow-lg ${uploading ? 'bg-gray-400 cursor-not-allowed' : 'bg-primary hover:bg-primary-dark shadow-primary/20'}`}
+                >
+                  {uploading ? 'Uploading & Saving...' : editingItem ? 'Save Changes' : `Create ${modalType.charAt(0).toUpperCase() + modalType.slice(1)}`}
                 </button>
               </div>
             </form>
