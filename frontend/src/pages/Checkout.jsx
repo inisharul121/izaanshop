@@ -66,10 +66,11 @@ const Checkout = () => {
     }
   };
 
-  if (cart.length === 0) {
-    navigate('/cart');
-    return null;
-  }
+  React.useEffect(() => {
+    if (cart.length === 0 && !loading) {
+      navigate('/cart');
+    }
+  }, [cart, loading, navigate]);
 
   const inputClass = 'w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 text-sm focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all duration-200';
   const labelClass = 'block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1';
