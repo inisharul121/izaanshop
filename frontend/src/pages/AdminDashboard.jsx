@@ -171,7 +171,10 @@ const AdminDashboard = () => {
       }
       setShowModal(false);
     } catch (error) {
-      alert('Operation failed: ' + (error.response?.data?.message || error.message));
+      const data = error.response?.data;
+      const detail = data?.error ? ` (${data.error})` : '';
+      const hint = data?.hint ? `\nHint: ${data.hint}` : '';
+      alert(`Operation failed: ${data?.message || error.message}${detail}${hint}`);
     } finally {
       setUploading(false);
     }
