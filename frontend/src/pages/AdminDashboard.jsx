@@ -19,8 +19,6 @@ const AdminDashboard = () => {
   const [mainImage, setMainImage] = useState(null);
   const [galleryFiles, setGalleryFiles] = useState([]);
 
-  console.log('DEBUG: AdminDashboard rendered. setSlug is:', typeof setSlug);
-
   React.useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
