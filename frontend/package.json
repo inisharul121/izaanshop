@@ -11,9 +11,11 @@
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",
+    "@hookform/resolvers": "^5.2.2",
     "autoprefixer": "^10.4.27",
     "axios": "^1.13.6",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "framer-motion": "^12.36.0",
     "lucide-react": "^0.577.0",
     "postcss": "^8.5.8",
