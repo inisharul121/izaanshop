@@ -112,14 +112,24 @@ const Cart = () => {
             </div>
             
             <button 
-              onClick={() => navigate(user ? '/checkout' : '/login?redirect=checkout')}
+              onClick={() => navigate('/checkout')}
               className="w-full btn-primary py-4 text-lg flex items-center justify-center gap-2"
             >
               Proceed to Checkout <ArrowRight className="w-5 h-5" />
             </button>
 
-            <p className="text-[10px] text-gray-400 text-center mt-6">
-              Taxes and shipping calculated at checkout. Multi-currency support coming soon.
+            {!user && (
+              <p className="text-xs text-gray-400 text-center mt-3">
+                Have an account?{' '}
+                <a href="/login?redirect=checkout" className="text-primary font-bold hover:underline">
+                  Sign in
+                </a>
+                {' '}for faster checkout
+              </p>
+            )}
+
+            <p className="text-[10px] text-gray-400 text-center mt-3">
+              Taxes and shipping calculated at checkout.
             </p>
           </div>
         </div>
