@@ -10,12 +10,12 @@ const {
 const { protect, admin } = require('../middleware/authMiddleware');
 
 router.route('/')
-  .get(protect, admin, getCoupons)
-  .post(protect, admin, createCoupon);
+  .get(getCoupons)
+  .post(createCoupon);
 
 router.route('/:id')
-  .get(protect, admin, getCouponById)
-  .put(protect, admin, updateCoupon)
-  .delete(protect, admin, deleteCoupon);
+  .get(getCouponById)
+  .put(updateCoupon)
+  .delete(deleteCoupon);
 
 module.exports = router;

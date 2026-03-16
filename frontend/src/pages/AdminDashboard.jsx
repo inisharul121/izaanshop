@@ -2,6 +2,7 @@ import React from 'react';
 import api from '../utils/api';
 import { LayoutDashboard, ShoppingBag, Users, BarChart3, Plus, Edit, Trash2, Check, X, Filter, Ticket, CreditCard } from 'lucide-react';
 import { format } from 'date-fns';
+import { motion } from 'framer-motion';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = React.useState('orders');
@@ -93,8 +94,12 @@ const AdminDashboard = () => {
     // Convert numerical fields
     if (data.price) data.price = Number(data.price);
     if (data.salePrice) data.salePrice = Number(data.salePrice);
+    else delete data.salePrice; // Remove empty string so backend uses null
+    
     if (data.stock) data.stock = Number(data.stock);
     if (data.category) data.category = Number(data.category);
+    if (data.discountValue) data.discountValue = Number(data.discountValue);
+    if (data.maxUses) data.maxUses = Number(data.maxUses);
     
     // Images array (simplified for now)
     if (data.image) data.images = [data.image];
@@ -171,6 +176,11 @@ const AdminDashboard = () => {
                 <Plus className="w-4 h-4" /> Add Coupon
               </button>
             )}
+            {activeTab === 'categories' && (
+              <button onClick={() => handleOpenModal('category')} className="btn-primary flex items-center gap-2 text-sm">
+                <Plus className="w-4 h-4" /> Add Category
+              </button>
+            )}
           </div>
 
           {loading ? (
@@ -242,9 +252,13 @@ const AdminDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {categories.map((cat) => (
                 <div key={cat.id} className="p-4 border border-gray-100 rounded-3xl text-center space-y-3">
-                   <div className="w-16 h-16 bg-primary/5 rounded-2xl flex items-center justify-center mx-auto">
-                     <Filter className="w-8 h-8 text-primary" />
-                   </div>
+                  <div className="w-16 h-16 bg-primary/5 rounded-2xl flex items-center justify-center mx-auto overflow-hidden">
+                    {cat.image ? (
+                      <img src={cat.image} alt={cat.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <Filter className="w-8 h-8 text-primary" />
+                    )}
+                  </div>
                    <p className="font-bold text-dark">{cat.name}</p>
                    <div className="flex gap-2 pt-2">
                     <button onClick={() => handleOpenModal('category', cat)} className="flex-1 p-2 bg-gray-50 text-gray-400 rounded-xl hover:text-primary"><Edit className="w-4 h-4" /></button>
@@ -410,6 +424,10 @@ const AdminDashboard = () => {
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-gray-400 uppercase">Slug</label>
                     <input name="slug" defaultValue={editingItem?.slug} required className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-gray-400 uppercase">Image URL</label>
+                    <input name="image" defaultValue={editingItem?.image} className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-gray-400 uppercase">Description</label>
