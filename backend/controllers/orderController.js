@@ -21,9 +21,9 @@ const addOrderItems = async (req, res) => {
     return res.status(400).json({ message: 'No order items' });
   }
 
-  // Require either a logged-in user or guest contact info
-  if (!req.user && (!guestName || !guestEmail)) {
-    return res.status(400).json({ message: 'Guest name and email are required for guest orders' });
+  // Require either a logged-in user or guest name
+  if (!req.user && !guestName) {
+    return res.status(400).json({ message: 'Name is required for guest orders' });
   }
 
   try {
@@ -32,19 +32,19 @@ const addOrderItems = async (req, res) => {
         ...(req.user ? { userId: req.user.id } : {}),
         ...(req.user ? {} : {
           guestName,
-          guestEmail,
+          guestEmail: guestEmail || null,
           guestPhone: guestPhone || shippingAddress?.phone || null,
         }),
-        phone: req.user ? null : (guestPhone || shippingAddress?.phone || null),
+        phone: req.user ? (shippingAddress?.phone || null) : (guestPhone || shippingAddress?.phone || null),
         totalPrice,
         paymentMethod,
         itemsPrice,
         taxPrice: taxPrice || 0,
         shippingPrice: shippingPrice || 0,
         street: shippingAddress.street,
-        city: shippingAddress.city,
-        state: shippingAddress.state,
-        zipCode: shippingAddress.zipCode,
+        city: shippingAddress.city || null,
+        state: shippingAddress.state || null,
+        zipCode: shippingAddress.zipCode || null,
         country: shippingAddress.country || 'Bangladesh',
         orderItems: {
           create: orderItems.map((item) => ({

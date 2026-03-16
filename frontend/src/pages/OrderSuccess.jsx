@@ -69,10 +69,15 @@ const OrderSuccess = () => {
               <MapPin className="w-5 h-5 text-primary" /> Delivery Details
             </h3>
             <div className="text-sm text-gray-600 space-y-2">
-              <p className="font-bold text-dark">{order.user?.name || order.guestName}</p>
-              <p>{order.street}, {order.city}</p>
-              <p>{order.zipCode}</p>
-              <p>Phone: {order.phone || order.guestPhone || 'N/A'}</p>
+              <p className="font-extrabold text-dark text-lg mb-1">{order.user?.name || order.guestName}</p>
+              <p className="text-gray-500 leading-relaxed font-medium">{order.street}</p>
+              {order.city && order.city !== 'N/A' && <p className="text-gray-500 font-medium">{order.city}{order.zipCode ? `, ${order.zipCode}` : ''}</p>}
+              <div className="mt-4 pt-4 border-t border-gray-50 flex items-center gap-2 text-primary font-bold">
+                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                   <Phone className="w-4 h-4" />
+                </div>
+                {order.phone || order.guestPhone || 'N/A'}
+              </div>
             </div>
           </div>
 

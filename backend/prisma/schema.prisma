@@ -120,11 +120,11 @@ model Order {
   status          String   @default("Pending")
   
   // Shipping Address
-  street          String
-  city            String
+  street          String?
+  city            String?
   state           String?
   zipCode         String?
-  country         String   @default("Bangladesh")
+  country         String?   @default("Bangladesh")
   
   // Payment Result
   paymentId       String?
