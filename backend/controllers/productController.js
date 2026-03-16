@@ -1,4 +1,4 @@
-const Product = require('../models/Product');
+const prisma = require('../utils/prisma');
 
 // @desc    Fetch all products
 // @route   GET /api/products
@@ -7,34 +7,47 @@ const getProducts = async (req, res) => {
   const pageSize = Number(req.query.pageSize) || 12;
   const page = Number(req.query.pageNumber) || 1;
 
-  const keyword = req.query.keyword ? {
-    name: {
-      $regex: req.query.keyword,
-      $options: 'i',
-    },
-  } : {};
+  const where = {};
+  if (req.query.keyword) {
+    where.name = { contains: req.query.keyword };
+  }
+  if (req.query.category) {
+    where.category = { slug: req.query.category };
+  }
 
-  const category = req.query.category ? { category: req.query.category } : {};
+  try {
+    const count = await prisma.product.count({ where });
+    const products = await prisma.product.findMany({
+      where,
+      take: pageSize,
+      skip: pageSize * (page - 1),
+      orderBy: { createdAt: 'desc' },
+      include: { category: true }
+    });
 
-  const count = await Product.countDocuments({ ...keyword, ...category });
-  const products = await Product.find({ ...keyword, ...category })
-    .limit(pageSize)
-    .skip(pageSize * (page - 1))
-    .sort({ createdAt: -1 });
-
-  res.json({ products, page, pages: Math.ceil(count / pageSize) });
+    res.json({ products, page, pages: Math.ceil(count / pageSize) });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 // @desc    Fetch single product
 // @route   GET /api/products/:id
 // @access  Public
 const getProductById = async (req, res) => {
-  const product = await Product.findById(req.params.id).populate('category', 'name');
+  try {
+    const product = await prisma.product.findUnique({
+      where: { id: Number(req.params.id) },
+      include: { category: true }
+    });
 
-  if (product) {
-    res.json(product);
-  } else {
-    res.status(404).json({ message: 'Product not found' });
+    if (product) {
+      res.json(product);
+    } else {
+      res.status(404).json({ message: 'Product not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -44,20 +57,23 @@ const getProductById = async (req, res) => {
 const createProduct = async (req, res) => {
   const { name, price, description, category, images, stock, slug, salePrice } = req.body;
 
-  const product = new Product({
-    name,
-    price,
-    description,
-    category,
-    images: images || [],
-    stock,
-    slug,
-    salePrice,
-    user: req.user._id
-  });
-
-  const createdProduct = await product.save();
-  res.status(201).json(createdProduct);
+  try {
+    const product = await prisma.product.create({
+      data: {
+        name,
+        price: Number(price),
+        description,
+        categoryId: Number(category),
+        images: images || [],
+        stock: Number(stock),
+        slug,
+        salePrice: salePrice ? Number(salePrice) : null,
+      }
+    });
+    res.status(201).json(product);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 // @desc    Update a product
@@ -66,21 +82,22 @@ const createProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
   const { name, price, description, category, images, stock, slug, salePrice } = req.body;
 
-  const product = await Product.findById(req.params.id);
-
-  if (product) {
-    product.name = name || product.name;
-    product.price = price ?? product.price;
-    product.description = description || product.description;
-    product.category = category || product.category;
-    product.images = images || product.images;
-    product.stock = stock ?? product.stock;
-    product.slug = slug || product.slug;
-    product.salePrice = salePrice ?? product.salePrice;
-
-    const updatedProduct = await product.save();
+  try {
+    const updatedProduct = await prisma.product.update({
+      where: { id: Number(req.params.id) },
+      data: {
+        name,
+        price: price ? Number(price) : undefined,
+        description,
+        categoryId: category ? Number(category) : undefined,
+        images,
+        stock: stock ? Number(stock) : undefined,
+        slug,
+        salePrice: salePrice ? Number(salePrice) : undefined,
+      }
+    });
     res.json(updatedProduct);
-  } else {
+  } catch (error) {
     res.status(404).json({ message: 'Product not found' });
   }
 };
@@ -89,12 +106,12 @@ const updateProduct = async (req, res) => {
 // @route   DELETE /api/products/:id
 // @access  Private/Admin
 const deleteProduct = async (req, res) => {
-  const product = await Product.findById(req.params.id);
-
-  if (product) {
-    await product.deleteOne();
+  try {
+    await prisma.product.delete({
+      where: { id: Number(req.params.id) }
+    });
     res.json({ message: 'Product removed' });
-  } else {
+  } catch (error) {
     res.status(404).json({ message: 'Product not found' });
   }
 };

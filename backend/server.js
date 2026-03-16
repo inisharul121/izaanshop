@@ -1,9 +1,9 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
+const prisma = require('./utils/prisma');
 require('dotenv').config();
 
 const app = express();
@@ -20,15 +20,23 @@ app.use(morgan('dev'));
 app.use(cookieParser());
 
 // Database Connection
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('✅ Connected to MongoDB'))
-  .catch(err => console.error('❌ MongoDB connection error:', err));
+async function connectDB() {
+  try {
+    await prisma.$connect();
+    console.log('✅ Connected to MySQL via Prisma');
+  } catch (error) {
+    console.error('❌ Database connection error:', error);
+    process.exit(1);
+  }
+}
+connectDB();
 
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
+app.use('/api/coupons', require('./routes/couponRoutes'));
 
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to IzaanShop API' });

@@ -1,4 +1,4 @@
-const Order = require('../models/Order');
+const prisma = require('../utils/prisma');
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -17,20 +17,37 @@ const addOrderItems = async (req, res) => {
   if (orderItems && orderItems.length === 0) {
     res.status(400).json({ message: 'No order items' });
     return;
-  } else {
-    const order = new Order({
-      orderItems,
-      user: req.user._id,
-      shippingAddress,
-      paymentMethod,
-      itemsPrice,
-      taxPrice,
-      shippingPrice,
-      totalPrice,
+  }
+
+  try {
+    const order = await prisma.order.create({
+      data: {
+        userId: req.user.id,
+        totalPrice,
+        paymentMethod,
+        itemsPrice,
+        taxPrice: taxPrice || 0,
+        shippingPrice: shippingPrice || 0,
+        street: shippingAddress.street,
+        city: shippingAddress.city,
+        state: shippingAddress.state,
+        zipCode: shippingAddress.zipCode,
+        country: shippingAddress.country || 'Bangladesh',
+        orderItems: {
+          create: orderItems.map((item) => ({
+            name: item.name,
+            quantity: item.quantity,
+            image: item.image,
+            price: item.price,
+            productId: item.productId,
+          })),
+        },
+      },
     });
 
-    const createdOrder = await order.save();
-    res.status(201).json(createdOrder);
+    res.status(201).json(order);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -38,12 +55,22 @@ const addOrderItems = async (req, res) => {
 // @route   GET /api/orders/:id
 // @access  Private
 const getOrderById = async (req, res) => {
-  const order = await Order.findById(req.params.id).populate('user', 'name email');
+  try {
+    const order = await prisma.order.findUnique({
+      where: { id: Number(req.params.id) },
+      include: {
+        user: { select: { name: true, email: true } },
+        orderItems: true,
+      },
+    });
 
-  if (order) {
-    res.json(order);
-  } else {
-    res.status(404).json({ message: 'Order not found' });
+    if (order) {
+      res.json(order);
+    } else {
+      res.status(404).json({ message: 'Order not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -51,21 +78,19 @@ const getOrderById = async (req, res) => {
 // @route   PUT /api/orders/:id/pay
 // @access  Private
 const updateOrderToPaid = async (req, res) => {
-  const order = await Order.findById(req.params.id);
-
-  if (order) {
-    order.isPaid = true;
-    order.paidAt = Date.now();
-    order.paymentResult = {
-      id: req.body.id,
-      status: req.body.status,
-      update_time: req.body.update_time,
-      email_address: req.body.email_address,
-    };
-
-    const updatedOrder = await order.save();
-    res.json(updatedOrder);
-  } else {
+  try {
+    const order = await prisma.order.update({
+      where: { id: Number(req.params.id) },
+      data: {
+        isPaid: true,
+        paidAt: new Date(),
+        paymentId: req.body.id,
+        paymentStatus: req.body.status,
+        paymentEmail: req.body.email_address,
+      },
+    });
+    res.json(order);
+  } catch (error) {
     res.status(404).json({ message: 'Order not found' });
   }
 };
@@ -74,16 +99,17 @@ const updateOrderToPaid = async (req, res) => {
 // @route   PUT /api/orders/:id/deliver
 // @access  Private/Admin
 const updateOrderToDelivered = async (req, res) => {
-  const order = await Order.findById(req.params.id);
-
-  if (order) {
-    order.isDelivered = true;
-    order.deliveredAt = Date.now();
-    order.status = 'Delivered';
-
-    const updatedOrder = await order.save();
-    res.json(updatedOrder);
-  } else {
+  try {
+    const order = await prisma.order.update({
+      where: { id: Number(req.params.id) },
+      data: {
+        isDelivered: true,
+        deliveredAt: new Date(),
+        status: 'Delivered',
+      },
+    });
+    res.json(order);
+  } catch (error) {
     res.status(404).json({ message: 'Order not found' });
   }
 };
@@ -92,16 +118,28 @@ const updateOrderToDelivered = async (req, res) => {
 // @route   GET /api/orders/myorders
 // @access  Private
 const getMyOrders = async (req, res) => {
-  const orders = await Order.find({ user: req.user._id });
-  res.json(orders);
+  try {
+    const orders = await prisma.order.findMany({
+      where: { userId: req.user.id },
+    });
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 // @desc    Get all orders
 // @route   GET /api/orders
 // @access  Private/Admin
 const getOrders = async (req, res) => {
-  const orders = await Order.find({}).populate('user', 'id name');
-  res.json(orders);
+  try {
+    const orders = await prisma.order.findMany({
+      include: { user: { select: { id: true, name: true } } },
+    });
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 module.exports = {

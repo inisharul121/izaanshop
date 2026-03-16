@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -117,4 +118,17 @@ model OrderItem {
   orderId   Int
   product   Product @relation(fields: [productId], references: [id])
   productId Int
+}
+
+model Coupon {
+  id            Int      @id @default(autoincrement())
+  code          String   @unique
+  discountType  String   // "percentage" or "fixed"
+  discountValue Float
+  expiryDate    DateTime?
+  isActive      Boolean  @default(true)
+  maxUses       Int?
+  usedCount     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

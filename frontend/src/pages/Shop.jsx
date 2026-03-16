@@ -1,9 +1,9 @@
 import React from 'react';
+import { motion } from 'framer-motion';
+import { Filter, SlidersHorizontal, ArrowRight } from 'lucide-react';
+import { useSearchParams, Link } from 'react-router-dom';
 import api from '../utils/api';
 import ProductCard from '../components/ProductCard';
-import { useSearchParams } from 'react-router-dom';
-import { Filter, SlidersHorizontal, ChevronDown } from 'lucide-react';
-import { Menu, Transition } from '@headlessui/react';
 import SEO from '../components/SEO';
 
 const Shop = () => {
@@ -42,8 +42,42 @@ const Shop = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-12">
+    <div className="pb-20">
       <SEO title="Shop" description="Browse our collection of educational books, STEM toys, and school supplies." />
+      
+      {/* Hero Section */}
+      <section className="relative h-[300px] md:h-[400px] overflow-hidden bg-primary/5 mb-12">
+        <div className="container mx-auto px-4 h-full flex flex-col md:flex-row items-center justify-between gap-8">
+          <motion.div 
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8 }}
+            className="md:w-1/2 space-y-4 text-center md:text-left"
+          >
+            <span className="text-primary font-bold tracking-wider text-xs uppercase">Welcome to IzaanShop</span>
+            <h1 className="text-3xl md:text-5xl font-extrabold text-dark leading-tight">
+              Empower Their <span className="text-primary">Future</span> Through Learning
+            </h1>
+            <p className="text-gray-600 text-base max-w-lg mx-auto md:mx-0">
+              Discover the best educational books, STEM toys, and school supplies for children of all ages.
+            </p>
+          </motion.div>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8 }}
+            className="md:w-1/3 hidden md:block"
+          >
+            <img 
+              src="https://placehold.co/600x400/FF6B35/white?text=Shop+Hero" 
+              alt="Shop Hero" 
+              className="w-full max-w-sm mx-auto drop-shadow-xl"
+            />
+          </motion.div>
+        </div>
+      </section>
+
+      <div className="container mx-auto px-4">
       <div className="flex flex-col md:flex-row gap-8">
         {/* Sidebar Filters */}
         <aside className="w-full md:w-64 space-y-8">
@@ -60,7 +94,7 @@ const Shop = () => {
               </button>
               {categories.map((cat) => (
                 <button 
-                  key={cat._id}
+                  key={cat.id}
                   onClick={() => handleCategoryChange(cat.slug)}
                   className={`block w-full text-left px-3 py-2 rounded-md transition-colors ${categoryParam === cat.slug ? 'bg-primary text-white font-medium' : 'text-gray-600 hover:bg-gray-100'}`}
                 >
@@ -117,7 +151,7 @@ const Shop = () => {
           ) : products.length > 0 ? (
             <div className="grid grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
               {products.map((product) => (
-                <ProductCard key={product._id} product={product} />
+                <ProductCard key={product.id} product={product} />
               ))}
             </div>
           ) : (
@@ -126,6 +160,7 @@ const Shop = () => {
             </div>
           )}
         </main>
+      </div>
       </div>
     </div>
   );

@@ -39,7 +39,7 @@ const Cart = () => {
           <AnimatePresence>
             {cart.map((item) => (
               <motion.div 
-                key={item._id}
+                key={item.id}
                 layout
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -58,7 +58,7 @@ const Cart = () => {
                       </Link>
                       <p className="text-xs text-gray-400 mt-1">Category Placeholder</p>
                     </div>
-                    <button onClick={() => removeFromCart(item._id)} className="text-gray-300 hover:text-red-500 transition-colors">
+                    <button onClick={() => removeFromCart(item.id)} className="text-gray-300 hover:text-red-500 transition-colors">
                       <Trash2 className="w-5 h-5" />
                     </button>
                   </div>
@@ -66,14 +66,14 @@ const Cart = () => {
                   <div className="flex items-center justify-between mt-4">
                     <div className="flex items-center border border-gray-100 rounded-md h-10">
                       <button 
-                        onClick={() => updateQuantity(item._id, Math.max(1, item.quantity - 1))}
+                        onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
                         className="px-3 text-gray-400 hover:text-primary"
                       >
                         <Minus className="w-3.5 h-3.5" />
                       </button>
                       <span className="w-8 text-center font-bold">{item.quantity}</span>
                       <button 
-                        onClick={() => updateQuantity(item._id, item.quantity + 1)}
+                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
                         className="px-3 text-gray-400 hover:text-primary"
                       >
                         <Plus className="w-3.5 h-3.5" />

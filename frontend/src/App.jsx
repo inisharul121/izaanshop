@@ -42,16 +42,15 @@ const App = () => {
         <Navbar />
         <main className="flex-grow">
           <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/shop" element={<Shop />} />
+            <Route path="/" element={<Shop />} />
+            <Route path="/shop" element={<Navigate to="/" replace />} />
             <Route path="/product/:slug" element={<ProductDetail />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/order/:id" element={<ProtectedRoute><OrderSuccess /></ProtectedRoute>} />
-            <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+            <Route path="/profile" element={<Dashboard />} />
+            <Route path="/admin" element={<AdminDashboard />} />
           </Routes>
         </main>
         <Footer />

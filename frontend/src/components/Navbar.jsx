@@ -1,11 +1,11 @@
 import React from 'react';
-import { ShoppingCart, User, Search, Menu, X, Heart } from 'lucide-react';
+import { ShoppingCart, User, Search, Menu, X, Heart, LayoutDashboard } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = React.useState(false);
-  const { cart, user } = useStore();
+  const { cart, user, logout } = useStore();
 
   const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
 
@@ -44,9 +44,29 @@ const Navbar = () => {
                 </span>
               )}
             </Link>
-            <Link to={user ? "/profile" : "/login"} className="text-dark hover:text-primary transition-colors">
-              <User className="w-6 h-6" />
+            <Link to="/admin" className="text-dark hover:text-primary transition-colors flex items-center gap-1 font-bold text-sm">
+                <LayoutDashboard className="w-5 h-5" /> Admin
             </Link>
+            <Link to="/profile" className="text-dark hover:text-primary transition-colors font-bold text-sm">
+                Dashboard
+            </Link>
+            {user ? (
+              <button 
+                onClick={logout}
+                className="text-dark hover:text-primary transition-colors font-bold text-sm"
+              >
+                Logout
+              </button>
+            ) : (
+              <>
+                <Link to="/login" className="text-dark hover:text-primary transition-colors font-bold text-sm">
+                  Login
+                </Link>
+                <Link to="/register" className="text-dark hover:text-primary transition-colors font-bold text-sm">
+                  Register
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Toggle */}
@@ -78,10 +98,27 @@ const Navbar = () => {
             <Search className="absolute left-3 top-2.5 text-gray-400 w-4 h-4" />
           </div>
           <nav className="flex flex-col gap-3 font-medium text-dark">
-            <Link to="/" onClick={() => setIsOpen(false)} className="hover:text-primary">Home</Link>
-            <Link to="/shop" onClick={() => setIsOpen(false)} className="hover:text-primary">Shop</Link>
+            <Link to="/admin" onClick={() => setIsOpen(false)} className="text-primary font-bold flex items-center gap-2">
+                <LayoutDashboard className="w-5 h-5" /> Admin Panel
+            </Link>
+            <Link to="/profile" onClick={() => setIsOpen(false)} className="hover:text-primary">Dashboard</Link>
+            {user ? (
+              <button 
+                onClick={() => {
+                  logout();
+                  setIsOpen(false);
+                }}
+                className="text-left hover:text-primary"
+              >
+                Logout
+              </button>
+            ) : (
+              <>
+                <Link to="/login" onClick={() => setIsOpen(false)} className="hover:text-primary">Login</Link>
+                <Link to="/register" onClick={() => setIsOpen(false)} className="hover:text-primary">Register</Link>
+              </>
+            )}
             <Link to="/categories" onClick={() => setIsOpen(false)} className="hover:text-primary">Categories</Link>
-            <Link to="/profile" onClick={() => setIsOpen(false)} className="hover:text-primary">Profile</Link>
           </nav>
         </div>
       )}
