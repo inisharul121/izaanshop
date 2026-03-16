@@ -14,6 +14,10 @@ const AdminDashboard = () => {
   const [showModal, setShowModal] = React.useState(false);
   const [modalType, setModalType] = React.useState(''); // 'product', 'category', 'coupon'
   const [editingItem, setEditingItem] = React.useState(null);
+  const [slug, setSlug] = React.useState('');
+  const [uploading, setUploading] = React.useState(false);
+  const [mainImage, setMainImage] = React.useState(null);
+  const [galleryFiles, setGalleryFiles] = React.useState([]);
 
   React.useEffect(() => {
     const fetchData = async () => {
