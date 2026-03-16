@@ -98,15 +98,15 @@ const ProductDetail = () => {
             <div className="sticky top-24 space-y-6">
               <motion.div 
                 layoutId={`img-${product.id}`}
-                className="aspect-square bg-gray-50 rounded-[2.5rem] overflow-hidden border border-gray-100 shadow-sm relative group"
+                className="aspect-square bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 relative group"
               >
                 <AnimatePresence mode="wait">
                   <motion.img 
                     key={activeImg}
-                    initial={{ opacity: 0, scale: 1.1 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.9 }}
-                    transition={{ duration: 0.4 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
                     src={getImageUrl(gallery[activeImg])} 
                     alt={product.name}
                     className="w-full h-full object-cover"
@@ -114,25 +114,24 @@ const ProductDetail = () => {
                 </AnimatePresence>
                 
                 {discount && (
-                  <div className="absolute top-6 left-6 bg-red-500 text-white text-xs font-black px-4 py-2 rounded-2xl shadow-xl shadow-red-500/30">
+                  <div className="absolute top-4 left-4 bg-red-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg shadow-sm">
                     {discount}% OFF
                   </div>
                 )}
 
-                <button className="absolute top-6 right-6 p-3 bg-white/80 backdrop-blur-md rounded-2xl text-gray-400 hover:text-red-500 transition-all shadow-lg opacity-0 group-hover:opacity-100">
-                  <Heart className="w-5 h-5" />
+                <button className="absolute top-4 right-4 p-2.5 bg-white border border-gray-100 rounded-xl text-gray-400 hover:text-red-500 transition-all shadow-sm opacity-0 group-hover:opacity-100">
+                  <Heart className="w-4 h-4" />
                 </button>
               </motion.div>
 
-              <div className="flex gap-4 overflow-x-auto pb-2 no-scrollbar">
+              <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
                 {gallery.map((img, i) => (
                   <button 
                     key={i} 
                     onClick={() => setActiveImg(i)}
-                    className={`relative w-24 h-24 flex-shrink-0 rounded-2xl overflow-hidden border-2 transition-all ${activeImg === i ? 'border-primary shadow-lg shadow-primary/20 scale-105' : 'border-gray-50 hover:border-gray-200'}`}
+                    className={`relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden border transition-all ${activeImg === i ? 'border-primary ring-2 ring-primary/10' : 'border-gray-100 hover:border-gray-200'}`}
                   >
                     <img src={getImageUrl(img)} alt={`Thumb ${i}`} className="w-full h-full object-cover" />
-                    {activeImg === i && <div className="absolute inset-0 bg-primary/10" />}
                   </button>
                 ))}
               </div>
@@ -143,93 +142,95 @@ const ProductDetail = () => {
           <div className="lg:col-span-6 flex flex-col pt-4">
             <div className="space-y-6">
               <div>
-                <Link to={`/shop?category=${product.category?.slug}`} className="inline-block px-4 py-1.5 bg-primary/10 text-primary font-bold text-[10px] uppercase tracking-widest rounded-full mb-4 hover:bg-primary/20 transition-all">
+                <Link to={`/shop?category=${product.category?.slug}`} className="inline-block px-3 py-1 bg-gray-100 text-gray-600 font-bold text-[10px] uppercase tracking-wider rounded-md mb-4 hover:bg-gray-200 transition-all">
                   {product.category?.name}
                 </Link>
-                <h1 className="text-3xl md:text-5xl font-black text-dark leading-tight mb-4 tracking-tight">
+                <h1 className="text-3xl md:text-4xl font-bold text-dark leading-tight mb-4">
                   {product.name}
                 </h1>
                 
                 <div className="flex flex-wrap items-center gap-6">
                   <div className="flex items-center gap-1.5">
-                    <div className="flex items-center bg-yellow-400/10 px-2 py-1 rounded-lg">
-                      <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                      <span className="text-sm font-bold text-yellow-700 ml-1">4.8</span>
+                    <div className="flex items-center gap-0.5">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} className={`w-3.5 h-3.5 ${i < 4 ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'}`} />
+                      ))}
                     </div>
                     <span className="text-xs text-gray-400 font-medium">(24 Reviews)</span>
                   </div>
                   <div className="h-4 w-px bg-gray-200" />
                   <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${product.stock > 0 ? 'bg-green-500' : 'bg-red-500'} animate-pulse`} />
-                    <span className={`text-sm font-bold uppercase tracking-wider ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {product.stock > 0 ? `In Stock (${product.stock})` : 'Sold Out'}
+                    <div className={`w-1.5 h-1.5 rounded-full ${product.stock > 0 ? 'bg-green-500' : 'bg-red-500'}`} />
+                    <span className={`text-xs font-bold uppercase tracking-wider ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="p-8 bg-gray-50/50 rounded-[2rem] border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="flex items-baseline gap-4">
+              <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="flex items-baseline gap-3">
                   {product.salePrice ? (
                     <>
-                      <span className="text-5xl font-black text-primary tracking-tighter">{product.salePrice}৳</span>
-                      <span className="text-xl text-gray-400 line-through font-bold">{product.price}৳</span>
+                      <span className="text-4xl font-bold text-primary tracking-tight">{product.salePrice}৳</span>
+                      <span className="text-lg text-gray-400 line-through font-medium">{product.price}৳</span>
                     </>
                   ) : (
-                    <span className="text-5xl font-black text-dark tracking-tighter">{product.price}৳</span>
+                    <span className="text-4xl font-bold text-dark tracking-tight">{product.price}৳</span>
                   )}
                 </div>
                 
-                <div className="flex items-center bg-white p-1 rounded-2xl shadow-sm border border-gray-100">
+                <div className="flex items-center bg-white border border-gray-200 rounded-xl overflow-hidden">
                   <button 
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-12 h-12 flex items-center justify-center hover:bg-gray-50 text-gray-400 rounded-xl transition-colors"
+                    className="w-10 h-10 flex items-center justify-center hover:bg-gray-50 text-gray-400 transition-colors border-r border-gray-100"
                   >
-                    <Minus className="w-5 h-5" />
+                    <Minus className="w-4 h-4" />
                   </button>
-                  <span className="w-12 text-center font-black text-xl">{quantity}</span>
+                  <span className="w-10 text-center font-bold text-sm text-dark">{quantity}</span>
                   <button 
                     onClick={() => setQuantity(quantity + 1)}
-                    className="w-12 h-12 flex items-center justify-center hover:bg-gray-50 text-gray-400 rounded-xl transition-colors"
+                    className="w-10 h-10 flex items-center justify-center hover:bg-gray-50 text-gray-400 transition-colors border-l border-gray-100"
                   >
-                    <Plus className="w-5 h-5" />
+                    <Plus className="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-4 pt-2">
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <button 
                   onClick={() => addToCart(product, quantity)}
-                  className="flex-[2] py-5 bg-gradient-to-r from-primary to-primary-dark text-white rounded-[1.5rem] font-black text-lg shadow-2xl shadow-primary/30 hover:shadow-primary/40 hover:-translate-y-1 transition-all flex items-center justify-center gap-4"
+                  className="flex-[3] py-4 bg-primary text-white rounded-xl font-bold text-base hover:bg-primary-dark transition-all flex items-center justify-center gap-3 active:scale-95"
                 >
-                  <ShoppingCart className="w-6 h-6" />
+                  <ShoppingCart className="w-5 h-5" />
                   Add To Basket
                 </button>
-                <button className="flex-1 py-5 border-2 border-gray-100 rounded-[1.5rem] hover:bg-gray-50 hover:border-gray-200 transition-all flex items-center justify-center text-gray-400 hover:text-red-500">
-                  <Heart className="w-6 h-6" />
+                <button className="flex-1 py-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all flex items-center justify-center text-gray-400 hover:text-red-500">
+                  <Heart className="w-5 h-5" />
                 </button>
-                <button className="p-5 border-2 border-gray-100 rounded-[1.5rem] hover:bg-gray-50 hover:border-gray-200 transition-all text-gray-400">
-                  <Share2 className="w-6 h-6" />
+                <button className="p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all text-gray-400">
+                  <Share2 className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
                 {[
                   { icon: Truck, title: 'Safe Shipping', desc: 'World wide' },
                   { icon: RefreshCcw, title: '7 Days Return', desc: 'Free guarantee' },
                   { icon: ShieldCheck, title: '24 Month', desc: 'Full warranty' }
                 ].map((item, i) => (
-                  <div key={i} className="p-4 bg-white border border-gray-100 rounded-2xl flex items-center gap-4">
-                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary flex-shrink-0">
-                      <item.icon className="w-6 h-6" />
+                  <div key={i} className="p-3 bg-white border border-gray-100 rounded-xl flex items-center gap-3">
+                    <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center text-gray-400 flex-shrink-0">
+                      <item.icon className="w-5 h-5" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-xs text-dark">{item.title}</h4>
-                      <p className="text-[10px] text-gray-400 font-medium">{item.desc}</p>
+                      <h4 className="font-bold text-[10px] text-dark uppercase tracking-tight">{item.title}</h4>
+                      <p className="text-[10px] text-gray-400">{item.desc}</p>
                     </div>
                   </div>
                 ))}
               </div>
+
 
               {/* Tabs Section */}
               <div className="pt-10">
@@ -238,36 +239,36 @@ const ProductDetail = () => {
                     <button
                       key={tab}
                       onClick={() => setActiveTab(tab)}
-                      className={`px-8 py-4 text-sm font-black capitalize transition-all relative ${activeTab === tab ? 'text-primary' : 'text-gray-400 hover:text-dark'}`}
+                      className={`px-6 py-4 text-sm font-bold capitalize transition-all relative ${activeTab === tab ? 'text-primary' : 'text-gray-400 hover:text-dark'}`}
                     >
                       {tab}
                       {activeTab === tab && (
-                        <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-full" />
+                        <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full" />
                       )}
                     </button>
                   ))}
                 </div>
                 
-                <div className="min-h-[200px] text-gray-600 leading-loose">
+                <div className="min-h-[200px] text-gray-500 leading-relaxed text-sm">
                   {activeTab === 'description' && (
-                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                       {product.description}
                     </motion.div>
                   )}
                   {activeTab === 'specifications' && (
-                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                      <div className="grid grid-cols-2 max-w-sm">
-                        <span className="font-bold text-dark">Category</span>
-                        <span>{product.category?.name}</span>
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
+                      <div className="flex justify-between border-b border-gray-50 py-2 max-w-md">
+                        <span className="font-medium text-gray-400">Category</span>
+                        <span className="text-dark font-bold">{product.category?.name}</span>
                       </div>
-                      <div className="grid grid-cols-2 max-w-sm">
-                        <span className="font-bold text-dark">Stock</span>
-                        <span>{product.stock} units</span>
+                      <div className="flex justify-between border-b border-gray-50 py-2 max-w-md">
+                        <span className="font-medium text-gray-400">Availability</span>
+                        <span className="text-dark font-bold">{product.stock > 0 ? 'In Stock' : 'Out of Stock'}</span>
                       </div>
                     </motion.div>
                   )}
                   {activeTab === 'reviews' && (
-                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-center py-10 text-gray-400 italic">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-12 text-gray-400 text-sm">
                       No reviews yet for this product.
                     </motion.div>
                   )}
@@ -279,14 +280,14 @@ const ProductDetail = () => {
 
         {/* Related Products */}
         {product.relatedProducts?.length > 0 && (
-          <section className="mt-32">
-            <div className="flex items-center justify-between mb-12">
-              <h2 className="text-3xl font-black text-dark">You Might Also Like</h2>
-              <Link to="/shop" className="text-primary font-bold hover:underline flex items-center gap-1">
+          <section className="mt-24 pt-24 border-t border-gray-100">
+            <div className="flex items-center justify-between mb-10">
+              <h2 className="text-2xl font-bold text-dark tracking-tight">You Might Also Like</h2>
+              <Link to="/shop" className="text-primary text-sm font-bold hover:underline flex items-center gap-1">
                 View All <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {product.relatedProducts.map((p) => (
                 <ProductCard key={p.id} product={p} />
               ))}
