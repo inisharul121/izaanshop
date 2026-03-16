@@ -15,9 +15,12 @@ app.use(cors({
   origin: process.env.CLIENT_URL || 'http://localhost:5173',
   credentials: true
 }));
-app.use(helmet());
 app.use(morgan('dev'));
 app.use(cookieParser());
+// Allow cross-origin images (important for separated frontend/backend)
+app.use(helmet({
+  crossOriginResourcePolicy: false,
+}));
 app.use('/uploads', express.static('uploads'));
 
 // Database Connection
