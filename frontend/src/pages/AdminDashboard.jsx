@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../utils/api';
 import { LayoutDashboard, ShoppingBag, Users, BarChart3, Plus, Edit, Trash2, Check, X, Filter, Ticket, CreditCard, Tag, RefreshCw, Eye, MapPin, Phone, Package, Truck, Clock, ShieldCheck } from 'lucide-react';
 import { format } from 'date-fns';
@@ -355,7 +356,15 @@ const AdminDashboard = () => {
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Sidebar */}
         <aside className="w-full lg:w-64 space-y-2">
-          <h2 className="text-xl font-bold mb-6 px-4">Admin Panel</h2>
+          <div className="px-4 mb-8">
+            <Link to="/" className="text-2xl font-bold text-primary flex items-center gap-1 mb-2">
+              <span className="bg-primary text-white px-2 py-0.5 rounded">I</span>
+              IzaanShop
+            </Link>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Admin Dashboard</p>
+          </div>
+
+          <h2 className="text-xs font-black text-gray-300 uppercase tracking-[0.2em] px-4 mb-4">Main Menu</h2>
           {[
             { id: 'analytics', label: 'Analytics', icon: BarChart3 },
             { id: 'orders', label: 'Manage Orders', icon: ShoppingBag },
