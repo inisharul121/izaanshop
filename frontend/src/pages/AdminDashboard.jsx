@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import api from '../utils/api';
-import { LayoutDashboard, ShoppingBag, Users, BarChart3, Plus, Edit, Trash2, Check, X, Filter, Ticket, CreditCard, Tag, RefreshCw } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, Users, BarChart3, Plus, Edit, Trash2, Check, X, Filter, Ticket, CreditCard, Tag, RefreshCw, Eye, MapPin, Phone, Package, Truck, Clock } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 
@@ -24,6 +24,8 @@ const AdminDashboard = () => {
   const [productType, setProductType] = useState('SIMPLE');
   const [attributes, setAttributes] = useState([]); // [{ name: 'Color', options: ['Red', 'Blue'], inputVal: '' }]
   const [variants, setVariants] = useState([]); // [{ sku: '', price: 0, stock: 0, options: {} }]
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showOrderModal, setShowOrderModal] = useState(false);
 
   const getImageUrl = (img) => {
     if (!img) return 'https://placehold.co/400x400/F8F9FA/2D3748?text=Product';
@@ -391,10 +393,17 @@ const AdminDashboard = () => {
                           {order.status}
                         </span>
                       </td>
-                      <td className="py-5">
+                      <td className="py-5 flex gap-3">
                         {!order.isDelivered && (
                           <button onClick={() => handleDeliver(order.id)} className="text-primary hover:underline text-xs font-bold">Mark Delivered</button>
                         )}
+                        <button 
+                          onClick={() => { setSelectedOrder(order); setShowOrderModal(true); }}
+                          className="p-2 bg-gray-50 text-gray-400 rounded-lg hover:text-primary transition-colors"
+                          title="View Details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -880,6 +889,148 @@ const AdminDashboard = () => {
                 </div>
               ))}
               {mediaFiles.length === 0 && <p className="col-span-full text-center py-10 text-gray-400">No media files found.</p>}
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Order Detail Modal */}
+      {showOrderModal && selectedOrder && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-dark/60 backdrop-blur-sm">
+          <motion.div 
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+          >
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <div>
+                <h4 className="text-xl font-bold text-dark flex items-center gap-2">
+                  Order Details <span className="text-sm font-medium text-gray-400">#{String(selectedOrder.id).padStart(6, '0')}</span>
+                </h4>
+                <p className="text-xs text-gray-400 font-medium">{format(new Date(selectedOrder.createdAt), 'dd MMM yyyy, hh:mm a')}</p>
+              </div>
+              <button onClick={() => setShowOrderModal(false)} className="p-2 hover:bg-white rounded-full transition-colors shadow-sm">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-8 overflow-y-auto space-y-8 custom-scrollbar">
+              {/* Status & Payment Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Status</p>
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold ${selectedOrder.isDelivered ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                    {selectedOrder.status}
+                  </span>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Payment Method</p>
+                  <p className="text-sm font-bold text-dark flex items-center gap-2">
+                    <CreditCard className="w-4 h-4 text-gray-400" /> {selectedOrder.paymentMethod}
+                  </p>
+                </div>
+              </div>
+
+              {/* Customer Info */}
+              <div className="space-y-4">
+                <h5 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Customer Information</h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center shrink-0">
+                      <Users className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-dark">{selectedOrder.user?.name || selectedOrder.guestName || 'Guest'}</p>
+                      <p className="text-xs text-gray-400">{selectedOrder.user?.email || selectedOrder.guestEmail || 'No email provided'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center shrink-0">
+                      <Phone className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-dark">{selectedOrder.phone || 'N/A'}</p>
+                      <p className="text-xs text-gray-400 italic">Contact Phone</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                  <div className="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center shrink-0">
+                    <MapPin className="w-5 h-5 text-orange-500" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-dark">Shipping Address</p>
+                    <p className="text-xs text-gray-500 leading-relaxed mt-1">
+                      {selectedOrder.street}<br />
+                      {selectedOrder.city && selectedOrder.city !== 'N/A' ? `${selectedOrder.city}, ` : ''}{selectedOrder.zipCode && selectedOrder.zipCode !== 'N/A' ? `${selectedOrder.zipCode}, ` : ''}
+                      {selectedOrder.country || 'Bangladesh'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Order Items */}
+              <div className="space-y-4">
+                <h5 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] flex justify-between">
+                  Ordered Items <span>{selectedOrder.orderItems?.length || 0} items</span>
+                </h5>
+                <div className="space-y-3">
+                  {selectedOrder.orderItems?.map((item, idx) => (
+                    <div key={idx} className="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-2xl transition-colors border border-transparent hover:border-gray-100">
+                      <div className="w-14 h-14 bg-gray-50 rounded-xl overflow-hidden border border-gray-100 shrink-0">
+                        <img src={getImageUrl(item.image)} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-dark truncate">{item.name}</p>
+                        <p className="text-xs text-gray-400">{item.quantity} x {item.price}৳</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold text-primary">{item.quantity * item.price}৳</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Totals */}
+              <div className="pt-6 border-t border-gray-100 space-y-3">
+                <div className="flex justify-between text-xs font-bold text-gray-400 uppercase tracking-widest">
+                  <span>Subtotal</span>
+                  <span className="text-dark">{selectedOrder.itemsPrice}৳</span>
+                </div>
+                <div className="flex justify-between text-xs font-bold text-gray-400 uppercase tracking-widest">
+                  <span>Shipping</span>
+                  <span className="text-dark">{selectedOrder.shippingPrice}৳</span>
+                </div>
+                <div className="flex justify-between items-end pt-2">
+                  <div>
+                    <p className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] mb-1">Grand Total</p>
+                    <p className="text-3xl font-black text-dark">{selectedOrder.totalPrice}৳</p>
+                  </div>
+                  {selectedOrder.isPaid && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-600 rounded-lg text-[10px] font-black uppercase tracking-widest">
+                      <Check className="w-4 h-4" /> Paid
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 bg-gray-50 border-t border-gray-100 flex gap-3">
+              <button 
+                onClick={() => setShowOrderModal(false)}
+                className="flex-1 py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-50 transition-all"
+              >
+                Close
+              </button>
+              {!selectedOrder.isDelivered && (
+                <button 
+                  onClick={() => { handleDeliver(selectedOrder.id); setShowOrderModal(false); }}
+                  className="flex-1 py-3 px-4 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary-dark transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
+                >
+                  <Truck className="w-4 h-4" /> Mark as Delivered
+                </button>
+              )}
             </div>
           </motion.div>
         </div>
