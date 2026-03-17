@@ -26,6 +26,7 @@ const AdminDashboard = () => {
   const [variants, setVariants] = useState([]); // [{ sku: '', price: 0, stock: 0, options: {} }]
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showOrderModal, setShowOrderModal] = useState(false);
+  const [pendingAdmins, setPendingAdmins] = useState([]);
 
   const getImageUrl = (img) => {
     if (!img) return 'https://placehold.co/400x400/F8F9FA/2D3748?text=Product';
@@ -66,16 +67,18 @@ const AdminDashboard = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [orderRes, prodRes, catRes, coupRes] = await Promise.all([
+        const [orderRes, prodRes, catRes, coupRes, pendingRes] = await Promise.all([
           api.get('/orders'),
           api.get('/products'),
           api.get('/categories'),
-          api.get('/coupons')
+          api.get('/coupons'),
+          api.get('/auth/admin/pending')
         ]);
         setOrders(orderRes.data);
         setProducts(prodRes.data.products);
         setCategories(catRes.data);
         setCoupons(coupRes.data);
+        setPendingAdmins(pendingRes.data);
       } catch (error) {
         console.error('Admin fetch error', error);
         if (error.response?.status === 401) {
@@ -94,6 +97,16 @@ const AdminDashboard = () => {
       setOrders(orders.map(o => o.id === id ? { ...o, isDelivered: true, status: 'Delivered' } : o));
     } catch (error) {
       alert('Action failed');
+    }
+  };
+
+  const handleApproveAdmin = async (id) => {
+    try {
+      await api.put(`/auth/admin/${id}/approve`);
+      setPendingAdmins(pendingAdmins.filter(a => a.id !== id));
+      alert('Admin approved successfully!');
+    } catch (error) {
+      alert('Approval failed');
     }
   };
 
@@ -326,6 +339,7 @@ const AdminDashboard = () => {
             { id: 'coupons', label: 'Coupons', icon: Ticket },
             { id: 'payments', label: 'Payments', icon: CreditCard },
             { id: 'users', label: 'Shop Customers', icon: Users },
+            { id: 'admin_approvals', label: 'Admin Approvals', icon: ShieldCheck },
           ].map((item) => (
             <button
               key={item.id}
@@ -487,6 +501,43 @@ const AdminDashboard = () => {
                       </td>
                     </tr>
                   ))}
+                </tbody>
+              </table>
+            </div>
+          ) : activeTab === 'admin_approvals' ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="text-xs text-gray-400 uppercase tracking-widest border-b border-gray-100">
+                    <th className="pb-4 font-bold">Admin Name</th>
+                    <th className="pb-4 font-bold">Email</th>
+                    <th className="pb-4 font-bold">Request Date</th>
+                    <th className="pb-4 font-bold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {pendingAdmins.map((admin) => (
+                    <tr key={admin.id} className="text-sm">
+                      <td className="py-5">
+                        <p className="font-bold text-dark">{admin.name}</p>
+                      </td>
+                      <td className="py-5 text-gray-400">{admin.email}</td>
+                      <td className="py-5 text-gray-400">{format(new Date(admin.createdAt), 'dd MMM yyyy')}</td>
+                      <td className="py-5">
+                        <button 
+                          onClick={() => handleApproveAdmin(admin.id)}
+                          className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-md shadow-primary/20"
+                        >
+                          Approve Access
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {pendingAdmins.length === 0 && (
+                    <tr>
+                      <td colSpan="4" className="py-10 text-center text-gray-400 italic">No pending admin applications.</td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>

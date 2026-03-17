@@ -25,8 +25,10 @@ const protect = async (req, res, next) => {
 };
 
 const admin = (req, res, next) => {
-  if (req.user && req.user.role === 'admin') {
+  if (req.user && req.user.role === 'admin' && req.user.isApproved) {
     return next();
+  } else if (req.user && req.user.role === 'admin' && !req.user.isApproved) {
+    return res.status(401).json({ message: 'Not authorized, admin account pending approval' });
   } else {
     return res.status(401).json({ message: 'Not authorized as an admin' });
   }
