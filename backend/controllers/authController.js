@@ -165,4 +165,43 @@ const getUserProfile = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, authUser, getUserProfile, registerAdmin, getPendingAdmins, approveAdmin };
+// @desc    Update user profile
+// @route   PUT /api/auth/profile
+// @access  Private
+const updateUserProfile = async (req, res) => {
+  try {
+    const { name, phone, street, city, state, zipCode, country } = req.body;
+
+    const user = await prisma.user.update({
+      where: { id: req.user.id },
+      data: {
+        name,
+        phone,
+        street,
+        city,
+        state,
+        zipCode,
+        country
+      }
+    });
+
+    res.json({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      phone: user.phone,
+      address: {
+        street: user.street,
+        city: user.city,
+        state: user.state,
+        zipCode: user.zipCode,
+        country: user.country
+      }
+    });
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+module.exports = { registerUser, authUser, getUserProfile, updateUserProfile, registerAdmin, getPendingAdmins, approveAdmin };

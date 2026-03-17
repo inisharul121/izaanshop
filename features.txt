@@ -1,39 +1,44 @@
 # Izaan Shop - Implemented Features
 
 ## 1. Authentication & User Management
-- **User Registration & Login**: Standard user authentication with JWT.
-- **Admin Portal**: Separate login/registration for administrators.
-- **Admin Approval System**: New admin accounts require approval from an existing admin before access is granted.
-- **Stale Session Handling**: Global 401 interceptor to auto-logout and redirect users when sessions expire or roles change.
-- **Role-Based Access Control (RBAC)**: Secure routes for 'user' and 'admin' roles.
+- **Universal JWT Auth**: Secure token-based authentication for both users and administrators.
+- **Separate Admin Portal**: Dedicated registration and login flows for staff members at `/admin/login`.
+- **Admin Approval Workflow**: High-security system where new admin accounts remain locked until approved by an existing administrator.
+- **Role-Based Access Control (RBAC)**: Backend middleware ensuring users can only access endpoints authorized for their specific role.
+- **Session Protection**: Global 401 interceptor that automatically handles expired credentials and unauthorized access by redirecting to the correct login page.
 
-## 2. Product Management
-- **Dynamic Catalog**: Full CRUD operations for products, categories, and coupons.
-- **Variable Products**: Support for product attributes (e.g., Color, Size) and variants with independent SKUs, prices, and stock.
-- **Image Management**: Integrated Media Library for uploading and reuse of images.
-- **Product Search & Filtering**: (Implicitly supported by the catalog structure).
+## 2. Advanced Product Management
+- **Simple & Variable Products**: Support for standard items and complex products with multiple variants (Color, Size, Material, etc.).
+- **Dynamic Variant Generator**: Automated tool to create all possible variant combinations based on selected attributes.
+- **Independent Variant Pricing**: Each product variant can have its own unique SKU, regular price, sale price, and stock level.
+- **Centralized Media Library**: Powerful image management system with a reusable gallery, preventing duplicate uploads and optimizing storage.
+- **Main & Gallery Images**: Ability to set a featured product image and a multi-image gallery for detailed views.
+- **Smart Slugs**: Automatic URL-friendly slug generation for products and categories.
 
-## 3. Shopping Experience
-- **Cart System**: local storage persistent cart with real-time updates.
-- **Checkout Process**: Multi-step checkout with guest checkout support.
-- **Guest Checkout**: Ability for users to place orders without creating an account.
-- **Form Validation**: Zod-powered client-side validation for checkout and auth.
+## 3. Categories & Promotions
+- **Category Hierarchy**: Full CRUD management of product categories with custom icons/images.
+- **Intelligent Coupon System**: Create promotional codes with:
+    - Fixed or Percentage discounts.
+    - Custom expiry dates.
+    - Usage limits (Max uses tracking).
+    - Real-time active/inactive status toggling.
 
-## 4. Order & Payment Management
-- **Order Tracking**: Detailed order history for users.
-- **Admin Order Dashboard**: Comprehensive view for admins to manage all orders.
-- **Order Details View**: Detailed modal for admins to see specific items, customer shipping info, and price breakdowns.
-- **Delivery Status**: "Mark Delivered" functionality in the admin panel.
-- **Payment History**: Payments tab tracking transactions and customer names (including guest names).
+## 4. Shopping & Checkout Experience
+- **Persistent Cart**: Local storage integrated cart that survives page refreshes.
+- **Dual Checkout Flow**: Seamless experience for both registered users and guest customers.
+- **Saved Address Profiles**: Logged-in users can save their shipping details (Street, City, State, Zip) once and reuse them across all future orders.
+- **Guest Checkout**: "Finish as Guest" functionality allowing instant ordering without mandatory account creation.
+- **Address Selection Logic**: One-click toggling between saved default addresses and new shipping destinations at checkout.
 
-## 5. UI/UX & Design
-- **Premium Design**: Modern, responsive UI with sleek dark modes and vibrant color palettes.
-- **Interactive Elements**: Micro-animations using Framer Motion.
-- **Mobile Responsive**: Fully optimized for mobile and tablet devices.
-- **Iconography**: Clean, consistent icons from Lucide React.
+## 5. Order Fulfillment & Administration
+- **Unified Order Dashboard**: Centralized view for admins to monitor and fulfill all store orders.
+- **Deep Order Insights**: Modal-based detail view showing specific items, unit prices, customer contact info, and precise shipping destinations.
+- **Payment Verification**: Dedicated payments tab tracking transaction history, customer names, and payment methods (bKash, Card, COD).
+- **Delivery Management**: One-click "Mark Delivered" status updates for efficient order processing.
+- **Customer Directory**: Full searchable list of all registered shop customers for administration.
 
-## 6. Technical Stack
-- **Frontend**: React, Vite, Zustand (State Management), Tailwind CSS.
-- **Backend**: Node.js, Express, MySQL.
-- **ORM**: Prisma for type-safe database interactions.
-- **Version Control**: Git integration.
+## 6. UI/UX & Technical Excellence
+- **Premium Aesthetics**: Modern, responsive design using a sophisticated dark-themed palette with glassmorphism elements.
+- **Fluid Interactions**: Smooth micro-animations and tab transitions powered by Framer Motion.
+- **Full Responsiveness**: Optimized layouts for Mobile, Tablet, and Desktop screens.
+- **Tech Stack**: Built with a high-performance stack: React, Vite, Tailwind CSS, Node.js, Express, and MySQL (via Prisma ORM).

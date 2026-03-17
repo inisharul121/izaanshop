@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import api from '../utils/api';
-import { LayoutDashboard, ShoppingBag, Users, BarChart3, Plus, Edit, Trash2, Check, X, Filter, Ticket, CreditCard, Tag, RefreshCw, Eye, MapPin, Phone, Package, Truck, Clock } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, Users, BarChart3, Plus, Edit, Trash2, Check, X, Filter, Ticket, CreditCard, Tag, RefreshCw, Eye, MapPin, Phone, Package, Truck, Clock, ShieldCheck } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
 

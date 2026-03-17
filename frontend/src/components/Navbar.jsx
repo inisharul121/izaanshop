@@ -44,9 +44,11 @@ const Navbar = () => {
                 </span>
               )}
             </Link>
-            <Link to="/admin" className="text-dark hover:text-primary transition-colors flex items-center gap-1 font-bold text-sm">
-                <LayoutDashboard className="w-5 h-5" /> Admin
-            </Link>
+            {user?.role === 'admin' && (
+              <Link to="/admin" className="text-dark hover:text-primary transition-colors flex items-center gap-1 font-bold text-sm">
+                  <LayoutDashboard className="w-5 h-5" /> Admin
+              </Link>
+            )}
             <Link to="/profile" className="text-dark hover:text-primary transition-colors font-bold text-sm">
                 Dashboard
             </Link>
@@ -98,9 +100,11 @@ const Navbar = () => {
             <Search className="absolute left-3 top-2.5 text-gray-400 w-4 h-4" />
           </div>
           <nav className="flex flex-col gap-3 font-medium text-dark">
-            <Link to="/admin" onClick={() => setIsOpen(false)} className="text-primary font-bold flex items-center gap-2">
-                <LayoutDashboard className="w-5 h-5" /> Admin Panel
-            </Link>
+            {user?.role === 'admin' && (
+              <Link to="/admin" onClick={() => setIsOpen(false)} className="text-primary font-bold flex items-center gap-2">
+                  <LayoutDashboard className="w-5 h-5" /> Admin Panel
+              </Link>
+            )}
             <Link to="/profile" onClick={() => setIsOpen(false)} className="hover:text-primary">Dashboard</Link>
             {user ? (
               <button 

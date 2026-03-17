@@ -23,7 +23,8 @@ api.interceptors.response.use(
       // Avoid redirecting on checkout where auth is optional
       if (!window.location.pathname.includes('/checkout')) {
         localStorage.removeItem('izaan-shop-storage');
-        window.location.href = '/login?expired=true';
+        const loginPath = window.location.pathname.startsWith('/admin') ? '/admin/login' : '/login';
+        window.location.href = `${loginPath}?expired=true`;
       }
     }
     return Promise.reject(error);

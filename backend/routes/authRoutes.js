@@ -1,9 +1,12 @@
-const { registerUser, authUser, getUserProfile, registerAdmin, getPendingAdmins, approveAdmin } = require('../controllers/authController');
+const express = require('express');
+const router = express.Router();
+const { registerUser, authUser, getUserProfile, updateUserProfile, registerAdmin, getPendingAdmins, approveAdmin } = require('../controllers/authController');
 const { protect, admin } = require('../middleware/authMiddleware');
 
 router.post('/register', registerUser);
 router.post('/login', authUser);
 router.get('/profile', protect, getUserProfile);
+router.put('/profile', protect, updateUserProfile);
 
 // Admin Approval Routes
 router.post('/admin/register', registerAdmin);

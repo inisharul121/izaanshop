@@ -5,9 +5,12 @@ const {
   getCouponById,
   createCoupon,
   updateCoupon,
-  deleteCoupon
+  deleteCoupon,
+  validateCoupon
 } = require('../controllers/couponController');
 const { protect, admin } = require('../middleware/authMiddleware');
+
+router.post('/validate', validateCoupon);
 
 router.route('/')
   .get(getCoupons)

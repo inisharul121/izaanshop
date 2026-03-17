@@ -99,10 +99,48 @@ const deleteCoupon = async (req, res) => {
   }
 };
 
+// @desc    Validate a coupon code
+// @route   POST /api/coupons/validate
+// @access  Public
+const validateCoupon = async (req, res) => {
+  const { code } = req.body;
+
+  try {
+    const coupon = await prisma.coupon.findUnique({
+      where: { code: code.toUpperCase() }
+    });
+
+    if (!coupon) {
+      return res.status(404).json({ message: 'Invalid coupon code' });
+    }
+
+    if (!coupon.isActive) {
+      return res.status(400).json({ message: 'Coupon is inactive' });
+    }
+
+    if (coupon.expiryDate && new Date(coupon.expiryDate) < new Date()) {
+      return res.status(400).json({ message: 'Coupon has expired' });
+    }
+
+    if (coupon.maxUses && coupon.usedCount >= coupon.maxUses) {
+      return res.status(400).json({ message: 'Coupon limit reached' });
+    }
+
+    res.json({
+      code: coupon.code,
+      discountType: coupon.discountType,
+      discountValue: coupon.discountValue
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getCoupons,
   getCouponById,
   createCoupon,
   updateCoupon,
-  deleteCoupon
+  deleteCoupon,
+  validateCoupon
 };
