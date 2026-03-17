@@ -61,6 +61,11 @@ const AdminDashboard = () => {
           gallery: [...(prev?.images?.gallery || []), file.url] 
         }
       }));
+    } else if (selectingFor === 'category_image') {
+      setEditingItem(prev => ({
+        ...prev,
+        image: file.url
+      }));
     }
     setShowMediaLibrary(false);
   };
@@ -177,7 +182,7 @@ const AdminDashboard = () => {
 
   const handleNameChange = (e) => {
     const val = e.target.value;
-    if (!editingItem) {
+    if (!editingItem || modalType === 'category') {
       setSlug(val.toLowerCase().trim().replace(/ /g, '-').replace(/[^\w-]+/g, ''));
     }
   };
@@ -916,21 +921,50 @@ const AdminDashboard = () => {
                 <>
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-gray-400 uppercase">Category Name</label>
-                    <input name="name" defaultValue={editingItem?.name} required className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
+                    <input 
+                      name="name" 
+                      defaultValue={editingItem?.name} 
+                      onChange={handleNameChange}
+                      required 
+                      className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" 
+                    />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className="text-xs font-bold text-gray-400 uppercase">Slug</label>
-                      <input name="slug" defaultValue={editingItem?.slug} required className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
+                      <input 
+                        name="slug" 
+                        value={slug} 
+                        onChange={(e) => setSlug(e.target.value)} 
+                        required 
+                        className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" 
+                      />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs font-bold text-gray-400 uppercase">Image URL</label>
-                      <input name="image" defaultValue={editingItem?.image} className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
+                      <label className="text-xs font-bold text-gray-400 uppercase flex justify-between">
+                        Banner Image
+                        <button type="button" onClick={() => { setSelectingFor('category_image'); fetchMedia(); }} className="text-primary hover:underline">Pick from Media</button>
+                      </label>
+                      <input 
+                        name="image" 
+                        value={editingItem?.image || ''} 
+                        onChange={(e) => setEditingItem({ ...editingItem, image: e.target.value })}
+                        placeholder="URL or select from media"
+                        className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" 
+                      />
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-gray-400 uppercase">Description</label>
-                    <textarea name="description" defaultValue={editingItem?.description} rows="3" className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" />
+                    <label className="text-xs font-bold text-gray-400 uppercase flex justify-between">
+                      Description 
+                      <span className="text-[10px] opacity-40">Optional</span>
+                    </label>
+                    <textarea 
+                      name="description" 
+                      defaultValue={editingItem?.description} 
+                      rows="3" 
+                      className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" 
+                    />
                   </div>
                 </>
               ) : (
