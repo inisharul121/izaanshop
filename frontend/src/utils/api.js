@@ -16,4 +16,18 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Avoid redirecting on checkout where auth is optional
+      if (!window.location.pathname.includes('/checkout')) {
+        localStorage.removeItem('izaan-shop-storage');
+        window.location.href = '/login?expired=true';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;

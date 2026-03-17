@@ -76,6 +76,9 @@ const AdminDashboard = () => {
         setCoupons(coupRes.data);
       } catch (error) {
         console.error('Admin fetch error', error);
+        if (error.response?.status === 401) {
+          alert('Session expired or unauthorized. Please login as Admin.');
+        }
       } finally {
         setLoading(false);
       }
@@ -496,7 +499,7 @@ const AdminDashboard = () => {
                     <tr key={order.id} className="text-sm">
                       <td className="py-5 font-bold">#{String(order.id).padStart(6, '0')}</td>
                       <td className="py-5 text-gray-400">{format(new Date(order.paidAt || order.createdAt), 'dd MMM yyyy')}</td>
-                      <td className="py-5 font-bold">{order.user?.name || 'Guest'}</td>
+                      <td className="py-5 font-bold">{order.user?.name || order.guestName || 'Guest'}</td>
                       <td className="py-5 capitalize">{order.paymentMethod}</td>
                       <td className="py-5 font-bold">{order.totalPrice}৳</td>
                       <td className="py-5">
