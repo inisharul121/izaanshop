@@ -108,7 +108,7 @@ const updateOrderToPaid = async (req, res) => {
     });
     res.json(order);
   } catch (error) {
-    res.status(404).json({ message: 'Order not found' });
+    res.status(500).json({ message: error.message || 'Failed to update payment status' });
   }
 };
 

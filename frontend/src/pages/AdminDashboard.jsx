@@ -4,7 +4,7 @@ import logo from '../assets/logo.png';
 import api from '../utils/api';
 import { LayoutDashboard, ShoppingBag, Users, BarChart3, Plus, Edit, Trash2, Check, X, Filter, Ticket, CreditCard, Tag, RefreshCw, Eye, MapPin, Phone, Package, Truck, Clock, ShieldCheck, Menu } from 'lucide-react';
 import { format } from 'date-fns';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { getImageUrl } from '../utils/helpers';
 
 const AdminDashboard = () => {
@@ -376,26 +376,26 @@ const AdminDashboard = () => {
           )}
         </AnimatePresence>
 
-        {/* Sidebar */}
+        {/* Mobile Sidebar Drawer (AnimatePresence) */}
         <AnimatePresence>
-          {(isSidebarOpen || window.innerWidth >= 1024) && (
+          {isSidebarOpen && (
             <motion.aside 
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className={`fixed lg:relative top-0 left-0 h-full lg:h-auto w-[280px] lg:w-64 bg-white lg:bg-transparent z-[80] lg:z-0 p-8 lg:p-0 space-y-2 overflow-y-auto lg:block ${isSidebarOpen ? 'block' : 'hidden'}`}
+              className="fixed top-0 left-0 h-full w-[280px] bg-white z-[80] p-8 space-y-2 overflow-y-auto lg:hidden"
             >
               <div className="flex items-center justify-between mb-8">
-                <div className="px-4 lg:px-0">
+                <div className="px-4">
                   <Link to="/" className="flex items-center gap-2 group mb-2">
-                    <img src={logo} alt="IzaanShop" className="h-10 lg:h-12 w-auto object-contain" />
+                    <img src={logo} alt="IzaanShop" className="h-10 w-auto object-contain" />
                   </Link>
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Admin Dashboard</p>
                 </div>
                 <button 
                   onClick={() => setIsSidebarOpen(false)}
-                  className="lg:hidden p-2 bg-gray-50 rounded-full text-gray-400"
+                  className="p-2 bg-gray-50 rounded-full text-gray-400"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -415,10 +415,7 @@ const AdminDashboard = () => {
               ].map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => {
-                    setActiveTab(item.id);
-                    if (window.innerWidth < 1024) setIsSidebarOpen(false);
-                  }}
+                  onClick={() => { setActiveTab(item.id); setIsSidebarOpen(false); }}
                   className={`w-full flex items-center gap-3 p-4 rounded-xl text-sm font-medium transition-all ${activeTab === item.id ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-gray-500 hover:bg-gray-100'}`}
                 >
                   <item.icon className="w-5 h-5" />
@@ -428,6 +425,38 @@ const AdminDashboard = () => {
             </motion.aside>
           )}
         </AnimatePresence>
+
+        {/* Desktop Sidebar (always visible on lg+) */}
+        <aside className="hidden lg:block w-64 flex-shrink-0 space-y-2">
+          <div className="mb-8">
+            <Link to="/" className="flex items-center gap-2 group mb-2">
+              <img src={logo} alt="IzaanShop" className="h-12 w-auto object-contain" />
+            </Link>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Admin Dashboard</p>
+          </div>
+
+          <h2 className="text-xs font-black text-gray-300 uppercase tracking-[0.2em] px-4 mb-4">Main Menu</h2>
+          {[
+            { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+            { id: 'orders', label: 'Manage Orders', icon: ShoppingBag },
+            { id: 'products', label: 'Manage Products', icon: LayoutDashboard },
+            { id: 'categories', label: 'Manage Categories', icon: Filter },
+            { id: 'coupons', label: 'Coupons', icon: Ticket },
+            { id: 'payments', label: 'Payments', icon: CreditCard },
+            { id: 'users', label: 'Shop Customers', icon: Users },
+            { id: 'admin_approvals', label: 'Admin Approvals', icon: ShieldCheck },
+            { id: 'payment_settings', label: 'Payment Settings', icon: Tag },
+          ].map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveTab(item.id)}
+              className={`w-full flex items-center gap-3 p-4 rounded-xl text-sm font-medium transition-all ${activeTab === item.id ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-gray-500 hover:bg-gray-100'}`}
+            >
+              <item.icon className="w-5 h-5" />
+              {item.label}
+            </button>
+          ))}
+        </aside>
 
         {/* Content */}
         <main className="flex-1 bg-white rounded-3xl border border-gray-100 p-4 md:p-8 shadow-sm overflow-hidden">
@@ -600,7 +629,7 @@ const AdminDashboard = () => {
                     <tr key={coupon.id} className="text-sm">
                       <td className="py-5 font-bold text-primary">{coupon.code}</td>
                       <td className="py-5">
-                        {coupon.discountValue}{coupon.discountType === 'Percentage' ? '%' : '৳'}
+                        {coupon.discountValue}{coupon.discountType?.toLowerCase() === 'percentage' ? '%' : '৳'}
                       </td>
                       <td className="py-5 text-gray-400">
                         {coupon.expiryDate ? format(new Date(coupon.expiryDate), 'dd MMM yyyy') : 'No Expiry'}
@@ -638,7 +667,7 @@ const AdminDashboard = () => {
                     <div className="flex justify-between items-center bg-white p-3 rounded-2xl border border-gray-100">
                       <div className="text-center flex-1 border-r border-gray-100">
                         <p className="text-[10px] text-gray-400 uppercase font-black mb-1">Benefit</p>
-                        <p className="font-bold text-dark">{coupon.discountValue}{coupon.discountType === 'Percentage' ? '%' : '৳'}</p>
+                        <p className="font-bold text-dark">{coupon.discountValue}{coupon.discountType?.toLowerCase() === 'percentage' ? '%' : '৳'}</p>
                       </div>
                       <div className="text-center flex-1">
                         <p className="text-[10px] text-gray-400 uppercase font-black mb-1">Used</p>

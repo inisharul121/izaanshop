@@ -318,7 +318,7 @@ const Shop = () => {
                 <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
                   {keywordParam && (
                     <span className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-xs font-bold border border-primary/20">
-                      " {keywordParam} "
+                      {keywordParam}
                       <button onClick={() => removeFilter('keyword')}><X className="w-3 h-3" /></button>
                     </span>
                   )}

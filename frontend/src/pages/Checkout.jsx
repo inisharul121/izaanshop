@@ -12,7 +12,7 @@ const checkoutSchema = z.object({
   name: z.string().min(2, 'Full name is required'),
   address: z.string().min(10, 'Full address is required'),
   phone: z.string().min(11, 'Valid phone number is required'),
-  paymentMethod: z.enum(['Cash on Delivery', 'bKash', 'Card']),
+  paymentMethod: z.enum(['Cash on Delivery', 'bKash', 'Nagad', 'Card']),
 });
 
 const Checkout = () => {
@@ -327,7 +327,7 @@ const Checkout = () => {
               {cart.map((item) => (
                 <div key={`${item.id}-${JSON.stringify(item.selectedOptions || {})}`} className="flex justify-between items-center gap-4 group">
                   <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-white/5">
-                    <img src={getImageUrl(item.images?.[0])} alt={item.name} className="w-full h-full object-cover" />
+                    <img src={getImageUrl(item.images?.main || item.images?.[0])} alt={item.name} className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1">
                     <h4 className="font-bold text-base group-hover:text-primary transition-colors">{item.name}</h4>
