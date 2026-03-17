@@ -6,6 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 import api from '../utils/api';
 import { CreditCard, Truck, CheckCircle, Loader2, User, MapPin, Phone } from 'lucide-react';
+import { getImageUrl } from '../utils/helpers';
 
 const checkoutSchema = z.object({
   name: z.string().min(2, 'Full name is required'),
@@ -325,6 +326,9 @@ const Checkout = () => {
             <div className="space-y-6 mb-10 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar relative z-10">
               {cart.map((item) => (
                 <div key={`${item.id}-${JSON.stringify(item.selectedOptions || {})}`} className="flex justify-between items-center gap-4 group">
+                  <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 border border-white/5">
+                    <img src={getImageUrl(item.images?.[0])} alt={item.name} className="w-full h-full object-cover" />
+                  </div>
                   <div className="flex-1">
                     <h4 className="font-bold text-base group-hover:text-primary transition-colors">{item.name}</h4>
                     <div className="flex items-center gap-3 mt-1.5 opacity-40 text-[10px] font-black uppercase tracking-widest">

@@ -1,5 +1,26 @@
 const prisma = require('../utils/prisma');
 
+const formatProduct = (product) => {
+  if (!product) return null;
+  const p = { ...product };
+  if (p.images && typeof p.images === 'string') {
+    try { p.images = JSON.parse(p.images); } catch (e) { p.images = { main: '', gallery: [] }; }
+  }
+  if (p.attributes) {
+    p.attributes = p.attributes.map(attr => ({
+      ...attr,
+      options: typeof attr.options === 'string' ? JSON.parse(attr.options) : attr.options
+    }));
+  }
+  if (p.variants) {
+    p.variants = p.variants.map(variant => ({
+      ...variant,
+      options: typeof variant.options === 'string' ? JSON.parse(variant.options) : variant.options
+    }));
+  }
+  return p;
+};
+
 // @desc    Fetch all products
 // @route   GET /api/products
 // @access  Public
@@ -44,20 +65,39 @@ const getProducts = async (req, res) => {
   }
 
   try {
-    const count = await prisma.product.count({ where });
-    const products = await prisma.product.findMany({
-      where,
-      take: pageSize,
-      skip: pageSize * (page - 1),
-      orderBy,
-      include: { 
-        category: true,
-        attributes: true,
-        variants: true
-      }
-    });
+    const [count, products, maxPriceData, storeMaxPriceData] = await Promise.all([
+      prisma.product.count({ where }),
+      prisma.product.findMany({
+        where,
+        take: pageSize,
+        skip: pageSize * (page - 1),
+        orderBy,
+        include: { 
+          category: true,
+          attributes: true,
+          variants: true
+        }
+      }),
+      prisma.product.aggregate({
+        where: {
+          category: where.category,
+          name: where.name
+        },
+        _max: { price: true }
+      }),
+      prisma.product.aggregate({
+        _max: { price: true }
+      })
+    ]);
 
-    res.json({ products, page, pages: Math.ceil(count / pageSize) });
+    const formattedProducts = products.map(formatProduct);
+    res.json({ 
+      products: formattedProducts, 
+      page, 
+      pages: Math.ceil(count / pageSize),
+      maxPrice: maxPriceData._max.price || 5000,
+      storeMaxPrice: storeMaxPriceData._max.price || 5000
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -93,7 +133,8 @@ const getProductById = async (req, res) => {
           variants: true
         }
       });
-      res.json({ ...product, relatedProducts: related });
+      const formattedProduct = formatProduct(product);
+      res.json({ ...formattedProduct, relatedProducts: related.map(formatProduct) });
     } else {
       res.status(404).json({ message: 'Product not found' });
     }
@@ -117,10 +158,10 @@ const createProduct = async (req, res) => {
       price: Number(price),
       description,
       categoryId: Number(category),
-      images: {
+      images: JSON.stringify({
         main: mainImage,
         gallery: gallery || []
-      },
+      }),
       stock: stock ? Number(stock) : 0,
       slug,
       salePrice: salePrice ? Number(salePrice) : null,
@@ -131,7 +172,7 @@ const createProduct = async (req, res) => {
       productData.attributes = {
         create: attributes.map(attr => ({
           name: attr.name,
-          options: attr.options
+          options: JSON.stringify(attr.options)
         }))
       };
       productData.variants = {
@@ -140,7 +181,7 @@ const createProduct = async (req, res) => {
           price: Number(variant.price),
           salePrice: variant.salePrice ? Number(variant.salePrice) : null,
           stock: Number(variant.stock),
-          options: variant.options,
+          options: JSON.stringify(variant.options),
           image: variant.image
         }))
       };
@@ -154,7 +195,7 @@ const createProduct = async (req, res) => {
       }
     });
 
-    res.status(201).json(product);
+    res.status(201).json(formatProduct(product));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -183,10 +224,10 @@ const updateProduct = async (req, res) => {
     };
 
     if (mainImage || gallery) {
-      data.images = {
+      data.images = JSON.stringify({
         main: mainImage,
         gallery: gallery || []
-      };
+      });
     }
 
     // Handle variable product logic (Attributes and Variants)
@@ -199,7 +240,7 @@ const updateProduct = async (req, res) => {
         data.attributes = {
           create: attributes.map(attr => ({
             name: attr.name,
-            options: attr.options
+            options: JSON.stringify(attr.options)
           }))
         };
         data.variants = {
@@ -208,7 +249,7 @@ const updateProduct = async (req, res) => {
             price: Number(variant.price),
             salePrice: variant.salePrice ? Number(variant.salePrice) : null,
             stock: Number(variant.stock),
-            options: variant.options,
+            options: JSON.stringify(variant.options),
             image: variant.image
           }))
         };
@@ -227,7 +268,7 @@ const updateProduct = async (req, res) => {
         variants: true
       }
     });
-    res.json(updatedProduct);
+    res.json(formatProduct(updatedProduct));
   } catch (error) {
     console.error('Update Product Error:', error);
     res.status(500).json({ message: error.message });

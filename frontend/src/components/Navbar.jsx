@@ -2,6 +2,7 @@ import React from 'react';
 import { ShoppingCart, User, Search, Menu, X, Heart, LayoutDashboard } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useStore } from '../store/useStore';
+import logo from '../assets/logo.png';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = React.useState(false);
@@ -14,9 +15,12 @@ const Navbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
-          <Link to="/" className="text-2xl font-bold text-primary flex items-center gap-1">
-            <span className="bg-primary text-white px-2 py-0.5 rounded">I</span>
-            IzaanShop
+          <Link to="/" className="flex items-center gap-2 group">
+            <img 
+              src={logo} 
+              alt="IzaanShop" 
+              className="h-10 md:h-12 w-auto object-contain transition-transform group-hover:scale-105" 
+            />
           </Link>
 
           {/* Search Box - Hidden on mobile */}

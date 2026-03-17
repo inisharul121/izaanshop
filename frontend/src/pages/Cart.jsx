@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, Minus, Plus, ShoppingBag, ArrowRight } from 'lucide-react';
 import { useStore } from '../store/useStore';
+import { getImageUrl } from '../utils/helpers';
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -47,7 +48,7 @@ const Cart = () => {
                 className="flex gap-4 md:gap-6 bg-white p-4 md:p-6 rounded-2xl border border-gray-100 shadow-sm"
               >
                 <Link to={`/product/${item.slug}`} className="w-24 md:w-32 aspect-square rounded-lg overflow-hidden shrink-0">
-                  <img src={item.images[0]} alt={item.name} className="w-full h-full object-cover" />
+                  <img src={getImageUrl(item.images?.[0])} alt={item.name} className="w-full h-full object-cover" />
                 </Link>
                 
                 <div className="flex-1 flex flex-col justify-between">

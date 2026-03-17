@@ -8,6 +8,7 @@ import {
 import api from '../utils/api';
 import { useStore } from '../store/useStore';
 import ProductCard from '../components/ProductCard';
+import { getImageUrl } from '../utils/helpers';
 
 const ProductDetail = () => {
   const { slug } = useParams();
@@ -68,12 +69,6 @@ const ProductDetail = () => {
     }
   }, [selectedOptions, product]);
 
-  const getImageUrl = (img) => {
-    if (!img) return 'https://placehold.co/800x800/F8F9FA/2D3748?text=Product';
-    if (img.startsWith('http')) return img;
-    const cleanPath = img.startsWith('/') ? img : `/${img}`;
-    return `http://localhost:5001${cleanPath}`;
-  };
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50/50">

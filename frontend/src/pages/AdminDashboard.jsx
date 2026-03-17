@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import logo from '../assets/logo.png';
 import api from '../utils/api';
-import { LayoutDashboard, ShoppingBag, Users, BarChart3, Plus, Edit, Trash2, Check, X, Filter, Ticket, CreditCard, Tag, RefreshCw, Eye, MapPin, Phone, Package, Truck, Clock, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, Users, BarChart3, Plus, Edit, Trash2, Check, X, Filter, Ticket, CreditCard, Tag, RefreshCw, Eye, MapPin, Phone, Package, Truck, Clock, ShieldCheck, Menu } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
+import { getImageUrl } from '../utils/helpers';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('orders');
@@ -30,13 +32,7 @@ const AdminDashboard = () => {
   const [pendingAdmins, setPendingAdmins] = useState([]);
   const [settings, setSettings] = useState({ bkash_number: '', nagad_number: '' });
   const [savingSettings, setSavingSettings] = useState(false);
-
-  const getImageUrl = (img) => {
-    if (!img) return 'https://placehold.co/400x400/F8F9FA/2D3748?text=Product';
-    if (img.startsWith('http')) return img;
-    const cleanPath = img.startsWith('/') ? img : `/${img}`;
-    return `http://localhost:5001${cleanPath}`;
-  };
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const fetchMedia = async () => {
     try {
@@ -353,42 +349,88 @@ const AdminDashboard = () => {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <div className="flex flex-col lg:flex-row gap-8">
-        {/* Sidebar */}
-        <aside className="w-full lg:w-64 space-y-2">
-          <div className="px-4 mb-8">
-            <Link to="/" className="text-2xl font-bold text-primary flex items-center gap-1 mb-2">
-              <span className="bg-primary text-white px-2 py-0.5 rounded">I</span>
-              IzaanShop
-            </Link>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Admin Dashboard</p>
-          </div>
+      {/* Mobile Header */}
+      <div className="lg:hidden flex items-center justify-between bg-white border-b border-gray-100 p-4 sticky top-0 z-[60] mb-6">
+        <Link to="/" className="flex items-center gap-2">
+          <img src={logo} alt="IzaanShop" className="h-8 w-auto object-contain" />
+        </Link>
+        <button 
+          onClick={() => setIsSidebarOpen(true)}
+          className="p-2 bg-gray-50 rounded-xl text-gray-400 active:scale-95 transition-all"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+      </div>
 
-          <h2 className="text-xs font-black text-gray-300 uppercase tracking-[0.2em] px-4 mb-4">Main Menu</h2>
-          {[
-            { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-            { id: 'orders', label: 'Manage Orders', icon: ShoppingBag },
-            { id: 'products', label: 'Manage Products', icon: LayoutDashboard },
-            { id: 'categories', label: 'Manage Categories', icon: Filter },
-            { id: 'coupons', label: 'Coupons', icon: Ticket },
-            { id: 'payments', label: 'Payments', icon: CreditCard },
-            { id: 'users', label: 'Shop Customers', icon: Users },
-            { id: 'admin_approvals', label: 'Admin Approvals', icon: ShieldCheck },
-            { id: 'payment_settings', label: 'Payment Settings', icon: Tag },
-          ].map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-3 p-4 rounded-xl text-sm font-medium transition-all ${activeTab === item.id ? 'bg-primary text-white shadow-lg' : 'text-gray-500 hover:bg-gray-100'}`}
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* Sidebar Overlay (Mobile) */}
+        <AnimatePresence>
+          {isSidebarOpen && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsSidebarOpen(false)}
+              className="fixed inset-0 bg-dark/60 backdrop-blur-sm z-[70] lg:hidden"
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Sidebar */}
+        <AnimatePresence>
+          {(isSidebarOpen || window.innerWidth >= 1024) && (
+            <motion.aside 
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className={`fixed lg:relative top-0 left-0 h-full lg:h-auto w-[280px] lg:w-64 bg-white lg:bg-transparent z-[80] lg:z-0 p-8 lg:p-0 space-y-2 overflow-y-auto lg:block ${isSidebarOpen ? 'block' : 'hidden'}`}
             >
-              <item.icon className="w-5 h-5" />
-              {item.label}
-            </button>
-          ))}
-        </aside>
+              <div className="flex items-center justify-between mb-8">
+                <div className="px-4 lg:px-0">
+                  <Link to="/" className="flex items-center gap-2 group mb-2">
+                    <img src={logo} alt="IzaanShop" className="h-10 lg:h-12 w-auto object-contain" />
+                  </Link>
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Admin Dashboard</p>
+                </div>
+                <button 
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="lg:hidden p-2 bg-gray-50 rounded-full text-gray-400"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <h2 className="text-xs font-black text-gray-300 uppercase tracking-[0.2em] px-4 mb-4">Main Menu</h2>
+              {[
+                { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+                { id: 'orders', label: 'Manage Orders', icon: ShoppingBag },
+                { id: 'products', label: 'Manage Products', icon: LayoutDashboard },
+                { id: 'categories', label: 'Manage Categories', icon: Filter },
+                { id: 'coupons', label: 'Coupons', icon: Ticket },
+                { id: 'payments', label: 'Payments', icon: CreditCard },
+                { id: 'users', label: 'Shop Customers', icon: Users },
+                { id: 'admin_approvals', label: 'Admin Approvals', icon: ShieldCheck },
+                { id: 'payment_settings', label: 'Payment Settings', icon: Tag },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setActiveTab(item.id);
+                    if (window.innerWidth < 1024) setIsSidebarOpen(false);
+                  }}
+                  className={`w-full flex items-center gap-3 p-4 rounded-xl text-sm font-medium transition-all ${activeTab === item.id ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-gray-500 hover:bg-gray-100'}`}
+                >
+                  <item.icon className="w-5 h-5" />
+                  {item.label}
+                </button>
+              ))}
+            </motion.aside>
+          )}
+        </AnimatePresence>
 
         {/* Content */}
-        <main className="flex-1 bg-white rounded-3xl border border-gray-100 p-8 shadow-sm overflow-hidden">
+        <main className="flex-1 bg-white rounded-3xl border border-gray-100 p-4 md:p-8 shadow-sm overflow-hidden">
           <div className="flex justify-between items-center mb-10">
             <h3 className="text-2xl font-bold capitalize">{activeTab.replace('-', ' ')}</h3>
             {activeTab === 'products' && (
@@ -414,7 +456,8 @@ const AdminDashboard = () => {
             </div>
           ) : activeTab === 'orders' ? (
             <div className="overflow-x-auto">
-              <table className="w-full text-left">
+              {/* Desktop Table */}
+              <table className="hidden md:table w-full text-left">
                 <thead>
                   <tr className="text-xs text-gray-400 uppercase tracking-widest border-b border-gray-100">
                     <th className="pb-4 font-bold">Customer</th>
@@ -458,6 +501,46 @@ const AdminDashboard = () => {
                   ))}
                 </tbody>
               </table>
+
+              {/* Mobile Cards */}
+              <div className="md:hidden space-y-4">
+                {orders.map((order) => (
+                  <div key={order.id} className="p-5 border border-gray-100 rounded-3xl bg-gray-50/30 space-y-4 transition-all active:scale-[0.98]">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-xs text-gray-400 font-bold mb-1">#{String(order.id).padStart(6, '0')}</p>
+                        <p className="font-black text-dark text-lg">{order.user?.name || order.guestName || 'Guest'}</p>
+                      </div>
+                      <div className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${order.isDelivered ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                        {order.status}
+                      </div>
+                    </div>
+                    
+                    <div className="flex justify-between items-end border-t border-dashed border-gray-200 pt-4">
+                      <div className="space-y-1">
+                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Amount Due</p>
+                        <p className="text-xl font-black text-primary">{order.totalPrice}৳</p>
+                      </div>
+                      <div className="flex gap-2">
+                        {!order.isDelivered && (
+                          <button 
+                            onClick={() => handleDeliver(order.id)}
+                            className="p-2.5 bg-primary text-white rounded-xl shadow-lg shadow-primary/20"
+                          >
+                            <Truck className="w-4 h-4" />
+                          </button>
+                        )}
+                        <button 
+                          onClick={() => { setSelectedOrder(order); setShowOrderModal(true); }}
+                          className="p-2.5 bg-white border border-gray-200 text-gray-400 rounded-xl"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : activeTab === 'products' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -501,7 +584,7 @@ const AdminDashboard = () => {
             </div>
           ) : activeTab === 'coupons' ? (
             <div className="overflow-x-auto">
-              <table className="w-full text-left">
+              <table className="hidden md:table w-full text-left">
                 <thead>
                   <tr className="text-xs text-gray-400 uppercase tracking-widest border-b border-gray-100">
                     <th className="pb-4 font-bold">Code</th>
@@ -517,7 +600,7 @@ const AdminDashboard = () => {
                     <tr key={coupon.id} className="text-sm">
                       <td className="py-5 font-bold text-primary">{coupon.code}</td>
                       <td className="py-5">
-                        {coupon.discountValue}{coupon.discountType === 'percentage' ? '%' : '৳'}
+                        {coupon.discountValue}{coupon.discountType === 'Percentage' ? '%' : '৳'}
                       </td>
                       <td className="py-5 text-gray-400">
                         {coupon.expiryDate ? format(new Date(coupon.expiryDate), 'dd MMM yyyy') : 'No Expiry'}
@@ -538,10 +621,41 @@ const AdminDashboard = () => {
                   ))}
                 </tbody>
               </table>
+
+              {/* Mobile Card View for Coupons */}
+              <div className="md:hidden space-y-4">
+                {coupons.map((coupon) => (
+                  <div key={coupon.id} className="p-5 border border-gray-100 rounded-3xl bg-gray-50/30 space-y-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-lg font-black text-primary mb-0.5">{coupon.code}</p>
+                        <p className="text-xs text-gray-400 font-medium">Expires: {coupon.expiryDate ? format(new Date(coupon.expiryDate), 'dd MMM yyyy') : 'No Expiry'}</p>
+                      </div>
+                      <div className={`px-2 py-0.5 rounded text-[10px] font-black ${coupon.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {coupon.isActive ? 'ACTIVE' : 'INACTIVE'}
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center bg-white p-3 rounded-2xl border border-gray-100">
+                      <div className="text-center flex-1 border-r border-gray-100">
+                        <p className="text-[10px] text-gray-400 uppercase font-black mb-1">Benefit</p>
+                        <p className="font-bold text-dark">{coupon.discountValue}{coupon.discountType === 'Percentage' ? '%' : '৳'}</p>
+                      </div>
+                      <div className="text-center flex-1">
+                        <p className="text-[10px] text-gray-400 uppercase font-black mb-1">Used</p>
+                        <p className="font-bold text-dark">{coupon.usedCount} / {coupon.maxUses || '∞'}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => handleOpenModal('coupon', coupon)} className="flex-1 py-3 bg-white border border-gray-200 rounded-xl text-gray-400 flex justify-center"><Edit className="w-4 h-4" /></button>
+                      <button onClick={() => handleDeleteCoupon(coupon.id)} className="flex-1 py-3 bg-white border border-gray-200 rounded-xl text-gray-400 flex justify-center"><Trash2 className="w-4 h-4" /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : activeTab === 'admin_approvals' ? (
             <div className="overflow-x-auto">
-              <table className="w-full text-left">
+              <table className="hidden md:table w-full text-left">
                 <thead>
                   <tr className="text-xs text-gray-400 uppercase tracking-widest border-b border-gray-100">
                     <th className="pb-4 font-bold">Admin Name</th>
@@ -568,17 +682,47 @@ const AdminDashboard = () => {
                       </td>
                     </tr>
                   ))}
-                  {pendingAdmins.length === 0 && (
-                    <tr>
-                      <td colSpan="4" className="py-10 text-center text-gray-400 italic">No pending admin applications.</td>
-                    </tr>
-                  )}
                 </tbody>
               </table>
+
+              {/* Mobile View for Admin Approvals */}
+              <div className="md:hidden space-y-4">
+                {pendingAdmins.map((admin) => (
+                  <div key={admin.id} className="p-5 border border-gray-100 rounded-3xl bg-gray-50/30 space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center">
+                        <ShieldCheck className="w-6 h-6 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-black text-dark text-base">{admin.name}</p>
+                        <p className="text-xs text-gray-400 font-medium">{admin.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center bg-white p-3 rounded-2xl border border-gray-100">
+                      <div>
+                        <p className="text-[10px] text-gray-400 uppercase font-black">Requested</p>
+                        <p className="text-xs font-bold text-dark">{format(new Date(admin.createdAt), 'dd MMM yyyy')}</p>
+                      </div>
+                      <button
+                        onClick={() => handleApproveAdmin(admin.id)}
+                        className="bg-primary text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest"
+                      >
+                        Approve
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {pendingAdmins.length === 0 && (
+                <div className="py-20 text-center">
+                  <p className="text-gray-400 italic text-sm">No pending admin applications.</p>
+                </div>
+              )}
             </div>
           ) : activeTab === 'payments' ? (
             <div className="overflow-x-auto">
-              <table className="w-full text-left">
+              <table className="hidden md:table w-full text-left">
                 <thead>
                   <tr className="text-xs text-gray-400 uppercase tracking-widest border-b border-gray-100">
                     <th className="pb-4 font-bold">Order ID</th>
@@ -604,6 +748,29 @@ const AdminDashboard = () => {
                   ))}
                 </tbody>
               </table>
+
+              {/* Mobile View for Payments */}
+              <div className="md:hidden space-y-4">
+                {orders.filter(o => o.isPaid).map((order) => (
+                  <div key={order.id} className="p-5 border border-gray-100 rounded-3xl bg-gray-50/30 space-y-3">
+                    <div className="flex justify-between items-center">
+                      <p className="font-black text-dark text-base">#{String(order.id).padStart(6, '0')}</p>
+                      <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-[10px] font-black">PAID</span>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Customer</p>
+                      <p className="font-bold text-dark">{order.user?.name || order.guestName || 'Guest'}</p>
+                    </div>
+                    <div className="flex justify-between items-end pt-2 border-t border-gray-100">
+                      <div>
+                        <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{order.paymentMethod}</p>
+                        <p className="text-xs text-gray-400">{format(new Date(order.paidAt || order.createdAt), 'dd MMM yyyy')}</p>
+                      </div>
+                      <p className="text-xl font-black text-dark">{order.totalPrice}৳</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : activeTab === 'payment_settings' ? (
             <div className="max-w-2xl">
@@ -814,7 +981,7 @@ const AdminDashboard = () => {
                                 ))}
                               </div>
                               {/* 3-col grid: Price · Sale · Stock */}
-                              <div className="grid grid-cols-3 gap-2">
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                 <div className="space-y-1">
                                   <label className="text-[10px] font-bold text-gray-400 uppercase">Price</label>
                                   <input
@@ -1076,7 +1243,7 @@ const AdminDashboard = () => {
 
             <div className="p-8 overflow-y-auto space-y-8 custom-scrollbar">
               {/* Status & Payment Info */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100">
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Status</p>
                   <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold ${selectedOrder.isDelivered ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { getImageUrl } from '../utils/helpers';
 import { ShoppingCart, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useStore } from '../store/useStore';
@@ -10,13 +11,6 @@ const ProductCard = ({ product }) => {
   const discount = product.salePrice 
     ? Math.round(((product.price - product.salePrice) / product.price) * 100)
     : null;
-
-  const getImageUrl = (img) => {
-    if (!img) return 'https://placehold.co/400x500/F8F9FA/2D3748?text=Product';
-    if (img.startsWith('http')) return img;
-    const cleanPath = img.startsWith('/') ? img : `/${img}`;
-    return `http://localhost:5001${cleanPath}`;
-  };
 
   return (
     <motion.div 
