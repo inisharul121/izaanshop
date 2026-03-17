@@ -43,6 +43,7 @@ app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/coupons', require('./routes/couponRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
 app.use('/api/media', require('./routes/mediaRoutes'));
+app.use('/api/settings', require('./routes/settingsRoutes'));
 
 app.get('/', (req, res) => {
   res.json({ message: 'Welcome to IzaanShop API' });

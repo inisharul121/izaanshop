@@ -37,6 +37,22 @@ const Checkout = () => {
     }
   });
 
+  const [paymentSettings, setPaymentSettings] = React.useState({ bkash_number: '', nagad_number: '' });
+  const selectedPaymentMethod = watch('paymentMethod');
+  const [transactionId, setTransactionId] = React.useState('');
+
+  React.useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const { data } = await api.get('/settings');
+        setPaymentSettings(data);
+      } catch (error) {
+        console.error('Failed to fetch payment settings');
+      }
+    };
+    fetchSettings();
+  }, []);
+
   const applyCoupon = async () => {
     if (!couponCode.trim()) return;
     setCouponLoading(true);
@@ -99,6 +115,7 @@ const Checkout = () => {
         itemsPrice: subtotal,
         shippingPrice: shipping,
         totalPrice: total,
+        transactionId: transactionId,
         ...(appliedCoupon ? { couponCode: appliedCoupon.code } : {}),
         ...(isGuest ? {
           guestName: data.name,
@@ -238,11 +255,11 @@ const Checkout = () => {
               Payment Method
             </h2>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {['Cash on Delivery', 'bKash', 'Card'].map((item) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {['Cash on Delivery', 'bKash', 'Nagad', 'Card'].map((item) => (
                 <label 
                   key={item} 
-                  className="relative flex items-center p-5 border border-gray-100 rounded-2xl cursor-pointer hover:bg-gray-50 hover:border-primary/30 transition-all group"
+                  className={`relative flex items-center p-5 border rounded-2xl cursor-pointer transition-all group ${watch('paymentMethod') === item ? 'bg-primary/5 border-primary shadow-sm' : 'border-gray-100 hover:bg-gray-50'}`}
                 >
                   <input
                     type="radio"
@@ -250,10 +267,50 @@ const Checkout = () => {
                     {...register('paymentMethod')}
                     className="w-5 h-5 text-primary focus:ring-primary border-gray-300"
                   />
-                  <span className="ml-4 font-bold text-dark group-hover:text-primary transition-colors text-sm">{item}</span>
+                  <span className={`ml-4 font-bold transition-colors text-sm ${watch('paymentMethod') === item ? 'text-primary' : 'text-dark group-hover:text-primary'}`}>{item}</span>
                 </label>
               ))}
             </div>
+
+            {/* Manual Payment Instructions */}
+            {(selectedPaymentMethod === 'bKash' || selectedPaymentMethod === 'Nagad') && (
+              <div className="mt-8 p-8 bg-gray-50 rounded-[2rem] border border-gray-200 space-y-6 animate-in fade-in slide-in-from-top-4 duration-500">
+                <div className="flex items-center gap-4">
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${selectedPaymentMethod === 'bKash' ? 'bg-pink-100 text-pink-600' : 'bg-orange-100 text-orange-600'}`}>
+                     <Phone className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h4 className="font-black text-dark uppercase tracking-tight">Manual {selectedPaymentMethod} Payment</h4>
+                    <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Follow these steps to complete order</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex bg-white p-5 rounded-2xl border border-gray-100 items-center justify-between">
+                    <div>
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Send Money to</p>
+                      <p className="text-lg font-black text-dark tracking-tight">
+                        {selectedPaymentMethod === 'bKash' ? (paymentSettings.bkash_number || 'Not Configured') : (paymentSettings.nagad_number || 'Not Configured')}
+                      </p>
+                    </div>
+                    <div className="px-3 py-1 bg-primary/10 text-primary text-[10px] font-black rounded-full uppercase tracking-widest">Personal</div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className={labelClass}>Enter Transaction ID (TxID)</label>
+                    <input
+                      type="text"
+                      placeholder="8X7Y6Z..."
+                      value={transactionId}
+                      onChange={(e) => setTransactionId(e.target.value.toUpperCase())}
+                      className={`${inputClass} font-mono uppercase tracking-widest`}
+                      required
+                    />
+                    <p className="text-[10px] text-gray-400 font-medium ml-1">Paste the transaction ID from your SMS confirmation.</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

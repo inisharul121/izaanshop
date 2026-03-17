@@ -33,7 +33,9 @@
 ## 5. Order Fulfillment & Administration
 - **Unified Order Dashboard**: Centralized view for admins to monitor and fulfill all store orders.
 - **Deep Order Insights**: Modal-based detail view showing specific items, unit prices, customer contact info, and precise shipping destinations.
-- **Payment Verification**: Dedicated payments tab tracking transaction history, customer names, and payment methods (bKash, Card, COD).
+- **Payment Verification**: Dedicated payments tab tracking transaction history, customer names, and payment methods (bKash, Card, Nagad, COD).
+- **Manual Payment Verification**: Captured Transaction ID (TxID) for bKash and Nagad payments, allowing admins to manually verify funds before shipping.
+- **Dynamic Payment Configuration**: Admin-controlled settings to manage bKash and Nagad mobile numbers displayed to customers.
 - **Delivery Management**: One-click "Mark Delivered" status updates for efficient order processing.
 - **Customer Directory**: Full searchable list of all registered shop customers for administration.
 

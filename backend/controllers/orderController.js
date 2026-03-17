@@ -15,6 +15,7 @@ const addOrderItems = async (req, res) => {
     guestName,
     guestEmail,
     guestPhone,
+    transactionId,
   } = req.body;
 
   if (!orderItems || orderItems.length === 0) {
@@ -38,6 +39,7 @@ const addOrderItems = async (req, res) => {
         phone: req.user ? (shippingAddress?.phone || null) : (guestPhone || shippingAddress?.phone || null),
         totalPrice,
         paymentMethod,
+        transactionId,
         itemsPrice,
         taxPrice: taxPrice || 0,
         shippingPrice: shippingPrice || 0,

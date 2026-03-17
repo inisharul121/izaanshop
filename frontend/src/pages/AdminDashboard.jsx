@@ -27,6 +27,8 @@ const AdminDashboard = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [pendingAdmins, setPendingAdmins] = useState([]);
+  const [settings, setSettings] = useState({ bkash_number: '', nagad_number: '' });
+  const [savingSettings, setSavingSettings] = useState(false);
 
   const getImageUrl = (img) => {
     if (!img) return 'https://placehold.co/400x400/F8F9FA/2D3748?text=Product';
@@ -67,18 +69,23 @@ const AdminDashboard = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [orderRes, prodRes, catRes, coupRes, pendingRes] = await Promise.all([
+        const [orderRes, prodRes, catRes, coupRes, pendingRes, settingsRes] = await Promise.all([
           api.get('/orders'),
           api.get('/products'),
           api.get('/categories'),
           api.get('/coupons'),
-          api.get('/auth/admin/pending')
+          api.get('/auth/admin/pending'),
+          api.get('/settings')
         ]);
         setOrders(orderRes.data);
         setProducts(prodRes.data.products);
         setCategories(catRes.data);
         setCoupons(coupRes.data);
         setPendingAdmins(pendingRes.data);
+        setSettings({
+          bkash_number: settingsRes.data.bkash_number || '',
+          nagad_number: settingsRes.data.nagad_number || ''
+        });
       } catch (error) {
         console.error('Admin fetch error', error);
         if (error.response?.status === 401) {
@@ -140,6 +147,19 @@ const AdminDashboard = () => {
       } catch (error) {
         alert('Delete failed');
       }
+    }
+  };
+
+  const handleSaveSettings = async (e) => {
+    e.preventDefault();
+    setSavingSettings(true);
+    try {
+      await api.put('/settings', settings);
+      alert('Payment settings saved successfully!');
+    } catch (error) {
+      alert('Failed to save settings');
+    } finally {
+      setSavingSettings(false);
     }
   };
 
@@ -340,6 +360,7 @@ const AdminDashboard = () => {
             { id: 'payments', label: 'Payments', icon: CreditCard },
             { id: 'users', label: 'Shop Customers', icon: Users },
             { id: 'admin_approvals', label: 'Admin Approvals', icon: ShieldCheck },
+            { id: 'payment_settings', label: 'Payment Settings', icon: Tag },
           ].map((item) => (
             <button
               key={item.id}
@@ -569,6 +590,51 @@ const AdminDashboard = () => {
                   ))}
                 </tbody>
               </table>
+            </div>
+          ) : activeTab === 'payment_settings' ? (
+            <div className="max-w-2xl">
+              <p className="text-gray-400 mb-8 text-sm tracking-tight font-medium">Configure the mobile numbers for bKash and Nagad payments. These will be displayed to customers during checkout.</p>
+              
+              <form onSubmit={handleSaveSettings} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-pink-500" /> bKash Number
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.bkash_number}
+                      onChange={(e) => setSettings({ ...settings, bkash_number: e.target.value })}
+                      placeholder="017XXXXXXXX"
+                      className="w-full bg-gray-50 border border-transparent rounded-2xl px-5 py-4 text-sm focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all duration-200"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-orange-500" /> Nagad Number
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.nagad_number}
+                      onChange={(e) => setSettings({ ...settings, nagad_number: e.target.value })}
+                      placeholder="017XXXXXXXX"
+                      className="w-full bg-gray-50 border border-transparent rounded-2xl px-5 py-4 text-sm focus:bg-white focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all duration-200"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-4">
+                  <button
+                    type="submit"
+                    disabled={savingSettings}
+                    className="btn-primary flex items-center gap-3 px-8 py-4 shadow-xl shadow-primary/20 disabled:opacity-50"
+                  >
+                    {savingSettings ? <RefreshCw className="w-5 h-5 animate-spin" /> : <ShieldCheck className="w-5 h-5" />}
+                    Save Payment Configuration
+                  </button>
+                </div>
+              </form>
             </div>
           ) : (
             <div className="py-20 text-center opacity-30">
@@ -981,6 +1047,18 @@ const AdminDashboard = () => {
                   </p>
                 </div>
               </div>
+
+              {selectedOrder.transactionId && (
+                <div className="p-4 bg-primary/5 border border-primary/10 rounded-2xl flex items-center justify-between">
+                  <div>
+                    <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Transaction ID (Manual Payment)</p>
+                    <p className="text-lg font-mono font-black text-dark tracking-tighter">{selectedOrder.transactionId}</p>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-[10px] font-black uppercase tracking-widest">
+                    <ShieldCheck className="w-4 h-4" /> Verify Manually
+                  </div>
+                </div>
+              )}
 
               {/* Customer Info */}
               <div className="space-y-4">
