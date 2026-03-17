@@ -27,6 +27,8 @@ const Dashboard = () => {
     country: user?.address?.country || 'Bangladesh',
   });
 
+  const [expandedOrderId, setExpandedOrderId] = useState(null);
+
   useEffect(() => {
     const fetchOrders = async () => {
       try {
@@ -65,6 +67,16 @@ const Dashboard = () => {
     { id: 'addresses', label: 'Shipping Address', icon: MapPin },
   ];
 
+  const getStatusSteps = (status) => {
+    const steps = ['Pending', 'Processing', 'Shipped', 'Delivered'];
+    const currentIdx = steps.indexOf(status) !== -1 ? steps.indexOf(status) : 0;
+    return steps.map((s, i) => ({
+      name: s,
+      isDone: i <= currentIdx,
+      isCurrent: i === currentIdx
+    }));
+  };
+
   return (
     <div className="container mx-auto px-4 py-12">
       <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-8 items-start">
@@ -72,7 +84,7 @@ const Dashboard = () => {
         {/* Sidebar */}
         <aside className="w-full lg:w-72 space-y-6">
           <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm flex flex-col items-center text-center">
-            <div className="w-20 h-20 bg-primary/10 text-primary rounded-2xl flex items-center justify-center font-black text-3xl mb-4">
+            <div className="w-20 h-20 bg-primary/10 text-primary rounded-2xl flex items-center justify-center font-black text-3xl mb-4 text-primary">
               {user?.name?.charAt(0)}
             </div>
             <h2 className="text-xl font-black text-dark">{user?.name}</h2>
@@ -97,7 +109,7 @@ const Dashboard = () => {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 w-full">
+        <main className="flex-1 w-full text-dark">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -127,36 +139,127 @@ const Dashboard = () => {
                       ))}
                     </div>
                   ) : orders.length > 0 ? (
-                    <div className="overflow-x-auto -mx-8 lg:-mx-10 px-8 lg:px-10">
-                      <table className="w-full text-left">
-                        <thead>
-                          <tr className="text-xs text-gray-400 uppercase tracking-widest border-b border-gray-50">
-                            <th className="pb-4 font-black">Order ID</th>
-                            <th className="pb-4 font-black">Date</th>
-                            <th className="pb-4 font-black">Total</th>
-                            <th className="pb-4 font-black">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-50">
-                          {orders.map((order) => (
-                            <tr key={order.id || order._id} className="group">
-                              <td className="py-6">
-                                <span className="font-bold text-dark group-hover:text-primary transition-colors">#{String(order.id || order._id).slice(-6).toUpperCase()}</span>
-                              </td>
-                              <td className="py-6 text-gray-400 text-sm font-medium">
-                                {format(new Date(order.createdAt), 'MMM dd, yyyy')}
-                              </td>
-                              <td className="py-6 font-black text-dark">{order.totalPrice}৳</td>
-                              <td className="py-6">
-                                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${order.isDelivered ? 'bg-green-100/50 text-green-700' : 'bg-orange-100/50 text-orange-700'}`}>
-                                  {order.isDelivered ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
+                    <div className="space-y-4">
+                      {orders.map((order) => (
+                        <div key={order.id} className="border border-gray-100 rounded-3xl overflow-hidden shadow-sm transition-all hover:border-primary/20">
+                          <div 
+                            onClick={() => setExpandedOrderId(expandedOrderId === order.id ? null : order.id)}
+                            className="p-6 flex flex-wrap items-center justify-between gap-6 cursor-pointer bg-white group"
+                          >
+                            <div className="flex items-center gap-6">
+                              <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 group-hover:text-primary transition-colors">
+                                <Package className="w-6 h-6" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-black text-dark">Order #{String(order.id).padStart(6, '0')}</p>
+                                <p className="text-xs font-bold text-gray-400">{format(new Date(order.createdAt), 'MMM dd, yyyy')}</p>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-8">
+                              <div className="hidden sm:block text-right">
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Total Price</p>
+                                <p className="text-sm font-black text-dark">{order.totalPrice.toLocaleString()}৳</p>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${order.status === 'Delivered' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
                                   {order.status}
                                 </span>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                                {expandedOrderId === order.id ? <ChevronUp className="w-5 h-5 text-gray-300" /> : <ChevronDown className="w-5 h-5 text-gray-300" />}
+                              </div>
+                            </div>
+                          </div>
+
+                          <AnimatePresence>
+                            {expandedOrderId === order.id && (
+                              <motion.div 
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="border-t border-gray-50 bg-gray-50/30 overflow-hidden"
+                              >
+                                <div className="p-8 space-y-10">
+                                  {/* Status Timeline */}
+                                  <div className="relative pt-8 px-4">
+                                     <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-gray-100 -translate-y-1/2" />
+                                     <div className="relative flex justify-between">
+                                        {getStatusSteps(order.status).map((step, i) => (
+                                          <div key={i} className="flex flex-col items-center gap-3 bg-gray-50 px-2 z-10 transition-all">
+                                             <div className={`w-6 h-6 rounded-full border-4 flex items-center justify-center transition-all ${step.isDone ? 'bg-primary border-primary/20 text-white' : 'bg-white border-gray-100 text-gray-200'}`}>
+                                                {step.isDone && <CheckCircle2 className="w-3 h-3" />}
+                                             </div>
+                                             <span className={`text-[10px] font-black uppercase tracking-widest ${step.isCurrent ? 'text-primary' : step.isDone ? 'text-dark' : 'text-gray-300'}`}>
+                                               {step.name}
+                                             </span>
+                                          </div>
+                                        ))}
+                                     </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 pt-4">
+                                    {/* Order Items */}
+                                    <div className="space-y-4">
+                                       <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Items Ordered</h4>
+                                       <div className="space-y-3">
+                                         {order.orderItems?.map((item, i) => (
+                                           <div key={i} className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-50 shadow-sm">
+                                              <div className="w-14 h-14 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-center p-1">
+                                                 <img src={item.image} alt={item.name} className="w-full h-full object-contain" />
+                                              </div>
+                                              <div className="flex-1">
+                                                <p className="text-sm font-bold text-dark">{item.name}</p>
+                                                <p className="text-[10px] font-bold text-gray-400 uppercase">{item.quantity} x {item.price}৳</p>
+                                              </div>
+                                              <p className="text-sm font-black text-dark">{(item.quantity * item.price).toLocaleString()}৳</p>
+                                           </div>
+                                         ))}
+                                       </div>
+                                    </div>
+
+                                    {/* Order Info */}
+                                    <div className="space-y-8">
+                                       <div className="grid grid-cols-2 gap-6">
+                                          <div className="space-y-2">
+                                             <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                                <MapPin className="w-3 h-3" /> Shipping Address
+                                             </h4>
+                                             <p className="text-sm font-bold text-dark leading-relaxed">
+                                               {order.street}, {order.city}<br />
+                                               {order.state} {order.zipCode}, {order.country}
+                                             </p>
+                                          </div>
+                                          <div className="space-y-2">
+                                             <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                                                <CreditCard className="w-3 h-3" /> Payment Method
+                                             </h4>
+                                             <p className="text-sm font-bold text-dark">{order.paymentMethod}</p>
+                                             <p className={`text-[10px] font-black uppercase ${order.isPaid ? 'text-green-500' : 'text-red-500'}`}>
+                                               {order.isPaid ? 'Payment Successful' : 'Payment Pending'}
+                                             </p>
+                                          </div>
+                                       </div>
+                                       <div className="pt-6 border-t border-gray-100 space-y-3">
+                                          <div className="flex justify-between text-xs font-bold text-gray-400">
+                                             <span>Subtotal</span>
+                                             <span>{order.itemsPrice.toLocaleString()}৳</span>
+                                          </div>
+                                          <div className="flex justify-between text-xs font-bold text-gray-400">
+                                             <span>Shipping</span>
+                                             <span>{order.shippingPrice.toLocaleString()}৳</span>
+                                          </div>
+                                          <div className="flex justify-between text-base font-black text-dark pt-2">
+                                             <span>Total</span>
+                                             <span>{order.totalPrice.toLocaleString()}৳</span>
+                                          </div>
+                                       </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      ))}
                     </div>
                   ) : (
                     <div className="text-center py-20 bg-gray-50 rounded-3xl border border-dashed border-gray-200">

@@ -138,6 +138,8 @@ const getMyOrders = async (req, res) => {
   try {
     const orders = await prisma.order.findMany({
       where: { userId: req.user.id },
+      include: { orderItems: true },
+      orderBy: { createdAt: 'desc' },
     });
     res.json(orders);
   } catch (error) {
@@ -163,6 +165,182 @@ const getOrders = async (req, res) => {
   }
 };
 
+// @desc    Get analytics data for admin dashboard
+// @route   GET /api/orders/analytics
+// @access  Private/Admin
+const getAnalytics = async (req, res) => {
+  try {
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now);
+    thirtyDaysAgo.setDate(now.getDate() - 30);
+    const sixMonthsAgo = new Date(now);
+    sixMonthsAgo.setMonth(now.getMonth() - 6);
+
+    // Run all queries in parallel for speed
+    const [
+      totalOrders,
+      totalRevenue,
+      totalCustomers,
+      totalProducts,
+      pendingOrders,
+      deliveredOrders,
+      recentOrders,
+      allOrders,
+      topProductItems,
+      lowStockProducts,
+      categoryRevenue,
+    ] = await Promise.all([
+      // KPIs
+      prisma.order.count(),
+      prisma.order.aggregate({ _sum: { totalPrice: true } }),
+      prisma.user.count({ where: { role: 'user' } }),
+      prisma.product.count(),
+      prisma.order.count({ where: { status: 'Pending' } }),
+      prisma.order.count({ where: { status: 'Delivered' } }),
+
+      // Orders in last 30 days for daily chart
+      prisma.order.findMany({
+        where: { createdAt: { gte: thirtyDaysAgo } },
+        select: { createdAt: true, totalPrice: true },
+        orderBy: { createdAt: 'asc' },
+      }),
+
+      // All orders for monthly grouping + payment method
+      prisma.order.findMany({
+        where: { createdAt: { gte: sixMonthsAgo } },
+        select: { createdAt: true, totalPrice: true, paymentMethod: true, status: true },
+        orderBy: { createdAt: 'asc' },
+      }),
+
+      // Top products aggregated by quantity sold
+      prisma.orderItem.groupBy({
+        by: ['productId'],
+        _sum: { quantity: true, price: true },
+        orderBy: { _sum: { quantity: 'desc' } },
+        take: 10,
+      }),
+
+      // Low stock products (stock <= 10)
+      prisma.product.findMany({
+        where: { stock: { lte: 10 } },
+        select: { id: true, name: true, stock: true, slug: true, images: true },
+        orderBy: { stock: 'asc' },
+        take: 10,
+      }),
+
+      // Category performance
+      prisma.category.findMany({
+        select: {
+          id: true,
+          name: true,
+          products: {
+            select: {
+              id: true,
+              orderItems: {
+                select: { quantity: true, price: true }
+              }
+            }
+          }
+        }
+      }),
+    ]);
+
+    // --- Daily revenue (last 30 days) ---
+    const dailyMap = {};
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(now.getDate() - i);
+      const key = d.toISOString().slice(0, 10);
+      dailyMap[key] = { date: key, revenue: 0, orders: 0 };
+    }
+    recentOrders.forEach(o => {
+      const key = o.createdAt.toISOString().slice(0, 10);
+      if (dailyMap[key]) {
+        dailyMap[key].revenue += o.totalPrice;
+        dailyMap[key].orders += 1;
+      }
+    });
+    const revenueByDay = Object.values(dailyMap);
+
+    // --- Monthly revenue (last 6 months) ---
+    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const monthlyMap = {};
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now);
+      d.setMonth(now.getMonth() - i);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      monthlyMap[key] = { month: monthNames[d.getMonth()], year: d.getFullYear(), revenue: 0, orders: 0 };
+    }
+    allOrders.forEach(o => {
+      const d = o.createdAt;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      if (monthlyMap[key]) {
+        monthlyMap[key].revenue += o.totalPrice;
+        monthlyMap[key].orders += 1;
+      }
+    });
+    const revenueByMonth = Object.values(monthlyMap);
+
+    // --- Payment method breakdown ---
+    const paymentMap = {};
+    allOrders.forEach(o => {
+      const method = o.paymentMethod || 'Unknown';
+      if (!paymentMap[method]) paymentMap[method] = { method, revenue: 0, orders: 0 };
+      paymentMap[method].revenue += o.totalPrice;
+      paymentMap[method].orders += 1;
+    });
+    const paymentBreakdown = Object.values(paymentMap);
+
+    // --- Top selling products (with name) ---
+    const productIds = topProductItems.map(i => i.productId);
+    const productsInfo = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, name: true, slug: true, images: true, price: true }
+    });
+    const productInfoMap = Object.fromEntries(productsInfo.map(p => [p.id, p]));
+    const topProducts = topProductItems.map(item => ({
+      productId: item.productId,
+      name: productInfoMap[item.productId]?.name || 'Unknown',
+      slug: productInfoMap[item.productId]?.slug || '',
+      images: productInfoMap[item.productId]?.images || null,
+      unitsSold: item._sum.quantity || 0,
+      revenue: item._sum.price || 0,
+    }));
+
+    // --- Category performance ---
+    const categoryStats = categoryRevenue.map(cat => {
+      let units = 0, revenue = 0;
+      cat.products.forEach(p => {
+        p.orderItems.forEach(oi => {
+          units += oi.quantity;
+          revenue += oi.price * oi.quantity;
+        });
+      });
+      return { id: cat.id, name: cat.name, units, revenue, productCount: cat.products.length };
+    }).sort((a, b) => b.revenue - a.revenue);
+
+    res.json({
+      kpis: {
+        totalOrders,
+        totalRevenue: totalRevenue._sum.totalPrice || 0,
+        totalCustomers,
+        totalProducts,
+        pendingOrders,
+        deliveredOrders,
+      },
+      revenueByDay,
+      revenueByMonth,
+      paymentBreakdown,
+      topProducts,
+      lowStockProducts,
+      categoryStats,
+    });
+  } catch (error) {
+    console.error('Analytics error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   addOrderItems,
   getOrderById,
@@ -170,4 +348,6 @@ module.exports = {
   updateOrderToDelivered,
   getMyOrders,
   getOrders,
+  getAnalytics,
 };
+
