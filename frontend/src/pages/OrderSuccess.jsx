@@ -1,7 +1,7 @@
 import React from 'react';
 import { useParams, useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Package, CheckCircle, Truck, Clock, MapPin, ChevronLeft } from 'lucide-react';
+import { Package, CheckCircle, Truck, Clock, MapPin, ChevronLeft, Phone } from 'lucide-react';
 import api from '../utils/api';
 
 const OrderSuccess = () => {

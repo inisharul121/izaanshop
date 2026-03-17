@@ -150,6 +150,7 @@ const getOrders = async (req, res) => {
   try {
     const orders = await prisma.order.findMany({
       include: { user: { select: { id: true, name: true } } },
+      orderBy: { createdAt: 'desc' },
     });
     res.json(orders);
   } catch (error) {

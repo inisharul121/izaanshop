@@ -18,6 +18,7 @@ const Checkout = () => {
   const navigate = useNavigate();
   const { cart, clearCart, user } = useStore();
   const [loading, setLoading] = React.useState(false);
+  const isOrderPlaced = React.useRef(false);
   const isGuest = !user;
 
   const { register, handleSubmit, formState: { errors } } = useForm({
@@ -56,6 +57,7 @@ const Checkout = () => {
       };
 
       const response = await api.post('/orders', orderData);
+      isOrderPlaced.current = true;
       clearCart();
       navigate(`/order-success`, { state: { orderId: response.data.id, isGuest } });
     } catch (error) {
@@ -67,7 +69,7 @@ const Checkout = () => {
   };
 
   React.useEffect(() => {
-    if (cart.length === 0 && !loading) {
+    if (cart.length === 0 && !loading && !isOrderPlaced.current) {
       navigate('/cart');
     }
   }, [cart, loading, navigate]);

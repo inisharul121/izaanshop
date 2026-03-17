@@ -374,7 +374,7 @@ const AdminDashboard = () => {
                   {orders.map((order) => (
                     <tr key={order.id} className="text-sm">
                       <td className="py-5">
-                        <p className="font-bold text-dark">{order.user?.name || 'Guest'}</p>
+                        <p className="font-bold text-dark">{order.user?.name || order.guestName || 'Guest'}</p>
                         <p className="text-[10px] text-gray-400">{String(order.id).padStart(6, '0')}</p>
                       </td>
                       <td className="py-5 font-bold">{order.totalPrice}৳</td>
