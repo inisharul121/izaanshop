@@ -46,14 +46,14 @@ const Navbar = () => {
             </Link>
             {user?.role === 'admin' && (
               <Link to="/admin" className="text-dark hover:text-primary transition-colors flex items-center gap-1 font-bold text-sm">
-                  <LayoutDashboard className="w-5 h-5" /> Admin
+                <LayoutDashboard className="w-5 h-5" /> Admin
               </Link>
             )}
             <Link to="/profile" className="text-dark hover:text-primary transition-colors font-bold text-sm">
-                Dashboard
+              Dashboard
             </Link>
             {user ? (
-              <button 
+              <button
                 onClick={logout}
                 className="text-dark hover:text-primary transition-colors font-bold text-sm"
               >
@@ -102,12 +102,12 @@ const Navbar = () => {
           <nav className="flex flex-col gap-3 font-medium text-dark">
             {user?.role === 'admin' && (
               <Link to="/admin" onClick={() => setIsOpen(false)} className="text-primary font-bold flex items-center gap-2">
-                  <LayoutDashboard className="w-5 h-5" /> Admin Panel
+                <LayoutDashboard className="w-5 h-5" /> Admin Panel
               </Link>
             )}
             <Link to="/profile" onClick={() => setIsOpen(false)} className="hover:text-primary">Dashboard</Link>
             {user ? (
-              <button 
+              <button
                 onClick={() => {
                   logout();
                   setIsOpen(false);

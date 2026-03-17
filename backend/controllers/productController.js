@@ -15,13 +15,41 @@ const getProducts = async (req, res) => {
     where.category = { slug: req.query.category };
   }
 
+  // Price range filtering
+  if (req.query.minPrice || req.query.maxPrice) {
+    where.price = {};
+    if (req.query.minPrice) where.price.gte = Number(req.query.minPrice);
+    if (req.query.maxPrice) where.price.lte = Number(req.query.maxPrice);
+  }
+
+  // Sorting
+  let orderBy = { createdAt: 'desc' };
+  if (req.query.sort) {
+    switch (req.query.sort) {
+      case 'price-low':
+        orderBy = { price: 'asc' };
+        break;
+      case 'price-high':
+        orderBy = { price: 'desc' };
+        break;
+      case 'popular':
+        // For now, popularity can be based on createdAt or we can add a 'views' field later
+        orderBy = { createdAt: 'desc' };
+        break;
+      case 'newest':
+      default:
+        orderBy = { createdAt: 'desc' };
+        break;
+    }
+  }
+
   try {
     const count = await prisma.product.count({ where });
     const products = await prisma.product.findMany({
       where,
       take: pageSize,
       skip: pageSize * (page - 1),
-      orderBy: { createdAt: 'desc' },
+      orderBy,
       include: { 
         category: true,
         attributes: true,

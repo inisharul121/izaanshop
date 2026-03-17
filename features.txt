@@ -14,8 +14,10 @@
 - **Centralized Media Library**: Powerful image management system with a reusable gallery, preventing duplicate uploads and optimizing storage.
 - **Main & Gallery Images**: Ability to set a featured product image and a multi-image gallery for detailed views.
 - **Smart Slugs**: Automatic URL-friendly slug generation for products and categories.
+- **Advanced Filtering & Sorting**: Powerful shop search supporting price range filtering and multiple sorting options (Newest, Price High/Low).
 
 ## 3. Categories & Promotions
+- **Dynamic Category Discovery**: Homepage dynamically fetches and displays the latest categories from the database.
 - **Category Hierarchy**: Full CRUD management of product categories with custom icons/images.
 - **Intelligent Coupon System**: Create promotional codes with:
     - Fixed or Percentage discounts.
@@ -44,3 +46,4 @@
 - **Fluid Interactions**: Smooth micro-animations and tab transitions powered by Framer Motion.
 - **Full Responsiveness**: Optimized layouts for Mobile, Tablet, and Desktop screens.
 - **Tech Stack**: Built with a high-performance stack: React, Vite, Tailwind CSS, Node.js, Express, and MySQL (via Prisma ORM).
+- **Brand Centralization**: Unified identity across the storefront and admin dashboard using high-resolution custom logo and favicon assets.

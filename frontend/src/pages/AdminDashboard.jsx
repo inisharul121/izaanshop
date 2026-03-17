@@ -57,9 +57,9 @@ const AdminDashboard = () => {
     } else if (selectingFor === 'gallery') {
       setEditingItem(prev => ({
         ...prev,
-        images: { 
-          ...prev?.images, 
-          gallery: [...(prev?.images?.gallery || []), file.url] 
+        images: {
+          ...prev?.images,
+          gallery: [...(prev?.images?.gallery || []), file.url]
         }
       }));
     } else if (selectingFor === 'category_image') {
@@ -192,7 +192,7 @@ const AdminDashboard = () => {
     e.preventDefault();
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData.entries());
-    
+
     // Add variants and attributes if VARIABLE
     if (modalType === 'product') {
       data.type = productType;
@@ -217,7 +217,7 @@ const AdminDashboard = () => {
           const uploadRes = await api.post('/upload', uploadData, {
             headers: { 'Content-Type': 'multipart/form-data' }
           });
-          
+
           if (uploadRes.data.mainImage) mainImageUrl = uploadRes.data.mainImage;
           if (uploadRes.data.gallery.length > 0) {
             galleryUrls = [...galleryUrls, ...uploadRes.data.gallery];
@@ -232,12 +232,12 @@ const AdminDashboard = () => {
       if (data.price) data.price = Number(data.price);
       if (data.salePrice) data.salePrice = Number(data.salePrice);
       else delete data.salePrice;
-      
+
       data.stock = data.stock ? Number(data.stock) : 0;
       if (data.category) data.category = Number(data.category);
       if (data.discountValue) data.discountValue = Number(data.discountValue);
       if (data.maxUses) data.maxUses = Number(data.maxUses);
-      
+
       if (modalType === 'product') {
         if (editingItem) {
           const res = await api.put(`/products/${editingItem.id}`, data);
@@ -446,7 +446,7 @@ const AdminDashboard = () => {
                         {!order.isDelivered && (
                           <button onClick={() => handleDeliver(order.id)} className="text-primary hover:underline text-xs font-bold">Mark Delivered</button>
                         )}
-                        <button 
+                        <button
                           onClick={() => { setSelectedOrder(order); setShowOrderModal(true); }}
                           className="p-2 bg-gray-50 text-gray-400 rounded-lg hover:text-primary transition-colors"
                           title="View Details"
@@ -491,8 +491,8 @@ const AdminDashboard = () => {
                       <Filter className="w-8 h-8 text-primary" />
                     )}
                   </div>
-                   <p className="font-bold text-dark">{cat.name}</p>
-                   <div className="flex gap-2 pt-2">
+                  <p className="font-bold text-dark">{cat.name}</p>
+                  <div className="flex gap-2 pt-2">
                     <button onClick={() => handleOpenModal('category', cat)} className="flex-1 p-2 bg-gray-50 text-gray-400 rounded-xl hover:text-primary"><Edit className="w-4 h-4" /></button>
                     <button onClick={() => handleDeleteCategory(cat.id)} className="flex-1 p-2 bg-gray-50 text-gray-400 rounded-xl hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
                   </div>
@@ -559,7 +559,7 @@ const AdminDashboard = () => {
                       <td className="py-5 text-gray-400">{admin.email}</td>
                       <td className="py-5 text-gray-400">{format(new Date(admin.createdAt), 'dd MMM yyyy')}</td>
                       <td className="py-5">
-                        <button 
+                        <button
                           onClick={() => handleApproveAdmin(admin.id)}
                           className="bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-md shadow-primary/20"
                         >
@@ -608,7 +608,7 @@ const AdminDashboard = () => {
           ) : activeTab === 'payment_settings' ? (
             <div className="max-w-2xl">
               <p className="text-gray-400 mb-8 text-sm tracking-tight font-medium">Configure the mobile numbers for bKash and Nagad payments. These will be displayed to customers during checkout.</p>
-              
+
               <form onSubmit={handleSaveSettings} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
@@ -652,8 +652,8 @@ const AdminDashboard = () => {
             </div>
           ) : (
             <div className="py-20 text-center opacity-30">
-               <BarChart3 className="w-20 h-20 mx-auto mb-4" />
-               <p>Detailed analytics module is coming soon.</p>
+              <BarChart3 className="w-20 h-20 mx-auto mb-4" />
+              <p>Detailed analytics module is coming soon.</p>
             </div>
           )}
         </main>
@@ -662,13 +662,13 @@ const AdminDashboard = () => {
       {/* Modal Overlay */}
       {showModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="absolute inset-0 bg-dark/60 backdrop-blur-sm"
             onClick={() => setShowModal(false)}
           />
-          <motion.div 
+          <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             className="relative bg-white w-full max-w-xl rounded-3xl shadow-2xl overflow-hidden"
@@ -699,20 +699,20 @@ const AdminDashboard = () => {
                   <div className="space-y-1 py-4 border-t border-b border-gray-100">
                     <label className="text-xs font-bold text-gray-400 uppercase">Product Type</label>
                     <div className="flex gap-4 pt-2">
-                       <button 
+                      <button
                         type="button"
                         onClick={() => setProductType('SIMPLE')}
                         className={`flex-1 py-3 rounded-xl text-sm font-bold border transition-all ${productType === 'SIMPLE' ? 'bg-primary/10 border-primary text-primary' : 'bg-gray-50 border-transparent text-gray-500 hover:bg-gray-100'}`}
-                       >
-                         Simple Product
-                       </button>
-                       <button 
+                      >
+                        Simple Product
+                      </button>
+                      <button
                         type="button"
                         onClick={() => setProductType('VARIABLE')}
                         className={`flex-1 py-3 rounded-xl text-sm font-bold border transition-all ${productType === 'VARIABLE' ? 'bg-primary/10 border-primary text-primary' : 'bg-gray-50 border-transparent text-gray-500 hover:bg-gray-100'}`}
-                       >
-                         Variable Product
-                       </button>
+                      >
+                        Variable Product
+                      </button>
                     </div>
                   </div>
 
@@ -897,11 +897,11 @@ const AdminDashboard = () => {
                         Main Image
                         <button type="button" onClick={() => { setSelectingFor('main'); fetchMedia(); }} className="text-primary hover:underline">Select from Media</button>
                       </label>
-                      <input 
-                        type="file" 
+                      <input
+                        type="file"
                         accept="image/*"
                         onChange={(e) => setMainImage(e.target.files[0])}
-                        className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" 
+                        className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                       />
                       {editingItem?.images?.main && <p className="text-[10px] text-gray-400 truncate">Current: {editingItem.images.main.split('/').pop()}</p>}
                     </div>
@@ -910,12 +910,12 @@ const AdminDashboard = () => {
                         Gallery Images
                         <button type="button" onClick={() => { setSelectingFor('gallery'); fetchMedia(); }} className="text-primary hover:underline">Select from Media</button>
                       </label>
-                      <input 
-                        type="file" 
-                        multiple 
+                      <input
+                        type="file"
+                        multiple
                         accept="image/*"
                         onChange={(e) => setGalleryFiles(Array.from(e.target.files))}
-                        className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-primary/10 file:text-primary hover:file:bg-primary/20" 
+                        className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
                       />
                       {editingItem?.images?.gallery?.length > 0 && <p className="text-[10px] text-gray-400">{editingItem.images.gallery.length} current items</p>}
                     </div>
@@ -930,23 +930,23 @@ const AdminDashboard = () => {
                 <>
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-gray-400 uppercase">Category Name</label>
-                    <input 
-                      name="name" 
-                      defaultValue={editingItem?.name} 
+                    <input
+                      name="name"
+                      defaultValue={editingItem?.name}
                       onChange={handleNameChange}
-                      required 
-                      className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" 
+                      required
+                      className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20"
                     />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <label className="text-xs font-bold text-gray-400 uppercase">Slug</label>
-                      <input 
-                        name="slug" 
-                        value={slug} 
-                        onChange={(e) => setSlug(e.target.value)} 
-                        required 
-                        className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" 
+                      <input
+                        name="slug"
+                        value={slug}
+                        onChange={(e) => setSlug(e.target.value)}
+                        required
+                        className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20"
                       />
                     </div>
                     <div className="space-y-1">
@@ -954,25 +954,25 @@ const AdminDashboard = () => {
                         Banner Image
                         <button type="button" onClick={() => { setSelectingFor('category_image'); fetchMedia(); }} className="text-primary hover:underline">Pick from Media</button>
                       </label>
-                      <input 
-                        name="image" 
-                        value={editingItem?.image || ''} 
+                      <input
+                        name="image"
+                        value={editingItem?.image || ''}
                         onChange={(e) => setEditingItem({ ...editingItem, image: e.target.value })}
                         placeholder="URL or select from media"
-                        className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" 
+                        className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20"
                       />
                     </div>
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-bold text-gray-400 uppercase flex justify-between">
-                      Description 
+                      Description
                       <span className="text-[10px] opacity-40">Optional</span>
                     </label>
-                    <textarea 
-                      name="description" 
-                      defaultValue={editingItem?.description} 
-                      rows="3" 
-                      className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20" 
+                    <textarea
+                      name="description"
+                      defaultValue={editingItem?.description}
+                      rows="3"
+                      className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/20"
                     />
                   </div>
                 </>
@@ -1009,8 +1009,8 @@ const AdminDashboard = () => {
               )}
 
               <div className="pt-4">
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   disabled={uploading}
                   className={`w-full py-4 rounded-2xl font-bold text-white transition-all shadow-lg ${uploading ? 'bg-gray-400 cursor-not-allowed' : 'bg-primary hover:bg-primary-dark shadow-primary/20'}`}
                 >
@@ -1024,7 +1024,7 @@ const AdminDashboard = () => {
       {/* Media Library Modal */}
       {showMediaLibrary && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-dark/60 backdrop-blur-sm">
-          <motion.div 
+          <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
@@ -1037,8 +1037,8 @@ const AdminDashboard = () => {
             </div>
             <div className="p-6 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {mediaFiles.map((file, i) => (
-                <div 
-                  key={i} 
+                <div
+                  key={i}
                   onClick={() => selectMedia(file)}
                   className="group relative aspect-square rounded-xl overflow-hidden border-2 border-transparent hover:border-primary cursor-pointer transition-all bg-gray-50"
                 >
@@ -1057,7 +1057,7 @@ const AdminDashboard = () => {
       {/* Order Detail Modal */}
       {showOrderModal && selectedOrder && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-dark/60 backdrop-blur-sm">
-          <motion.div 
+          <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
@@ -1189,14 +1189,14 @@ const AdminDashboard = () => {
             </div>
 
             <div className="p-6 bg-gray-50 border-t border-gray-100 flex gap-3">
-              <button 
+              <button
                 onClick={() => setShowOrderModal(false)}
                 className="flex-1 py-3 px-4 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-50 transition-all"
               >
                 Close
               </button>
               {!selectedOrder.isDelivered && (
-                <button 
+                <button
                   onClick={() => { handleDeliver(selectedOrder.id); setShowOrderModal(false); }}
                   className="flex-1 py-3 px-4 bg-primary text-white rounded-xl text-sm font-bold hover:bg-primary-dark transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
                 >

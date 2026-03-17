@@ -30,7 +30,7 @@ const Home = () => {
       {/* Hero Section */}
       <section className="relative h-[400px] md:h-[500px] overflow-hidden bg-primary/5">
         <div className="container mx-auto px-4 h-full flex flex-col md:flex-row items-center justify-between gap-8 pt-12 md:pt-0">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
@@ -52,15 +52,15 @@ const Home = () => {
               </Link>
             </div>
           </motion.div>
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8 }}
             className="md:w-1/2 hidden md:block"
           >
-            <img 
-              src="https://placehold.co/800x600/FF6B35/white?text=Izaan+Shop+hero" 
-              alt="Hero" 
+            <img
+              src="https://placehold.co/800x600/FF6B35/white?text=Izaan+Shop+hero"
+              alt="Hero"
               className="w-full max-w-md mx-auto drop-shadow-2xl"
             />
           </motion.div>
@@ -74,22 +74,29 @@ const Home = () => {
           <div className="w-20 h-1 bg-primary mx-auto rounded-full"></div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-          {[
-            { name: 'Books', icon: BookOpen, color: 'bg-blue-50 text-blue-500', slug: 'books' },
-            { name: 'Educational Toys', icon: ToyBrick, color: 'bg-orange-50 text-orange-500', slug: 'educational-toys' },
-            { name: 'Stationery', icon: PenTool, color: 'bg-green-50 text-green-500', slug: 'stationery' },
-          ].map((cat, i) => (
-            <Link key={i} to={`/shop?category=${cat.slug}`}>
+          {categories.map((cat, i) => (
+            <Link key={cat.id || i} to={`/shop?category=${cat.slug}`}>
               <motion.div 
                 whileHover={{ scale: 1.05 }}
-                className={`${cat.color} rounded-2xl p-8 flex flex-col items-center text-center group cursor-pointer`}
+                className="bg-white border border-gray-100 rounded-3xl p-2 flex flex-col items-center text-center group cursor-pointer shadow-sm hover:shadow-xl transition-all"
               >
-                <cat.icon className="w-12 h-12 mb-4 group-hover:rotate-12 transition-transform" />
-                <h3 className="text-xl font-bold text-dark">{cat.name}</h3>
-                <p className="text-xs mt-2 opacity-70">Browse Collections</p>
+                <div className="w-full aspect-square rounded-2xl overflow-hidden mb-4 bg-primary/5">
+                  <img 
+                    src={cat.image || `https://placehold.co/400?text=${cat.name}`} 
+                    alt={cat.name} 
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                </div>
+                <div className="pb-6 px-4">
+                  <h3 className="text-xl font-bold text-dark">{cat.name}</h3>
+                  <p className="text-xs mt-1 text-gray-400">Discover Collection</p>
+                </div>
               </motion.div>
             </Link>
           ))}
+          {categories.length === 0 && !loading && (
+            <p className="col-span-full text-center text-gray-400 italic">No categories found.</p>
+          )}
         </div>
       </section>
 
@@ -102,7 +109,7 @@ const Home = () => {
               View All <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
-          
+
           {loading ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               {[...Array(4)].map((_, i) => (

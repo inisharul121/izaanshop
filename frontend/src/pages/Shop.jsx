@@ -14,13 +14,23 @@ const Shop = () => {
 
   const categoryParam = searchParams.get('category') || '';
   const sortParam = searchParams.get('sort') || 'newest';
+  const minPriceParam = searchParams.get('minPrice') || '';
+  const maxPriceParam = searchParams.get('maxPrice') || '5000';
+
+  const [priceRange, setPriceRange] = React.useState(maxPriceParam);
 
   React.useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
+        const query = new URLSearchParams({
+          category: categoryParam,
+          sort: sortParam,
+          minPrice: minPriceParam,
+          maxPrice: maxPriceParam
+        }).toString();
         const [prodRes, catRes] = await Promise.all([
-          api.get(`/products?category=${categoryParam}&sort=${sortParam}`),
+          api.get(`/products?${query}`),
           api.get('/categories')
         ]);
         setProducts(prodRes.data.products);
@@ -32,7 +42,7 @@ const Shop = () => {
       }
     };
     fetchData();
-  }, [categoryParam, sortParam]);
+  }, [categoryParam, sortParam, minPriceParam, maxPriceParam]);
 
   const handleCategoryChange = (slug) => {
     const newParams = new URLSearchParams(searchParams);
@@ -108,10 +118,27 @@ const Shop = () => {
             <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
               <SlidersHorizontal className="w-4 h-4" /> Price Range
             </h3>
-            <input type="range" className="w-full accent-primary" min="0" max="5000" />
+            <input 
+              type="range" 
+              className="w-full accent-primary" 
+              min="0" 
+              max="5000" 
+              value={priceRange}
+              onChange={(e) => setPriceRange(e.target.value)}
+              onMouseUp={() => {
+                const newParams = new URLSearchParams(searchParams);
+                newParams.set('maxPrice', priceRange);
+                setSearchParams(newParams);
+              }}
+              onTouchEnd={() => {
+                const newParams = new URLSearchParams(searchParams);
+                newParams.set('maxPrice', priceRange);
+                setSearchParams(newParams);
+              }}
+            />
             <div className="flex justify-between text-xs text-gray-500 mt-2">
               <span>0৳</span>
-              <span>5000৳</span>
+              <span className="font-bold text-primary">{priceRange}৳</span>
             </div>
           </div>
         </aside>
