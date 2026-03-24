@@ -15,7 +15,7 @@ cloudinary.config({
 let storage;
 
 if (process.env.CLOUDINARY_CLOUD_NAME && process.env.NODE_ENV === 'production') {
-  // Use Cloudinary for Production (Vercel)
+  // Use Cloudinary for Production (if credentials exist)
   storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
@@ -23,18 +23,18 @@ if (process.env.CLOUDINARY_CLOUD_NAME && process.env.NODE_ENV === 'production') 
       allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
     },
   });
+} else if (process.env.VERCEL) {
+  // Use Memory Storage for Vercel (Base64 fallback)
+  storage = multer.memoryStorage();
 } else {
   // Use Disk Storage for Local Development
   const uploadDir = 'uploads/products';
-  // Only try to create directory if not in a serverless environment
-  if (!process.env.VERCEL) {
-    try {
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-    } catch (err) {
-      console.warn('Could not create upload directory:', err.message);
+  try {
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
     }
+  } catch (err) {
+    console.warn('Could not create upload directory:', err.message);
   }
 
   storage = multer.diskStorage({

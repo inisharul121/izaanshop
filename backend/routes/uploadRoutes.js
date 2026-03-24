@@ -21,11 +21,16 @@ router.post('/', (req, res) => {
 
     try {
       const getFileUrl = (file) => {
-        // Cloudinary storage provides 'path' as the full URL
+        // 1. Cloudinary storage provides 'path' as the full URL
         if (file.path && file.path.startsWith('http')) {
           return file.path;
         }
-        // Disk storage provides 'filename'
+        // 2. Memory storage (Vercel Base64 fallback) provides 'buffer'
+        if (file.buffer) {
+          const b64 = file.buffer.toString('base64');
+          return `data:${file.mimetype};base64,${b64}`;
+        }
+        // 3. Disk storage provides 'filename'
         return `/uploads/products/${file.filename}`;
       };
 
