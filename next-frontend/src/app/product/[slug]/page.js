@@ -5,7 +5,7 @@ import { getImageUrl } from '@/utils/helpers';
 
 // Server-side data fetching
 async function getProduct(slug) {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:5001/api' : '');
   
   try {
     const res = await fetch(`${baseUrl}/products/${slug}`, {

@@ -1,7 +1,13 @@
 import axios from 'axios';
 
+const getBaseUrl = () => {
+  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+  if (process.env.NODE_ENV === 'development') return 'http://localhost:5001/api';
+  return ''; // Production must have env variable
+};
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api',
+  baseURL: getBaseUrl(),
   withCredentials: true,
 });
 
