@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
+const path = require('path');
 const prisma = require('./utils/prisma');
 require('dotenv').config();
 
@@ -50,7 +51,7 @@ app.use(cookieParser());
 app.use(helmet({
   crossOriginResourcePolicy: false,
 }));
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Database Connection
 async function connectDB() {
