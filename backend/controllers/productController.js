@@ -155,15 +155,15 @@ const createProduct = async (req, res) => {
   try {
     const productData = {
       name,
-      price: Number(price),
-      description,
-      categoryId: Number(category),
+      price: Number(price) || 0,
+      description: description || '',
+      categoryId: Number(category || req.body.categoryId),
       images: JSON.stringify({
-        main: mainImage,
+        main: mainImage || '/placeholder.png',
         gallery: gallery || []
       }),
-      stock: stock ? Number(stock) : 0,
-      slug,
+      stock: Number(stock) || 0,
+      slug: slug || name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, ''),
       salePrice: salePrice ? Number(salePrice) : null,
       type: type || 'SIMPLE'
     };

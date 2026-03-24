@@ -16,6 +16,8 @@ export const useAdminDashboard = () => {
   const [coupons, setCoupons] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [settings, setSettings] = useState({ bkash_number: '', nagad_number: '' });
+  const [pendingAdmins, setPendingAdmins] = useState([]);
+  const [users, setUsers] = useState([]);
   
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,20 +33,24 @@ export const useAdminDashboard = () => {
 
   const fetchData = useCallback(async () => {
     try {
-      const [pRes, cRes, oRes, cpRes, sRes, aRes] = await Promise.all([
+      const [pRes, cRes, oRes, cpRes, sRes, aRes, paRes, uRes] = await Promise.all([
         api.get('/products'),
         api.get('/categories'),
         api.get('/orders'),
         api.get('/coupons'),
         api.get('/settings'),
-        api.get('/analytics/admin/kpis')
+        api.get('/analytics/admin/kpis'),
+        api.get('/auth/admin/pending'),
+        api.get('/auth/users')
       ]);
-      setProducts(pRes.data);
+      setProducts(pRes.data.products || pRes.data);
       setCategories(cRes.data);
-      setOrders(oRes.data);
+      setOrders(oRes.data.orders || oRes.data);
       setCoupons(cpRes.data);
       setSettings(sRes.data || { bkash_number: '', nagad_number: '' });
       setAnalytics(aRes.data);
+      setPendingAdmins(paRes.data);
+      setUsers(uRes.data);
     } catch (err) {
       console.error('Failed to fetch admin data', err);
     } finally {
@@ -84,6 +90,15 @@ export const useAdminDashboard = () => {
     }
   };
 
+  const handleApproveAdmin = async (id) => {
+    try {
+      await api.put(`/auth/admin/${id}/approve`);
+      fetchData();
+    } catch (err) {
+      alert('Failed to approve admin');
+    }
+  };
+
   return {
     user,
     activeTab,
@@ -95,6 +110,8 @@ export const useAdminDashboard = () => {
     analytics,
     settings,
     setSettings,
+    pendingAdmins,
+    users,
     loading,
     searchTerm,
     setSearchTerm,
@@ -113,6 +130,7 @@ export const useAdminDashboard = () => {
     handleLogout,
     handleDelete,
     handleDeliver,
+    handleApproveAdmin,
     fetchData
   };
 };

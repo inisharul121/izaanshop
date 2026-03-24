@@ -6,10 +6,10 @@ import { motion } from 'framer-motion';
 
 const DashboardOverview = ({ analytics }) => {
   const kpis = [
-    { label: 'Total Revenue', value: `${analytics?.kpis?.totalRevenue?.toLocaleString()}৳`, icon: CreditCard, color: 'text-primary', bg: 'bg-primary/10' },
-    { label: 'Total Orders', value: analytics?.kpis?.totalOrders, icon: ShoppingBag, color: 'text-blue-500', bg: 'bg-blue-50' },
-    { label: 'Total Customers', value: analytics?.kpis?.totalCustomers, icon: Users, color: 'text-green-500', bg: 'bg-green-50' },
-    { label: 'Total Products', value: analytics?.kpis?.totalProducts, icon: Package, color: 'text-orange-500', bg: 'bg-orange-50' },
+    { label: 'Total Revenue', value: `${(analytics?.kpis?.totalRevenue ?? 0).toLocaleString()}৳`, icon: CreditCard, color: 'text-primary', bg: 'bg-primary/10' },
+    { label: 'Total Orders', value: analytics?.kpis?.totalOrders ?? '—', icon: ShoppingBag, color: 'text-blue-500', bg: 'bg-blue-50' },
+    { label: 'Total Customers', value: analytics?.kpis?.totalCustomers ?? '—', icon: Users, color: 'text-green-500', bg: 'bg-green-50' },
+    { label: 'Total Products', value: analytics?.kpis?.totalProducts ?? '—', icon: Package, color: 'text-orange-500', bg: 'bg-orange-50' },
   ];
 
   return (
@@ -42,7 +42,7 @@ const DashboardOverview = ({ analytics }) => {
         </div>
         
         <div className="h-64 w-full relative group">
-          <svg className="w-full h-full overflow-visible" preserveAspectRatio="none">
+          <svg className="w-full h-full overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
             {analytics?.revenueByDay?.length > 1 && (() => {
               const data = analytics.revenueByDay;
               const max = Math.max(...data.map(d => d.revenue)) || 1000;
@@ -50,8 +50,8 @@ const DashboardOverview = ({ analytics }) => {
                 x: (i / (data.length - 1)) * 100,
                 y: 100 - (d.revenue / max) * 100
               }));
-              const pathData = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x}% ${p.y}%`).join(' ');
-              const areaData = `${pathData} L 100% 100% L 0% 100% Z`;
+              const pathData = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+              const areaData = `${pathData} L 100 100 L 0 100 Z`;
               
               return (
                 <>
@@ -64,7 +64,7 @@ const DashboardOverview = ({ analytics }) => {
                   <path d={areaData} fill="url(#chartGradient)" className="transition-all duration-1000" />
                   <path d={pathData} fill="none" stroke="#f43f5e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                   {points.map((p, i) => (
-                    <circle key={i} cx={`${p.x}%`} cy={`${p.y}%`} r="4" className="fill-white stroke-[#f43f5e] stroke-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <circle key={i} cx={p.x} cy={p.y} r="2" className="fill-white stroke-[#f43f5e] stroke-2 opacity-0 group-hover:opacity-100 transition-opacity" />
                   ))}
                 </>
               );

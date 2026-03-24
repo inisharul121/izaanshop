@@ -133,6 +133,20 @@ const approveAdmin = async (req, res) => {
   }
 };
 
+// @desc    Get all users
+// @route   GET /api/auth/users
+// @access  Private/Admin
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: { id: true, name: true, email: true, role: true, createdAt: true }
+    });
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Get user profile
 // @route   GET /api/auth/profile
 // @access  Private
@@ -204,4 +218,4 @@ const updateUserProfile = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, authUser, getUserProfile, updateUserProfile, registerAdmin, getPendingAdmins, approveAdmin };
+module.exports = { registerUser, authUser, getUserProfile, updateUserProfile, registerAdmin, getPendingAdmins, approveAdmin, getAllUsers };

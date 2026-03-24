@@ -12,9 +12,18 @@ const ProductSection = ({
   onDelete, 
   getImageUrl 
 }) => {
-  const filteredProducts = products.filter(p => 
+  const safeProducts = Array.isArray(products) ? products : [];
+  const filteredProducts = safeProducts.filter(p => 
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const safeParseImage = (product) => {
+    try {
+      if (product.images?.main) return product.images.main;
+      if (typeof product.images === 'string') return JSON.parse(product.images)?.main || '/placeholder.png';
+    } catch { /* ignore parse errors */ }
+    return '/placeholder.png';
+  };
 
   return (
     <div className="space-y-6">
@@ -56,7 +65,7 @@ const ProductSection = ({
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-gray-50 rounded-xl overflow-hidden border border-gray-100 shrink-0">
                         <img 
-                          src={getImageUrl(product.images?.main || (product.images ? JSON.parse(product.images).main : '/placeholder.png'))} 
+                          src={getImageUrl(safeParseImage(product))} 
                           alt={product.name} 
                           className="w-full h-full object-cover" 
                         />

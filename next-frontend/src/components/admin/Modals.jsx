@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, CreditCard, Users, Phone, MapPin, Check, Truck, ShieldCheck, RefreshCw } from 'lucide-react';
+import { X, CreditCard, Users, Phone, MapPin, Check, Truck, ShieldCheck, RefreshCw, Image as ImageIcon, Upload } from 'lucide-react';
+import api, { getImageUrl } from '@/utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
-import { getImageUrl } from '@/utils/api';
 
 export const OrderModal = ({ order, isOpen, onClose, onDeliver }) => {
   if (!isOpen || !order) return null;
@@ -125,7 +125,31 @@ export const ProductModal = ({
   slug,
   setSlug
 }) => {
+  const [mainImage, setMainImage] = useState(editingItem?.images?.main || (editingItem?.images ? JSON.parse(editingItem.images).main : ''));
+  const [uploadingImage, setUploadingImage] = useState(false);
+
   if (!isOpen) return null;
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      const { data } = await api.post('/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setMainImage(data.mainImage);
+    } catch (err) {
+      alert('Upload failed');
+      console.error(err);
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   const handleNameChange = (e) => {
     const value = e.target.value;
@@ -266,6 +290,41 @@ export const ProductModal = ({
               <option value="">Select Category</option>
               {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-gray-400 uppercase">Description</label>
+            <textarea name="description" defaultValue={editingItem?.description} className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm min-h-[100px]" placeholder="Product details..."></textarea>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-gray-400 uppercase">Product Image</label>
+            <div className="flex gap-4">
+              <div className="w-24 h-24 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden shrink-0 group relative">
+                {mainImage ? (
+                  <>
+                    <img src={getImageUrl(mainImage)} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-dark/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                       <p className="text-[10px] text-white font-bold">Change</p>
+                    </div>
+                  </>
+                ) : (
+                  <ImageIcon className="w-8 h-8 text-gray-300" />
+                )}
+                <input type="file" onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer" />
+                {uploadingImage && <div className="absolute inset-0 bg-white/80 flex items-center justify-center"><RefreshCw className="w-5 h-5 animate-spin text-primary" /></div>}
+              </div>
+              <div className="flex-1 space-y-2">
+                <input 
+                  name="mainImage" 
+                  value={mainImage} 
+                  onChange={(e) => setMainImage(e.target.value)} 
+                  placeholder="Or paste image URL here..." 
+                  className="w-full bg-gray-50 border-none rounded-xl p-3 text-xs" 
+                />
+                <p className="text-[10px] text-gray-400 italic">Preferred: Square image (800x800px). Supports PNG, JPG.</p>
+              </div>
+            </div>
           </div>
 
           <div className="pt-4">

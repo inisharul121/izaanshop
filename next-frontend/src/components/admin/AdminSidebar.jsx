@@ -12,6 +12,7 @@ import {
   CreditCard, 
   PieChart, 
   FileText, 
+  ShieldCheck,
   Image as ImageIcon 
 } from 'lucide-react';
 
@@ -23,6 +24,8 @@ const AdminSidebar = ({ activeTab, setActiveTab, onLogout }) => {
     { id: 'categories', label: 'Categories', icon: Tag },
     { id: 'orders', label: 'Orders', icon: Package },
     { id: 'coupons', label: 'Coupons', icon: CreditCard },
+    { id: 'users', label: 'Customers', icon: Users },
+    { id: 'admin_approvals', label: 'Admin Approvals', icon: ShieldCheck },
     { id: 'media', label: 'Media Library', icon: ImageIcon },
     { id: 'financial_report', label: 'Financials', icon: FileText },
     { id: 'product_report', label: 'Stock Reports', icon: FileText },

@@ -8,6 +8,7 @@ import ProductSection from '@/components/admin/ProductSection';
 import OrderSection from '@/components/admin/OrderSection';
 import { CategorySection, CouponSection } from '@/components/admin/OtherManagement';
 import { AnalyticsCharts, FinancialReport, ProductReport } from '@/components/admin/AnalyticsReports';
+import { UserSection, AdminApprovalsSection } from '@/components/admin/UserManagement';
 import { OrderModal, ProductModal, CategoryModal, CouponModal } from '@/components/admin/Modals';
 import { useAdminDashboard } from '@/hooks/useAdminDashboard';
 import { Loader2, RefreshCw, ShieldCheck } from 'lucide-react';
@@ -25,6 +26,8 @@ const AdminDashboard = () => {
     analytics,
     settings,
     setSettings,
+    pendingAdmins,
+    users,
     loading,
     searchTerm,
     setSearchTerm,
@@ -43,6 +46,7 @@ const AdminDashboard = () => {
     handleLogout,
     handleDelete,
     handleDeliver,
+    handleApproveAdmin,
     fetchData
   } = useAdminDashboard();
 
@@ -59,8 +63,8 @@ const AdminDashboard = () => {
     setEditingItem(item);
     if (type === 'product') {
       setProductType(item?.type || 'SIMPLE');
-      setAttributes(item?.attributes ? JSON.parse(item.attributes) : []);
-      setVariants(item?.variants ? JSON.parse(item.variants) : []);
+      setAttributes(item?.attributes || []);
+      setVariants(item?.variants || []);
       setSlug(item?.slug || '');
     } else if (type === 'category') {
       setSlug(item?.slug || '');
@@ -219,6 +223,15 @@ const AdminDashboard = () => {
                   </button>
                 </form>
               </div>
+            )}
+
+            {activeTab === 'users' && <UserSection users={users} />}
+            
+            {activeTab === 'admin_approvals' && (
+              <AdminApprovalsSection 
+                pendingAdmins={pendingAdmins} 
+                onApprove={handleApproveAdmin} 
+              />
             )}
           </div>
         </main>

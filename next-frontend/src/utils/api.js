@@ -31,6 +31,17 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // 1. Better error logging for Network Issues
+    if (!error.response) {
+      console.error('🌐 NETWORK ERROR: Cannot reach the backend API.');
+      console.error(`Attempted URL: ${error.config?.baseURL}${error.config?.url}`);
+      console.error('Possible causes: Backend is NOT running, incorrect NEXT_PUBLIC_API_URL, or CORS issues.');
+      
+      if (error.code === 'ERR_NETWORK' || error.message.includes('Network Error')) {
+        console.warn('💡 TIP: Check if your backend server is started (npm run dev in /backend)');
+      }
+    }
+
     if (error.response?.status === 401 && typeof window !== 'undefined') {
       // Avoid redirecting on checkout where auth is optional
       if (!window.location.pathname.includes('/checkout')) {

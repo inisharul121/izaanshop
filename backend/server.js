@@ -19,16 +19,25 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin.replace(/\/$/, ''))) {
+    // 1. Allow mobile apps / server-to-server (no origin)
+    if (!origin) return callback(null, true);
+    
+    // 2. Clean origin (remove trailing slash)
+    const cleanOrigin = origin.replace(/\/$/, '');
+    
+    // 3. Check against whitelist
+    if (allowedOrigins.includes(cleanOrigin)) {
       callback(null, true);
     } else {
-      console.warn(`CORS BLOCKED for origin: ${origin}`);
+      console.warn(`CORS BLOCKED: ${origin} not in [${allowedOrigins.join(', ')}]`);
       callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'X-Custom-Header'],
+  exposedHeaders: ['Set-Cookie'],
+  maxAge: 86400, // Cache preflight for 24 hours
   optionsSuccessStatus: 204
 }));
 
