@@ -41,6 +41,61 @@ const nextConfig = {
     ],
     unoptimized: process.env.NODE_ENV === 'development',
   },
+  async redirects() {
+    return [
+      {
+        source: '/admin',
+        destination: '/admin/dashboard',
+        permanent: true,
+      },
+      {
+        source: '/wishlist',
+        destination: '/',
+        permanent: false,
+      },
+      {
+        source: '/categories',
+        destination: '/',
+        permanent: false,
+      },
+      {
+        source: '/shop',
+        destination: '/',
+        permanent: false,
+      },
+      // Redirect missing documentation pages to home for now
+      {
+        source: '/shipping',
+        destination: '/',
+        permanent: false,
+      },
+      {
+        source: '/returns',
+        destination: '/',
+        permanent: false,
+      },
+      {
+        source: '/about',
+        destination: '/',
+        permanent: false,
+      },
+      {
+        source: '/faq',
+        destination: '/',
+        permanent: false,
+      },
+      {
+        source: '/contact',
+        destination: '/',
+        permanent: false,
+      },
+      {
+        source: '/privacy',
+        destination: '/',
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
