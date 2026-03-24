@@ -20,12 +20,17 @@ router.post('/', (req, res) => {
     }
 
     try {
-      if (!req.files) {
-        throw new Error('No files were uploaded or processed.');
-      }
+      const getFileUrl = (file) => {
+        // Cloudinary storage provides 'path' as the full URL
+        if (file.path && file.path.startsWith('http')) {
+          return file.path;
+        }
+        // Disk storage provides 'filename'
+        return `/uploads/products/${file.filename}`;
+      };
 
-      const mainImage = req.files['image'] ? `/uploads/products/${req.files['image'][0].filename}` : null;
-      const gallery = req.files['gallery'] ? req.files['gallery'].map(file => `/uploads/products/${file.filename}`) : [];
+      const mainImage = req.files['image'] ? getFileUrl(req.files['image'][0]) : null;
+      const gallery = req.files['gallery'] ? req.files['gallery'].map(file => getFileUrl(file)) : [];
 
       res.json({
         mainImage,
