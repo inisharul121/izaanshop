@@ -8,31 +8,36 @@ require('dotenv').config();
 
 const app = express();
 
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// 1. CORS - MUST BE FIRST
 const allowedOrigins = [
   process.env.CLIENT_URL,
   'https://izaanshop.vercel.app',
   'http://localhost:3000',
   'http://localhost:3001',
   'http://localhost:5173'
-].filter(Boolean).map(url => url.replace(/\/$/, '')); // Normalize: strip trailing slash
+].filter(Boolean).map(url => url.replace(/\/$/, ''));
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Strip trailing slash from origin for comparison
-    const normalizedOrigin = origin ? origin.replace(/\/$/, '') : null;
-    
-    if (!normalizedOrigin || allowedOrigins.includes(normalizedOrigin)) {
+    if (!origin || allowedOrigins.includes(origin.replace(/\/$/, ''))) {
       callback(null, true);
     } else {
       console.warn(`CORS BLOCKED for origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  optionsSuccessStatus: 204
 }));
+
+// Pre-flight requests across all routes
+app.options('*', cors());
+
+// 2. Body Parsers
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use(morgan('dev'));
 app.use(cookieParser());
 // Allow cross-origin images (important for separated frontend/backend)
