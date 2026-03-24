@@ -8,7 +8,12 @@ import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const ProfilePage = () => {
+  const [mounted, setMounted] = useState(false);
   const { user, setUser } = useStore();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   const [activeTab, setActiveTab] = useState('orders');
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -78,6 +83,15 @@ const ProfilePage = () => {
       isCurrent: i === currentIdx
     }));
   };
+
+  if (!mounted) {
+    return (
+      <div className="container mx-auto px-4 py-32 text-center flex flex-col items-center gap-4 text-gray-400">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        <p className="font-bold text-sm uppercase tracking-widest">Loading Your Profile...</p>
+      </div>
+    );
+  }
 
   if (!user) {
     return (

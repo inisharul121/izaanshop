@@ -11,7 +11,14 @@ import Image from 'next/image';
 
 const Cart = () => {
   const router = useRouter();
+  const [mounted, setMounted] = React.useState(false);
   const { cart, removeFromCart, updateQuantity, user } = useStore();
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return <div className="container mx-auto px-4 py-32 text-center text-gray-400 font-bold uppercase tracking-widest">Loading Your Cart...</div>;
 
   const subtotal = cart.reduce((acc, item) => acc + (item.salePrice || item.price) * item.quantity, 0);
   const shipping = subtotal > 2000 ? 0 : 60;

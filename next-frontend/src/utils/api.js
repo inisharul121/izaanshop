@@ -40,7 +40,10 @@ api.interceptors.response.use(
 export const getImageUrl = (path) => {
   if (!path) return '/placeholder.png';
   if (path.startsWith('http') || path.startsWith('data:')) return path;
-  return `${process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5001'}${path}`;
+  
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5001';
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${baseUrl}${cleanPath}`;
 };
 
 export default api;

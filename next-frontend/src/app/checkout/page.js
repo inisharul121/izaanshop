@@ -21,8 +21,13 @@ const checkoutSchema = z.object({
 
 const Checkout = () => {
   const router = useRouter();
+  const [mounted, setMounted] = React.useState(false);
   const { cart, clearCart, user } = useStore();
   const [loading, setLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
   const isOrderPlaced = React.useRef(false);
   const isGuest = !user;
 
@@ -147,6 +152,15 @@ const Checkout = () => {
   const inputClass = 'w-full bg-gray-50 border border-gray-200 rounded-2xl px-5 py-4 text-sm focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all duration-200';
   const labelClass = 'block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1';
   const errorClass = 'text-red-500 text-xs mt-2 ml-1 animate-pulse';
+
+  if (!mounted) {
+    return (
+      <div className="container mx-auto px-4 py-32 text-center flex flex-col items-center gap-4 text-gray-400">
+        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        <p className="font-bold text-sm uppercase tracking-widest">Preparing Checkout...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-16 max-w-6xl">

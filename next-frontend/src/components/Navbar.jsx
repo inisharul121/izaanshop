@@ -13,12 +13,17 @@ const Navbar = () => {
   const pathname = usePathname();
   const isAdminPath = pathname.startsWith('/admin');
   
+  const [mounted, setMounted] = React.useState(false);
   const [isOpen, setIsOpen] = React.useState(false);
   const { cart, user, logout } = useStore();
 
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   if (isAdminPath) return null;
 
-  const cartCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+  const cartCount = mounted ? cart.reduce((acc, item) => acc + item.quantity, 0) : 0;
 
   return (
     <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-100">
@@ -58,7 +63,7 @@ const Navbar = () => {
                 </span>
               )}
             </Link>
-            {user?.role === 'admin' && (
+            {mounted && user?.role === 'admin' && (
               <Link href="/admin" className="text-dark hover:text-primary transition-colors flex items-center gap-1 font-bold text-sm">
                 <LayoutDashboard className="w-5 h-5" /> Admin
               </Link>
@@ -66,14 +71,14 @@ const Navbar = () => {
             <Link href="/profile" className="text-dark hover:text-primary transition-colors font-bold text-sm">
               Dashboard
             </Link>
-            {user ? (
+            {mounted && user ? (
               <button
                 onClick={logout}
                 className="text-dark hover:text-primary transition-colors font-bold text-sm"
               >
                 Logout
               </button>
-            ) : (
+            ) : mounted ? (
               <>
                 <Link href="/login" className="text-dark hover:text-primary transition-colors font-bold text-sm">
                   Login
@@ -82,7 +87,7 @@ const Navbar = () => {
                   Register
                 </Link>
               </>
-            )}
+            ) : null}
           </div>
 
           {/* Mobile Menu Toggle */}
@@ -114,13 +119,13 @@ const Navbar = () => {
             <Search className="absolute left-3 top-2.5 text-gray-400 w-4 h-4" />
           </div>
           <nav className="flex flex-col gap-3 font-medium text-dark">
-            {user?.role === 'admin' && (
+            {mounted && user?.role === 'admin' && (
               <Link href="/admin" onClick={() => setIsOpen(false)} className="text-primary font-bold flex items-center gap-2">
                 <LayoutDashboard className="w-5 h-5" /> Admin Panel
               </Link>
             )}
             <Link href="/profile" onClick={() => setIsOpen(false)} className="hover:text-primary">Dashboard</Link>
-            {user ? (
+            {mounted && user ? (
               <button
                 onClick={() => {
                   logout();
@@ -130,12 +135,12 @@ const Navbar = () => {
               >
                 Logout
               </button>
-            ) : (
+            ) : mounted ? (
               <>
                 <Link href="/login" onClick={() => setIsOpen(false)} className="hover:text-primary">Login</Link>
                 <Link href="/register" onClick={() => setIsOpen(false)} className="hover:text-primary">Register</Link>
               </>
-            )}
+            ) : null}
             <Link href="/categories" onClick={() => setIsOpen(false)} className="hover:text-primary">Categories</Link>
           </nav>
         </div>
