@@ -1,10 +1,10 @@
-export const getImageUrl = (img) => {
-  if (!img) return 'https://placehold.co/400x500/F8F9FA/2D3748?text=Product';
-  if (img.startsWith('http')) return img;
+export const getImageUrl = (path) => {
+  if (!path) return '/placeholder.png';
+  if (path.startsWith('http') || path.startsWith('data:')) return path;
   
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:5001/api' : '');
-  const baseUrl = apiUrl.replace('/api', '');
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api';
+  const baseUrl = apiUrl.replace('/api', '').replace(/\/$/, '');
   
-  const cleanPath = img.startsWith('/') ? img : `/${img}`;
-  return baseUrl ? `${baseUrl}${cleanPath}` : cleanPath;
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${baseUrl}${cleanPath}`;
 };

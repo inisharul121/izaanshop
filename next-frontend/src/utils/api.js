@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getImageUrl } from './helpers';
 
 const getBaseUrl = () => {
   if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
@@ -54,13 +55,5 @@ api.interceptors.response.use(
   }
 );
 
-export const getImageUrl = (path) => {
-  if (!path) return '/placeholder.png';
-  if (path.startsWith('http') || path.startsWith('data:')) return path;
-  
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5001';
-  const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  return `${baseUrl}${cleanPath}`;
-};
-
+export { getImageUrl };
 export default api;

@@ -14,8 +14,8 @@ cloudinary.config({
 
 let storage;
 
-if (process.env.CLOUDINARY_CLOUD_NAME && process.env.NODE_ENV === 'production') {
-  // Use Cloudinary for Production (if credentials exist)
+if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_CLOUD_NAME !== 'your_cloud_name') {
+  console.log('☁️  Storage: Using Cloudinary');
   storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
@@ -23,10 +23,11 @@ if (process.env.CLOUDINARY_CLOUD_NAME && process.env.NODE_ENV === 'production') 
       allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
     },
   });
-} else if (process.env.VERCEL) {
-  // Use Memory Storage for Vercel (Base64 fallback)
+} else if (process.env.VERCEL || process.env.NODE_ENV === 'production') {
+  console.log('💾 Storage: Using Memory (Base64 Fallback)');
   storage = multer.memoryStorage();
 } else {
+  console.log('📁 Storage: Using Local Disk');
   // Use Disk Storage for Local Development
   const uploadDir = 'uploads/products';
   try {
