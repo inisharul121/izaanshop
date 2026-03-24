@@ -32,9 +32,6 @@ app.use(cors({
   optionsSuccessStatus: 204
 }));
 
-// Pre-flight requests across all routes
-app.options('*', cors());
-
 // 2. Body Parsers
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
