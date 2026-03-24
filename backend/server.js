@@ -36,18 +36,43 @@ async function connectDB() {
 connectDB();
 
 // Routes
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/categories', require('./routes/categoryRoutes'));
-app.use('/api/products', require('./routes/productRoutes'));
-app.use('/api/orders', require('./routes/orderRoutes'));
-app.use('/api/coupons', require('./routes/couponRoutes'));
-app.use('/api/upload', require('./routes/uploadRoutes'));
-app.use('/api/media', require('./routes/mediaRoutes'));
-app.use('/api/settings', require('./routes/settingsRoutes'));
+const apiRouter = express.Router();
 
-app.get('/', (req, res) => {
+apiRouter.use('/auth', require('./routes/authRoutes'));
+apiRouter.use('/categories', require('./routes/categoryRoutes'));
+apiRouter.use('/products', require('./routes/productRoutes'));
+apiRouter.use('/orders', require('./routes/orderRoutes'));
+apiRouter.use('/coupons', require('./routes/couponRoutes'));
+apiRouter.use('/upload', require('./routes/uploadRoutes'));
+apiRouter.use('/media', require('./routes/mediaRoutes'));
+apiRouter.use('/settings', require('./routes/settingsRoutes'));
+
+apiRouter.get('/', (req, res) => {
   res.json({ message: 'Welcome to IzaanShop API' });
 });
+
+apiRouter.get('/health', async (req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ 
+      status: 'ok', 
+      database: 'connected',
+      message: 'Prisma is working correctly'
+    });
+  } catch (error) {
+    console.error('Health Check Error:', error);
+    res.status(500).json({ 
+      status: 'error', 
+      database: 'disconnected', 
+      message: error.message,
+      hint: 'Check DATABASE_URL and if prisma generate has been run.'
+    });
+  }
+});
+
+// Support both /api and / routes (cPanel compatibility)
+app.use('/api', apiRouter);
+app.use('/', apiRouter);
 
 // Error Handling
 app.use((err, req, res, next) => {

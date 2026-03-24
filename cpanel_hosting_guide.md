@@ -1,71 +1,52 @@
-# cPanel Hosting Guide for Izaan Shop
+# cPanel Hosting Guide for Izaan Shop (SIMPLIFIED)
 
-This guide provides step-by-step instructions on how to host the Izaan Shop project (Frontend and Backend) on a cPanel-based web server.
-
-## Prerequisites
-- A cPanel account with Node.js support (Setup Node.js App).
-- MySQL database access.
-- Domain or Subdomain for both Frontend and Backend (e.g., `shop.com` and `api.shop.com`).
-
----
+This is the simplest way to host your shop where the website is at `yourdomain.com` and the API is at `yourdomain.com/api`.
 
 ## 1. Backend Deployment (Node.js & Express)
 
-### Step 1: Prepare the Files
-1. Go to your local `backend` folder.
-2. Delete the `node_modules` folder.
-3. Compress everything inside the `backend` folder into a `.zip` file.
+### Step 1: Upload Files
+1. In cPanel **File Manager**, create a folder named `backend_app` **outside** of `public_html` (e.g., `/home/username/backend_app`).
+2. Upload your `backend.zip` (without `node_modules`) and extract it there.
 
-### Step 2: Upload and Extract
-1. In cPanel, open **File Manager**.
-2. Create a folder named `backend` (outside `public_html` for security, e.g., `/home/username/backend`).
-3. Upload your `.zip` file there and extract it.
+### Step 2: Create API Proxy Folder
+1. Go to `public_html/` and create an empty folder named **`api`**.
+2. (cPanel needs this folder to handle the `/api` URL).
 
 ### Step 3: Setup Node.js App
-1. In cPanel, search for **Setup Node.js App**.
-2. Click **Create Application**.
-3. **Application root**: `backend` (the folder you created).
-4. **Application URL**: Select your API subdomain (e.g., `api.shop.com`).
-5. **Application startup file**: `server.js`.
-6. Click **Create**.
-7. Once created, click **Run JS Install** to install dependencies.
+1. In cPanel **Setup Node.js App**, click **Create Application**.
+2. **Application root**: `backend_app`.
+3. **Application URL**: Select your domain and type **`api`** in the path box.
+   - Result: `yourdomain.com/api`
+4. **Application startup file**: `server.js`.
+21. Click **Create**, then click **Run NPM Install**.
+22. **Note**: If you see a **503 Service Unavailable** error in your browser, it usually means the `node_modules` are missing or Prisma hasn't been generated. My recent update added a `postinstall` script, so clicking **Run NPM Install** now generates Prisma automatically.
+23. Add the following **Environment variables** in the cPanel Node.js Selector UI:
+    - `DATABASE_URL`: `mysql://zaansho_main:PASS@localhost:3306/izaansho_db` (Get actual from `cenv.txt`)
+    - `JWT_SECRET`: `supersecretkey_izaan_shop_2024`
+    - `NODE_ENV`: `production`
+    - `CLIENT_URL`: `https://yourdomain.com`
+24. Click **SAVE** and then click **RESTART**.
 
-### Step 4: Environment Variables
-1. In the Node.js App interface, add your environment variables from `.env`:
-   - `DATABASE_URL`: `mysql://user:password@localhost:3306/db_name`
-   - `JWT_SECRET`: Your secret key.
-   - `CLOUDINARY_CLOUD_NAME`: ...
-   - `CLOUDINARY_API_KEY`: ...
-   - `CLOUDINARY_API_SECRET`: ...
-2. Restart the app.
-
-### Step 5: Database Migration
-1. In cPanel, create a MySQL database and user via **MySQL Database Wizard**.
-2. Assign the user to the database with all privileges.
-3. If you have terminal access (SSH), run:
-   ```bash
-   npx prisma db push
-   ```
-   *If no SSH, you might need to export your local schema as SQL and import it via phpMyAdmin.*
 
 ---
 
 ## 2. Frontend Deployment (Vite & React)
 
-### Step 1: Build the App
-1. Locally, in the `frontend` folder, update `.env` or `vite.config.js` to point to your live API URL (e.g., `https://api.shop.com/api`).
-2. Run:
-   ```bash
-   npm run build
-   ```
-3. This will create a `dist` folder.
+### Step 1: Build locally
+1. Ensure `frontend/vite.config.js` has `base: '/'`.
+2. Ensure `frontend/.env.production` has `VITE_API_URL=https://yourdomain.com/api`.
+3. Run `npm run build`.
 
 ### Step 2: Upload to cPanel
-1. Open **File Manager** and go to `public_html`.
-2. Upload the **contents** of the `dist` folder directly into `public_html`.
+1. Go to your local `frontend/dist` folder.
+2. Select **all files/folders inside `dist`** and zip them (`frontend.zip`).
+3. In cPanel **File Manager**, go to the root of **`public_html`**.
+4. **Delete everything** inside `public_html` (folders like `frontend`, `backend`, etc. if you created them before).
+5. Upload `frontend.zip` into `public_html` and **Extract** it.
+   - Now `index.html` should be directly inside `public_html`.
 
-### Step 3: Handle Routing (SPA)
-Since this is a React app, you need a `.htaccess` file in `public_html` to handle routing:
+### Step 3: Routing (.htaccess)
+Create a `.htaccess` file in the root of `public_html` (if it doesn't exist) and paste this:
 ```apache
 <IfModule mod_rewrite.c>
   RewriteEngine On
@@ -80,13 +61,7 @@ Since this is a React app, you need a `.htaccess` file in `public_html` to handl
 
 ---
 
-## 3. Connecting Frontend and Backend
-1. Ensure your frontend calls the correct backend URL.
-2. Ensure your backend has the frontend URL in its CORS configuration (if applicable).
-
----
-
-## Troubleshooting
-- **404 on Refresh**: Check the `.htaccess` file.
-- **500 Internal Server Error**: Check the Node.js App logs in cPanel.
-- **Database Connection Error**: Verify `DATABASE_URL` in the Node.js App environment variables.
+## Summary of URLs
+- **Store**: `https://yourdomain.com`
+- **API**: `https://yourdomain.com/api`
+- **API Test**: `https://yourdomain.com/api/products`

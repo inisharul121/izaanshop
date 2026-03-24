@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import api from '../utils/api';
-import { Package, User as UserIcon, MapPin, ChevronRight, Clock, CheckCircle2, Save, Loader2, Phone, Globe, Home } from 'lucide-react';
+import { Package, User as UserIcon, MapPin, ChevronRight, Clock, CheckCircle2, Save, Loader2, Phone, Globe, Home, ChevronUp, ChevronDown, CreditCard } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 

@@ -1,0 +1,118 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { useStore } from '@/store/useStore';
+import api from '@/utils/api';
+import { useRouter } from 'next/navigation';
+
+export const useAdminDashboard = () => {
+  const router = useRouter();
+  const { user, logout } = useStore();
+  
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [coupons, setCoupons] = useState([]);
+  const [analytics, setAnalytics] = useState(null);
+  const [settings, setSettings] = useState({ bkash_number: '', nagad_number: '' });
+  
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('All');
+
+  // Modal states
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState('product');
+  const [editingItem, setEditingItem] = useState(null);
+  
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+
+  const fetchData = useCallback(async () => {
+    try {
+      const [pRes, cRes, oRes, cpRes, sRes, aRes] = await Promise.all([
+        api.get('/products'),
+        api.get('/categories'),
+        api.get('/orders'),
+        api.get('/coupons'),
+        api.get('/settings'),
+        api.get('/analytics/admin/kpis')
+      ]);
+      setProducts(pRes.data);
+      setCategories(cRes.data);
+      setOrders(oRes.data);
+      setCoupons(cpRes.data);
+      setSettings(sRes.data || { bkash_number: '', nagad_number: '' });
+      setAnalytics(aRes.data);
+    } catch (err) {
+      console.error('Failed to fetch admin data', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!user || user.role !== 'admin') {
+      router.push('/admin/login');
+      return;
+    }
+    fetchData();
+  }, [user, router, fetchData]);
+
+  const handleLogout = () => {
+    logout();
+    router.push('/admin/login');
+  };
+
+  const handleDelete = async (type, id) => {
+    if (!window.confirm(`Are you sure you want to delete this ${type}?`)) return;
+    try {
+      await api.delete(`/${type}s/${id}`);
+      fetchData();
+    } catch (err) {
+      alert(`Failed to delete ${type}`);
+    }
+  };
+
+  const handleDeliver = async (id) => {
+    try {
+      await api.put(`/orders/${id}/deliver`);
+      fetchData();
+    } catch (err) {
+      alert('Failed to update order status');
+    }
+  };
+
+  return {
+    user,
+    activeTab,
+    setActiveTab,
+    products,
+    categories,
+    orders,
+    coupons,
+    analytics,
+    settings,
+    setSettings,
+    loading,
+    searchTerm,
+    setSearchTerm,
+    filterStatus,
+    setFilterStatus,
+    showModal,
+    setShowModal,
+    modalType,
+    setModalType,
+    editingItem,
+    setEditingItem,
+    showOrderModal,
+    setShowOrderModal,
+    selectedOrder,
+    setSelectedOrder,
+    handleLogout,
+    handleDelete,
+    handleDeliver,
+    fetchData
+  };
+};
