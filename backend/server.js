@@ -13,16 +13,21 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 const allowedOrigins = [
   process.env.CLIENT_URL,
+  'https://izaanshop.vercel.app',
   'http://localhost:3000',
   'http://localhost:3001',
   'http://localhost:5173'
-].filter(Boolean);
+].filter(Boolean).map(url => url.replace(/\/$/, '')); // Normalize: strip trailing slash
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Strip trailing slash from origin for comparison
+    const normalizedOrigin = origin ? origin.replace(/\/$/, '') : null;
+    
+    if (!normalizedOrigin || allowedOrigins.includes(normalizedOrigin)) {
       callback(null, true);
     } else {
+      console.warn(`CORS BLOCKED for origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
