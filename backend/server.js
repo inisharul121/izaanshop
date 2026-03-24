@@ -60,7 +60,6 @@ async function connectDB() {
     console.log('✅ Connected to MySQL via Prisma');
   } catch (error) {
     console.error('❌ Database connection error:', error);
-    process.exit(1);
   }
 }
 connectDB();
