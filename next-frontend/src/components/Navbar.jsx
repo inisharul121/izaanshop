@@ -72,6 +72,9 @@ const Navbar = () => {
             <Link href="/profile" className="text-dark hover:text-primary transition-colors font-bold text-sm">
               Dashboard
             </Link>
+            <Link href="/about" className="text-dark hover:text-primary transition-colors font-bold text-sm">
+              About Us
+            </Link>
             {mounted && user ? (
               <button
                 onClick={logout}
@@ -143,6 +146,7 @@ const Navbar = () => {
               </>
             ) : null}
             <Link href="/categories" onClick={() => setIsOpen(false)} className="hover:text-primary">Categories</Link>
+            <Link href="/about" onClick={() => setIsOpen(false)} className="hover:text-primary">About Us</Link>
           </nav>
         </div>
       )}
