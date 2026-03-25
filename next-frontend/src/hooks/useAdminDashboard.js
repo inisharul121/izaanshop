@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 
 export const useAdminDashboard = () => {
   const router = useRouter();
-  const { user, logout } = useStore();
+  const { user, logout, _hasHydrated } = useStore();
   
   const [activeTab, setActiveTab] = useState('dashboard');
   const [products, setProducts] = useState([]);
@@ -59,12 +59,14 @@ export const useAdminDashboard = () => {
   }, []);
 
   useEffect(() => {
+    if (!_hasHydrated) return; // Wait for hydration before checking auth
+
     if (!user || user.role !== 'admin') {
       router.push('/admin/login');
       return;
     }
     fetchData();
-  }, [user, router, fetchData]);
+  }, [user, router, fetchData, _hasHydrated]);
 
   const handleLogout = () => {
     logout();

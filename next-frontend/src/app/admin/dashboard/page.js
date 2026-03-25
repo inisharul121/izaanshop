@@ -8,6 +8,7 @@ import ProductSection from '@/components/admin/ProductSection';
 import OrderSection from '@/components/admin/OrderSection';
 import { CategorySection, CouponSection } from '@/components/admin/OtherManagement';
 import { AnalyticsCharts, FinancialReport, ProductReport } from '@/components/admin/AnalyticsReports';
+import MediaSection from '@/components/admin/MediaSection';
 import { UserSection, AdminApprovalsSection } from '@/components/admin/UserManagement';
 import { OrderModal, ProductModal, CategoryModal, CouponModal } from '@/components/admin/Modals';
 import { useAdminDashboard } from '@/hooks/useAdminDashboard';
@@ -85,9 +86,21 @@ const AdminDashboard = () => {
 
       if (modalType === 'product') {
         data.type = productType;
-        data.attributes = JSON.stringify(attributes);
-        data.variants = JSON.stringify(variants);
+        data.attributes = attributes;
+        data.variants = variants;
         data.slug = slug;
+        
+        // Handle images specifically
+        data.mainImage = data.mainImage || '';
+        if (data.gallery) {
+          try {
+            data.gallery = JSON.parse(data.gallery);
+          } catch (e) {
+            data.gallery = [];
+          }
+        } else {
+          data.gallery = [];
+        }
       } else if (modalType === 'category') {
         data.slug = slug;
       }
@@ -98,8 +111,11 @@ const AdminDashboard = () => {
       setShowModal(false);
       fetchData();
     } catch (err) {
-      alert('Failed to save item. Check console for details.');
-      console.error(err);
+      console.error('Full Save Error Object:', err);
+      const errorData = err.response?.data;
+      const errorMessage = errorData?.message || err.message || 'Failed to save item';
+      const errorDetails = errorData?.details ? JSON.stringify(errorData.details) : '';
+      alert(`${errorMessage}\n${errorDetails}`);
     } finally {
       setUploading(false);
     }
@@ -225,6 +241,8 @@ const AdminDashboard = () => {
                 </form>
               </div>
             )}
+
+            {activeTab === 'media' && <MediaSection />}
 
             {activeTab === 'users' && <UserSection users={users} />}
             

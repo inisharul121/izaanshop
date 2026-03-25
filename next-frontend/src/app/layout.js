@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "Izaan Shop | Premium Educational Toys & Books",
+  title: "Izaan Shop | Toys, Book & Learning Tools",
   description: "Shop for the best educational toys and books for children at Izaan Shop.",
 };
 

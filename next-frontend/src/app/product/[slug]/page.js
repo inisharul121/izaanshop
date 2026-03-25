@@ -5,21 +5,29 @@ import { getImageUrl } from '@/utils/helpers';
 
 // Server-side data fetching
 async function getProduct(slug) {
+  // Use absolute URL for server-side fetch
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:5001/api' : '');
   
+  if (!baseUrl) {
+    console.error('❌ Base URL for API is missing.');
+    return null;
+  }
+
   try {
-    const res = await fetch(`${baseUrl}/products/${slug}`, {
-      next: { revalidate: 60 } // Revalidate every minute
+    const url = `${baseUrl.replace(/\/$/, '')}/products/${slug}`;
+    const res = await fetch(url, {
+      cache: 'no-store'
     });
     
     if (!res.ok) {
+      console.warn(`⚠️ API responded with ${res.status} for URL: ${url}`);
       if (res.status === 404) return null;
-      throw new Error('Failed to fetch product');
+      throw new Error(`Failed to fetch product: ${res.statusText}`);
     }
     
     return res.json();
   } catch (error) {
-    console.error('Error fetching product:', error);
+    console.error('❌ Error in getProduct:', error.message);
     return null;
   }
 }

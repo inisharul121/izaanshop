@@ -33,9 +33,16 @@ export const useStore = create(
         ),
       })),
       clearCart: () => set({ cart: [] }),
+      
+      // Hydration State
+      _hasHydrated: false,
+      setHasHydrated: (state) => set({ _hasHydrated: state }),
     }),
     {
       name: 'izaan-shop-storage',
+      onRehydrateStorage: () => (state) => {
+        state.setHasHydrated(true);
+      }
     }
   )
 );

@@ -3,9 +3,21 @@ const prisma = require('../utils/prisma');
 const formatProduct = (product) => {
   if (!product) return null;
   const p = { ...product };
-  if (p.images && typeof p.images === 'string') {
-    try { p.images = JSON.parse(p.images); } catch (e) { p.images = { main: '', gallery: [] }; }
+
+  // Handle images
+  if (p.images) {
+    try {
+      // If images is already an object, use it. Otherwise, try to parse.
+      p.images = typeof p.images === 'object' ? p.images : JSON.parse(p.images);
+    } catch (e) {
+      console.error('CRITICAL: Failed to parse product images JSON for product ID:', p.id, 'Images data:', product.images, 'Error:', e.message);
+      p.images = { main: '/placeholder.png', gallery: [] }; // Fallback to default
+    }
+  } else {
+    p.images = { main: '/placeholder.png', gallery: [] }; // Default if no images field
   }
+
+  // Handle attributes
   if (p.attributes) {
     p.attributes = p.attributes.map(attr => ({
       ...attr,
@@ -147,42 +159,47 @@ const getProductById = async (req, res) => {
 // @route   POST /api/products
 // @access  Private/Admin
 const createProduct = async (req, res) => {
-  const { 
-    name, price, description, category, mainImage, gallery, 
-    stock, slug, salePrice, type, attributes, variants 
-  } = req.body;
+  const { name, price, description, category, mainImage, gallery, stock, slug, salePrice, type, attributes, variants } = req.body;
 
   try {
+    const images = {
+      main: mainImage || '/placeholder.png',
+      gallery: Array.isArray(gallery) ? gallery : []
+    };
+
     const productData = {
       name,
-      price: Number(price) || 0,
       description: description || '',
-      categoryId: Number(category || req.body.categoryId),
-      images: JSON.stringify({
-        main: mainImage || '/placeholder.png',
-        gallery: gallery || []
-      }),
-      stock: Number(stock) || 0,
+      price: (price !== undefined && price !== '') ? Number(price) : 0,
+      categoryId: (category || req.body.categoryId) ? Number(category || req.body.categoryId) : undefined,
+      stock: (stock !== undefined && stock !== '') ? Number(stock) : 0,
+      images: JSON.stringify(images),
       slug: slug || name.toLowerCase().replace(/ /g, '-').replace(/[^\w-]+/g, ''),
-      salePrice: salePrice ? Number(salePrice) : null,
+      salePrice: (salePrice !== undefined && salePrice !== '') ? Number(salePrice) : null,
       type: type || 'SIMPLE'
     };
+
+    // Final safety check against NaN which Prisma hates
+    if (isNaN(productData.categoryId) && productData.categoryId !== undefined) {
+      delete productData.categoryId;
+    }
 
     if (type === 'VARIABLE' && attributes && variants) {
       productData.attributes = {
         create: attributes.map(attr => ({
           name: attr.name,
-          options: JSON.stringify(attr.options)
+          options: typeof attr.options === 'object' ? JSON.stringify(attr.options) : attr.options
         }))
       };
       productData.variants = {
         create: variants.map(variant => ({
-          sku: variant.sku,
-          price: Number(variant.price),
-          salePrice: variant.salePrice ? Number(variant.salePrice) : null,
-          stock: Number(variant.stock),
-          options: JSON.stringify(variant.options),
-          image: variant.image
+          sku: variant.sku || null,
+          price: parseFloat(variant.price) || 0,
+          salePrice: (variant.salePrice && parseFloat(variant.salePrice) > 0) ? parseFloat(variant.salePrice) : null,
+          stock: parseInt(variant.stock) || 0,
+          options: typeof variant.options === 'object' ? JSON.stringify(variant.options) : variant.options,
+          image: variant.image || '',
+          isDefault: !!variant.isDefault
         }))
       };
     }
@@ -197,7 +214,11 @@ const createProduct = async (req, res) => {
 
     res.status(201).json(formatProduct(product));
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Create Product Error Details:', error);
+    res.status(500).json({ 
+      message: error.message || 'Internal Server Error',
+      details: error.meta || error.code || null
+    });
   }
 };
 
@@ -214,24 +235,40 @@ const updateProduct = async (req, res) => {
     // Start by updating basic product info
     const data = {
       name,
-      price: price ? Number(price) : undefined,
+      price: (price !== undefined && price !== '') ? Number(price) : undefined,
       description,
-      categoryId: category ? Number(category) : undefined,
-      stock: stock !== undefined ? Number(stock) : undefined,
-      slug,
-      salePrice: salePrice !== undefined ? Number(salePrice) : undefined,
+      categoryId: (category || req.body.categoryId) ? Number(category || req.body.categoryId) : undefined,
+      stock: (stock !== undefined && stock !== '') ? Number(stock) : undefined,
+      slug: slug || undefined,
+      salePrice: (salePrice !== undefined && salePrice !== '') ? Number(salePrice) : null,
       type: type || undefined,
     };
 
-    if (mainImage || gallery) {
-      data.images = JSON.stringify({
-        main: mainImage,
-        gallery: gallery || []
-      });
+    if (isNaN(data.categoryId) && data.categoryId !== undefined) {
+      delete data.categoryId;
     }
 
-    // Handle variable product logic (Attributes and Variants)
-    // Simple approach: Delete existing and re-create if provided
+    // Fetch existing product to preserve images if not provided
+    const existingProduct = await prisma.product.findUnique({ where: { id: Number(req.params.id) } });
+    if (!existingProduct) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    const currentImages = existingProduct.images ? JSON.parse(existingProduct.images) : { main: '', gallery: [] };
+    
+    // Merge new images with current ones
+    const newMainImage = mainImage !== undefined ? mainImage : currentImages.main;
+    const parsedGallery = typeof gallery === 'string' ? JSON.parse(gallery) : (gallery || currentImages.gallery);
+    
+    const finalImages = {
+      main: newMainImage || '/placeholder.png',
+      gallery: Array.isArray(parsedGallery) ? parsedGallery : []
+    };
+
+    console.log('Final Images being saved to DB:', finalImages);
+
+    data.images = JSON.stringify(finalImages);
+
     if (type === 'VARIABLE') {
       await prisma.productAttribute.deleteMany({ where: { productId: Number(req.params.id) } });
       await prisma.productVariant.deleteMany({ where: { productId: Number(req.params.id) } });
@@ -240,21 +277,23 @@ const updateProduct = async (req, res) => {
         data.attributes = {
           create: attributes.map(attr => ({
             name: attr.name,
-            options: JSON.stringify(attr.options)
+            options: typeof attr.options === 'object' ? JSON.stringify(attr.options) : attr.options
           }))
         };
         data.variants = {
           create: variants.map(variant => ({
-            sku: variant.sku,
-            price: Number(variant.price),
-            salePrice: variant.salePrice ? Number(variant.salePrice) : null,
-            stock: Number(variant.stock),
-            options: JSON.stringify(variant.options),
-            image: variant.image
+            sku: variant.sku || null,
+            price: parseFloat(variant.price) || 0,
+            salePrice: (variant.salePrice && parseFloat(variant.salePrice) > 0) ? parseFloat(variant.salePrice) : null,
+            stock: parseInt(variant.stock) || 0,
+            options: typeof variant.options === 'object' ? JSON.stringify(variant.options) : variant.options,
+            image: variant.image || '',
+            isDefault: !!variant.isDefault
           }))
         };
       }
-    } else if (type === 'SIMPLE') {
+    }
+ else if (type === 'SIMPLE') {
       // In case product type was changed from VARIABLE to SIMPLE
       await prisma.productAttribute.deleteMany({ where: { productId: Number(req.params.id) } });
       await prisma.productVariant.deleteMany({ where: { productId: Number(req.params.id) } });
@@ -270,8 +309,11 @@ const updateProduct = async (req, res) => {
     });
     res.json(formatProduct(updatedProduct));
   } catch (error) {
-    console.error('Update Product Error:', error);
-    res.status(500).json({ message: error.message });
+    console.error('Update Product Error Details:', error);
+    res.status(500).json({ 
+      message: error.message || 'Internal Server Error',
+      details: error.meta || error.code || null
+    });
   }
 };
 

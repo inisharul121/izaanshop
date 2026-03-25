@@ -84,7 +84,9 @@ const ProductSection = ({
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
                        <span className={`w-2 h-2 rounded-full ${product.stock > 0 ? 'bg-green-500' : 'bg-red-500'}`} />
-                       <span className="text-sm font-bold text-dark">{product.stock} Units</span>
+                       <span className="text-sm font-bold text-dark">
+                         {product.stock >= 999999 ? 'Unlimited' : `${product.stock} Units`}
+                       </span>
                     </div>
                   </td>
                   <td className="px-6 py-4">

@@ -23,7 +23,13 @@ const ProductDetailClient = ({ initialProduct }) => {
 
   useEffect(() => {
     // Initialize selected options if variable
-    if (product.type === 'VARIABLE' && product.attributes?.length > 0) {
+    if (product.type === 'VARIABLE' && product.variants?.length > 0) {
+      const defaultValue = product.variants.find(v => v.isDefault) || product.variants[0];
+      if (defaultValue) {
+        setSelectedOptions(defaultValue.options);
+        return;
+      }
+      
       const initial = {};
       product.attributes.forEach(attr => {
         initial[attr.name] = attr.options[0];
@@ -31,27 +37,41 @@ const ProductDetailClient = ({ initialProduct }) => {
       setSelectedOptions(initial);
     }
   }, [product]);
-
   useEffect(() => {
     if (product?.type === 'VARIABLE' && product.variants) {
       const match = product.variants.find(v => 
         Object.entries(selectedOptions).every(([key, val]) => v.options[key] === val)
       );
       setActiveVariant(match);
+      if (match?.image) {
+        setActiveImg(0);
+      }
     }
   }, [selectedOptions, product]);
 
+  // Safety: If images is a string, parse it
+  const imagesObj = typeof product?.images === 'string' ? JSON.parse(product.images) : (product?.images || {});
+
+  // Ensure gallery is actually an array
+  const galleryItems = Array.isArray(imagesObj.gallery) ? imagesObj.gallery : [];
+
+  // Determine the display image (prioritize active variant image)
+  const variantImage = activeVariant?.image;
+  
   const gallery = [
-    product.images?.main,
-    ...(product.images?.gallery || [])
+    variantImage || imagesObj.main,
+    ...galleryItems
   ].filter(Boolean);
 
-  const displayPrice = (activeVariant && activeVariant.price !== null) ? activeVariant.price : product.price;
-  const displaySalePrice = (activeVariant && activeVariant.salePrice !== null) ? activeVariant.salePrice : product.salePrice;
-  const displayStock = (activeVariant && activeVariant.stock !== null) ? activeVariant.stock : product.stock;
+  const basePrice = (activeVariant && activeVariant.price > 0) ? activeVariant.price : product.price;
+  const salePrice = (activeVariant && activeVariant.salePrice > 0) ? activeVariant.salePrice : product.salePrice;
+  const displayStock = (activeVariant && activeVariant.stock !== null && activeVariant.stock !== undefined) ? activeVariant.stock : product.stock;
 
-  const discount = displaySalePrice 
-    ? Math.round(((displayPrice - displaySalePrice) / displayPrice) * 100)
+  const finalPrice = salePrice || basePrice;
+  const originalPrice = (salePrice && basePrice && salePrice < basePrice) ? basePrice : null;
+
+  const discount = originalPrice 
+    ? Math.round(((originalPrice - finalPrice) / originalPrice) * 100)
     : null;
 
   const handleOptionChange = (name, val) => {
@@ -101,20 +121,24 @@ const ProductDetailClient = ({ initialProduct }) => {
                     transition={{ duration: 0.3 }}
                     className="w-full h-full relative"
                   >
-                    <Image 
-                      src={getImageUrl(gallery[activeImg])} 
-                      alt={product.name}
-                      fill
-                      className="object-cover"
-                    />
+                    {discount && (
+                      <div className="absolute top-4 left-4 bg-red-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg shadow-sm z-10">
+                        {discount}% OFF
+                      </div>
+                    )}
+                    {gallery[activeImg] ? (
+                      <img 
+                        src={getImageUrl(gallery[activeImg])} 
+                        alt={product.name}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-300">
+                        <ImageIcon className="w-12 h-12" />
+                      </div>
+                    )}
                   </motion.div>
                 </AnimatePresence>
-                
-                {discount && (
-                  <div className="absolute top-4 left-4 bg-red-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg shadow-sm z-10">
-                    {discount}% OFF
-                  </div>
-                )}
               </motion.div>
 
               <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
@@ -124,7 +148,7 @@ const ProductDetailClient = ({ initialProduct }) => {
                     onClick={() => setActiveImg(i)}
                     className={`relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden border transition-all ${activeImg === i ? 'border-primary ring-2 ring-primary/10' : 'border-gray-100 hover:border-gray-200'}`}
                   >
-                    <Image src={getImageUrl(img)} alt={`Thumb ${i}`} fill className="object-cover" />
+                    <img src={getImageUrl(img)} alt={`Thumb ${i}`} className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -156,7 +180,7 @@ const ProductDetailClient = ({ initialProduct }) => {
                   <div className="flex items-center gap-2">
                     <div className={`w-1.5 h-1.5 rounded-full ${displayStock > 0 ? 'bg-green-500' : 'bg-red-500'}`} />
                     <span className={`text-xs font-bold uppercase tracking-wider ${displayStock > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {displayStock > 0 ? `In Stock (${displayStock})` : 'Out of Stock'}
+                      {displayStock >= 999999 ? 'In Stock' : (displayStock > 0 ? `In Stock (${displayStock})` : 'Out of Stock')}
                     </span>
                   </div>
                 </div>
@@ -214,13 +238,13 @@ const ProductDetailClient = ({ initialProduct }) => {
 
               <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="flex items-baseline gap-3">
-                  {displaySalePrice ? (
-                    <>
-                      <span className="text-4xl font-bold text-primary tracking-tight">{displaySalePrice}৳</span>
-                      <span className="text-lg text-gray-400 line-through font-medium">{displayPrice}৳</span>
-                    </>
-                  ) : (
-                    <span className="text-4xl font-bold text-dark tracking-tight">{displayPrice}৳</span>
+                  <span className={`text-4xl font-bold tracking-tight ${originalPrice ? 'text-primary' : 'text-dark'}`}>
+                    {finalPrice}৳
+                  </span>
+                  {originalPrice && (
+                    <span className="text-lg text-gray-400 line-through font-medium">
+                      {originalPrice}৳
+                    </span>
                   )}
                 </div>
                 
@@ -255,23 +279,7 @@ const ProductDetailClient = ({ initialProduct }) => {
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
-                {[
-                  { icon: Truck, title: 'Safe Shipping', desc: 'World wide' },
-                  { icon: RefreshCcw, title: '7 Days Return', desc: 'Free guarantee' },
-                  { icon: ShieldCheck, title: '24 Month', desc: 'Full warranty' }
-                ].map((item, i) => (
-                  <div key={i} className="p-3 bg-white border border-gray-100 rounded-xl flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center text-gray-400 flex-shrink-0">
-                      <item.icon className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-[10px] text-dark uppercase tracking-tight">{item.title}</h4>
-                      <p className="text-[10px] text-gray-400">{item.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+
 
               <div className="pt-10">
                 <div className="flex border-b border-gray-100 mb-8">

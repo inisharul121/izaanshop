@@ -6,6 +6,99 @@ import api, { getImageUrl } from '@/utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 
+export const MediaLibraryModal = ({ isOpen, onClose, onSelect, multiple = false }) => {
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState([]);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setLoading(true);
+      api.get('/media')
+        .then(res => setImages(res.data))
+        .catch(err => console.error(err))
+        .finally(() => setLoading(false));
+    }
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const handleToggleSelect = (url) => {
+    if (multiple) {
+      if (selected.includes(url)) {
+        setSelected(selected.filter(u => u !== url));
+      } else {
+        setSelected([...selected, url]);
+      }
+    } else {
+      onSelect(url);
+      onClose();
+    }
+  };
+
+  const handleConfirm = () => {
+    onSelect(selected);
+    onClose();
+    setSelected([]);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-dark/60 backdrop-blur-sm">
+      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+          <h4 className="text-xl font-bold flex items-center gap-2">Media Library <span className="text-xs font-medium text-gray-400">({images.length} images)</span></h4>
+          <button onClick={onClose} className="p-2 hover:bg-white rounded-full transition-colors"><X className="w-5 h-5" /></button>
+        </div>
+        
+        <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-400">
+               <RefreshCw className="w-8 h-8 animate-spin text-primary" />
+               <p className="text-xs font-bold uppercase tracking-widest">Scanning Library...</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
+              {images.map((img, idx) => (
+                <div 
+                  key={idx} 
+                  onClick={() => handleToggleSelect(img.url)}
+                  className={`aspect-square rounded-2xl overflow-hidden cursor-pointer border-4 transition-all relative group ${
+                    selected.includes(img.url) ? 'border-primary ring-4 ring-primary/20' : 'border-transparent hover:border-gray-200'
+                  }`}
+                >
+                  <img src={getImageUrl(img.url)} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-dark/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                     <div className="bg-white/90 p-1.5 rounded-full shadow-sm">
+                        <Check className={`w-4 h-4 ${selected.includes(img.url) ? 'text-primary' : 'text-gray-400'}`} />
+                     </div>
+                  </div>
+                </div>
+              ))}
+              {images.length === 0 && <p className="col-span-full text-center py-20 text-gray-400 text-sm">No images found in the library.</p>}
+            </div>
+          )}
+        </div>
+
+        <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
+            <p className="text-xs text-gray-400 font-medium">{multiple ? `${selected.length} items selected` : 'Select an image to continue'}</p>
+            <div className="flex gap-3">
+              <button onClick={onClose} className="px-6 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold text-gray-400">Cancel</button>
+              {multiple && (
+                <button 
+                  onClick={handleConfirm} 
+                  disabled={selected.length === 0}
+                  className="px-6 py-2.5 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/20 disabled:bg-gray-300 transition-all font-black uppercase tracking-widest"
+                >
+                  Insert Selected
+                </button>
+              )}
+            </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 export const OrderModal = ({ order, isOpen, onClose, onDeliver }) => {
   if (!isOpen || !order) return null;
 
@@ -125,8 +218,39 @@ export const ProductModal = ({
   slug,
   setSlug
 }) => {
-  const [mainImage, setMainImage] = useState(editingItem?.images?.main || (editingItem?.images ? JSON.parse(editingItem.images).main : ''));
+  const [mainImage, setMainImage] = useState('');
+  const [gallery, setGallery] = useState([]);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [showMediaLibrary, setShowMediaLibrary] = useState(false);
+  const [mediaTarget, setMediaTarget] = useState('main'); // 'main', 'gallery', or 'variant'
+  const [activeVariantIdx, setActiveVariantIdx] = useState(null);
+  const [basePrice, setBasePrice] = useState('');
+  const [baseSalePrice, setBaseSalePrice] = useState('');
+  const [baseStock, setBaseStock] = useState('');
+
+  React.useEffect(() => {
+    if (isOpen) {
+      console.log('ProductModal Opened. editingItem:', editingItem);
+      if (editingItem?.images) {
+        try {
+          const imgs = typeof editingItem.images === 'object' ? editingItem.images : JSON.parse(editingItem.images);
+          setMainImage(imgs.main || '');
+          setGallery(Array.isArray(imgs.gallery) ? imgs.gallery : []);
+          console.log('Synced images from editingItem:', imgs);
+        } catch (e) {
+          console.error('Failed to sync images:', e);
+          setMainImage('');
+          setGallery([]);
+        }
+      } else {
+        setMainImage('');
+        setGallery([]);
+      }
+      setBasePrice(editingItem?.price || '');
+      setBaseSalePrice(editingItem?.salePrice || '');
+      setBaseStock(editingItem?.stock || 0);
+    }
+  }, [editingItem, isOpen]);
 
   if (!isOpen) return null;
 
@@ -159,6 +283,11 @@ export const ProductModal = ({
   };
 
   const addAttribute = () => setAttributes([...attributes, { name: '', options: [], inputVal: '' }]);
+  const quickAddAttribute = (name) => {
+    if (!attributes.find(a => a.name.toLowerCase() === name.toLowerCase())) {
+      setAttributes([...attributes, { name, options: [], inputVal: '' }]);
+    }
+  };
   const removeAttribute = (idx) => setAttributes(attributes.filter((_, i) => i !== idx));
   const updateAttributeName = (idx, name) => {
     const newAttrs = [...attributes];
@@ -201,13 +330,18 @@ export const ProductModal = ({
         combos = next;
     }
 
-    setVariants(combos.map(c => ({
-      options: c,
-      price: null,
-      salePrice: null,
-      stock: null,
-      sku: `${slug}-${Object.values(c).join('-')}`.toLowerCase()
-    })));
+    setVariants(combos.map(c => {
+      const existing = variants.find(v => JSON.stringify(v.options) === JSON.stringify(c));
+      return existing || {
+        options: c,
+        price: null,
+        salePrice: null,
+        stock: null,
+        sku: `${slug}-${Object.values(c).join('-')}`.toLowerCase(),
+        image: '',
+        isDefault: false
+      };
+    }));
   };
 
   const updateVariant = (idx, field, val) => {
@@ -246,47 +380,175 @@ export const ProductModal = ({
 
           {productType === 'VARIABLE' && (
              <div className="space-y-4 bg-gray-50/50 p-4 rounded-2xl border border-gray-100">
-                <div className="flex justify-between items-center">
-                   <h5 className="text-xs font-black uppercase text-gray-400">Attributes & Variants</h5>
-                   <button type="button" onClick={addAttribute} className="text-[10px] font-black uppercase text-primary border border-primary/20 px-2 py-1 rounded-md hover:bg-primary/5 transition-all">Add Attribute</button>
+                <div className="flex justify-between items-center gap-2">
+                   <h5 className="text-[10px] font-black uppercase text-gray-400">Attributes</h5>
+                   <div className="flex gap-2">
+                      <button type="button" onClick={() => quickAddAttribute('Color')} className="text-[9px] font-bold bg-gray-100 px-2 py-0.5 rounded hover:bg-gray-200">+ Color</button>
+                      <button type="button" onClick={() => quickAddAttribute('Size')} className="text-[9px] font-bold bg-gray-100 px-2 py-0.5 rounded hover:bg-gray-200">+ Size</button>
+                      <button type="button" onClick={addAttribute} className="text-[9px] font-bold text-primary border border-primary/20 px-2 py-0.5 rounded hover:bg-primary/5 transition-all">+ Custom</button>
+                   </div>
                 </div>
                 {attributes.map((attr, idx) => (
-                  <div key={idx} className="space-y-2 bg-white p-3 rounded-xl border border-gray-100">
-                    <div className="flex gap-2">
+                  <div key={idx} className="space-y-2 bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                    <div className="flex gap-2 items-center">
                       <input placeholder="Attribute (e.g. Color)" value={attr.name} onChange={(e) => updateAttributeName(idx, e.target.value)} className="flex-1 bg-gray-50 border-none rounded-lg p-2 text-xs font-bold" />
                       <button type="button" onClick={() => removeAttribute(idx)} className="text-gray-300 hover:text-red-500"><X className="w-4 h-4" /></button>
                     </div>
                     <div className="flex flex-wrap gap-1">
-                       {attr.options.map(o => <span key={o} className="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded-md flex items-center gap-1">{o} <button type="button" onClick={() => removeOptionTag(idx, o)}><X className="w-2.5 h-2.5" /></button></span>)}
+                       {attr.options.map(o => <span key={o} className="bg-primary/10 text-primary text-[10px] px-2 py-0.5 rounded-md flex items-center gap-1 font-bold">{o} <button type="button" onClick={() => removeOptionTag(idx, o)}><X className="w-2.5 h-2.5" /></button></span>)}
                     </div>
                     <div className="flex gap-2">
-                       <input placeholder="Add option" value={attr.inputVal} onChange={(e) => updateAttributeInput(idx, e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addOptionTag(idx))} className="flex-1 bg-gray-50 border-none rounded-lg p-2 text-[10px]" />
-                       <button type="button" onClick={() => addOptionTag(idx)} className="bg-dark text-white text-[10px] px-3 py-1 rounded-lg">Add</button>
+                       <input placeholder="Add option (e.g. Red, XL)" value={attr.inputVal} onChange={(e) => updateAttributeInput(idx, e.target.value)} onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addOptionTag(idx))} className="flex-1 bg-gray-50 border-none rounded-lg p-2 text-[10px]" />
+                       <button type="button" onClick={() => addOptionTag(idx)} className="bg-dark text-white text-[10px] px-3 py-1 rounded-lg font-black uppercase tracking-tighter">Add</button>
                     </div>
                   </div>
                 ))}
-                {attributes.length > 0 && <button type="button" onClick={generateVariants} className="w-full py-2 bg-dark text-white rounded-xl text-[10px] font-black uppercase tracking-widest">Generate {variants.length > 0 ? 'Again' : ''} ({variants.length})</button>}
+                
+                {attributes.length > 0 && (
+                  <div className="pt-2 border-t border-gray-100">
+                    <button type="button" onClick={generateVariants} className="w-full py-2 bg-dark text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-dark/20 hover:scale-[1.02] active:scale-95 transition-all">
+                      {variants.length > 0 ? 'Regenerate Variants' : 'Generate Variants'} ({variants.length})
+                    </button>
+                  </div>
+                )}
+
+                {variants.length > 0 && (
+                  <div className="space-y-3 mt-4">
+                     <h5 className="text-[10px] font-black uppercase text-gray-400">Manage Variants</h5>
+                     <div className="max-h-[300px] overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                        {variants.map((v, idx) => (
+                           <div key={idx} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm space-y-3">
+                              <div className="flex justify-between items-start gap-4">
+                                 <div className="flex gap-3 flex-1">
+                                    <div 
+                                      onClick={() => { setActiveVariantIdx(idx); setMediaTarget('variant'); setShowMediaLibrary(true); }}
+                                      className="w-12 h-12 bg-gray-50 rounded-xl border border-dashed border-gray-200 flex items-center justify-center overflow-hidden shrink-0 cursor-pointer hover:border-primary transition-all group"
+                                    >
+                                       {v.image ? (
+                                          <img src={getImageUrl(v.image)} className="w-full h-full object-cover" />
+                                       ) : (
+                                          <ImageIcon className="w-4 h-4 text-gray-300 group-hover:text-primary" />
+                                       )}
+                                    </div>
+                                    <div className="space-y-1 py-1">
+                                       <div className="flex flex-wrap gap-1">
+                                          {Object.entries(v.options || {}).map(([k, val]) => (
+                                             <span key={k} className="text-[10px] font-black bg-gray-100 px-2 py-0.5 rounded text-gray-500 uppercase">{val}</span>
+                                          ))}
+                                       </div>
+                                       <p className="text-[9px] text-gray-400 font-mono truncate max-w-[150px]">{v.sku}</p>
+                                    </div>
+                                 </div>
+                                 <div className="flex flex-col gap-2 items-end">
+                                    <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => {
+                                       const newVariants = variants.map((varnt, i) => ({ ...varnt, isDefault: i === idx }));
+                                       setVariants(newVariants);
+                                       // Auto-sync with base product
+                                       if (v.image) setMainImage(v.image);
+                                       if (v.price) setBasePrice(v.price);
+                                       if (v.salePrice) setBaseSalePrice(v.salePrice);
+                                       if (v.stock) setBaseStock(v.stock);
+                                    }}>
+                                       <span className="text-[9px] font-black text-gray-400 uppercase">Default</span>
+                                       <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${v.isDefault ? 'bg-primary border-primary text-white' : 'border-gray-200 bg-white'}`}>
+                                          {v.isDefault && <Check className="w-2.5 h-2.5" />}
+                                       </div>
+                                    </div>
+                                    <div className="flex flex-col gap-1 items-end mt-1">
+                                       <div className="flex items-center gap-2 mb-1">
+                                          <button 
+                                             type="button" 
+                                             onClick={() => updateVariant(idx, 'stock', 0)}
+                                             className={`text-[8px] px-1.5 py-0.5 rounded ${v.stock <= 0 ? 'bg-red-100 text-red-600 font-bold' : 'bg-gray-100 text-gray-400'}`}
+                                          >
+                                             Out
+                                          </button>
+                                          <button 
+                                             type="button" 
+                                             onClick={() => updateVariant(idx, 'stock', 999999)}
+                                             className={`text-[8px] px-1.5 py-0.5 rounded ${v.stock >= 999999 ? 'bg-blue-100 text-blue-600 font-bold' : v.stock > 0 ? 'bg-green-100 text-green-600 font-bold' : 'bg-gray-100 text-gray-400'}`}
+                                          >
+                                             {v.stock >= 999999 ? 'Unlimited' : 'In'}
+                                          </button>
+                                       </div>
+                                       <span className="text-[9px] font-black text-gray-300 uppercase">Qty</span>
+                                       <input 
+                                          type="number" 
+                                          value={v.stock >= 999999 ? '' : (v.stock || 0)} 
+                                          onChange={(e) => updateVariant(idx, 'stock', Number(e.target.value))}
+                                          placeholder="∞"
+                                          className="w-16 bg-gray-50 border-none rounded-lg p-1.5 text-[10px] text-center font-bold"
+                                       />
+                                    </div>
+                                 </div>
+                              </div>
+                              <div className="grid grid-cols-2 gap-3 pb-1">
+                                 <div className="space-y-1">
+                                    <span className="text-[9px] font-black text-gray-300 uppercase ml-1">Price</span>
+                                    <input 
+                                       type="number" 
+                                       value={v.price || ''} 
+                                       onChange={(e) => updateVariant(idx, 'price', Number(e.target.value))}
+                                       placeholder="Price"
+                                       className="w-full bg-gray-50 border-none rounded-xl p-2.5 text-xs font-bold"
+                                    />
+                                 </div>
+                                 <div className="space-y-1">
+                                    <span className="text-[9px] font-black text-gray-300 uppercase ml-1">Sale Price</span>
+                                    <input 
+                                       type="number" 
+                                       value={v.salePrice || ''} 
+                                       onChange={(e) => updateVariant(idx, 'salePrice', Number(e.target.value))}
+                                       placeholder="Discount"
+                                       className="w-full bg-gray-50 border-none rounded-xl p-2.5 text-xs font-bold text-primary"
+                                    />
+                                 </div>
+                              </div>
+                           </div>
+                        ))}
+                     </div>
+                  </div>
+                )}
              </div>
           )}
 
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-bold text-gray-400 uppercase">Base Price</label>
-              <input name="price" type="number" defaultValue={editingItem?.price} required className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm" />
+              <input name="price" type="number" value={basePrice} onChange={(e) => setBasePrice(e.target.value)} required className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm" />
             </div>
             <div className="space-y-1">
               <label className="text-xs font-bold text-gray-400 uppercase">Sale Price</label>
-              <input name="salePrice" type="number" defaultValue={editingItem?.salePrice} className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm" />
+              <input name="salePrice" type="number" value={baseSalePrice} onChange={(e) => setBaseSalePrice(e.target.value)} className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm" />
             </div>
             <div className="space-y-1">
-              <label className="text-xs font-bold text-gray-400 uppercase">Stock</label>
-              <input name="stock" type="number" defaultValue={editingItem?.stock} className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm" />
+              <div className="flex justify-between items-center">
+                <label className="text-xs font-bold text-gray-400 uppercase">Stock {baseStock >= 999999 && "(Unlimited)"}</label>
+                <div className="flex bg-gray-100 p-0.5 rounded-lg">
+                  <button 
+                    type="button" 
+                    onClick={() => setBaseStock(0)}
+                    className={`px-2 py-0.5 text-[9px] font-black rounded-md transition-all ${baseStock <= 0 ? 'bg-white text-red-500 shadow-sm' : 'text-gray-400'}`}
+                  >
+                    OUT
+                  </button>
+                  <button 
+                    type="button" 
+                    onClick={() => setBaseStock(999999)}
+                    className={`px-2 py-0.5 text-[9px] font-black rounded-md transition-all ${baseStock >= 999999 ? 'bg-white text-blue-500 shadow-sm' : baseStock > 0 ? 'bg-white text-green-500 shadow-sm' : 'text-gray-400'}`}
+                  >
+                    {baseStock >= 999999 ? 'UNLIMITED' : 'IN'}
+                  </button>
+                </div>
+              </div>
+              <input type="hidden" name="stock" value={baseStock} />
+              <input type="number" value={baseStock >= 999999 ? '' : baseStock} onChange={(e) => setBaseStock(e.target.value)} placeholder="Enter quantity or select Unlimited" className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm" />
             </div>
           </div>
 
           <div className="space-y-1">
             <label className="text-xs font-bold text-gray-400 uppercase">Category</label>
-            <select name="categoryId" defaultValue={editingItem?.categoryId} required className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm">
+            <select name="category" defaultValue={editingItem?.categoryId} required className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm">
               <option value="">Select Category</option>
               {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
@@ -298,34 +560,133 @@ export const ProductModal = ({
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-bold text-gray-400 uppercase">Product Image</label>
-            <div className="flex gap-4">
-              <div className="w-24 h-24 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden shrink-0 group relative">
-                {mainImage ? (
-                  <>
-                    <img src={getImageUrl(mainImage)} className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-dark/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                       <p className="text-[10px] text-white font-bold">Change</p>
-                    </div>
-                  </>
-                ) : (
-                  <ImageIcon className="w-8 h-8 text-gray-300" />
-                )}
-                <input type="file" onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer" />
-                {uploadingImage && <div className="absolute inset-0 bg-white/80 flex items-center justify-center"><RefreshCw className="w-5 h-5 animate-spin text-primary" /></div>}
+            <label className="text-xs font-bold text-gray-400 uppercase">Product Images</label>
+            <div className="grid grid-cols-2 gap-6">
+              {/* Main Image */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                   <p className="text-[10px] font-black uppercase text-gray-400">Main Image</p>
+                   <button type="button" onClick={() => { setMediaTarget('main'); setShowMediaLibrary(true); }} className="text-[10px] text-primary font-bold hover:underline">Media Library</button>
+                </div>
+                <div className="flex gap-3">
+                  <div className="w-16 h-16 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden shrink-0 group relative">
+                    {mainImage ? (
+                      <img src={getImageUrl(mainImage)} className="w-full h-full object-cover" />
+                    ) : (
+                      <ImageIcon className="w-6 h-6 text-gray-300" />
+                    )}
+                    <input type="file" onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer" />
+                  </div>
+                  <input 
+                    name="mainImage" 
+                    value={mainImage} 
+                    onChange={(e) => setMainImage(e.target.value)} 
+                    placeholder="URL..." 
+                    className="flex-1 bg-gray-50 border-none rounded-xl px-3 py-2 text-xs h-16" 
+                  />
+                </div>
               </div>
-              <div className="flex-1 space-y-2">
-                <input 
-                  name="mainImage" 
-                  value={mainImage} 
-                  onChange={(e) => setMainImage(e.target.value)} 
-                  placeholder="Or paste image URL here..." 
-                  className="w-full bg-gray-50 border-none rounded-xl p-3 text-xs" 
-                />
-                <p className="text-[10px] text-gray-400 italic">Preferred: Square image (800x800px). Supports PNG, JPG.</p>
+
+              {/* Gallery Images */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <p className="text-[10px] font-black uppercase text-gray-400">Gallery</p>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => { setMediaTarget('gallery'); setShowMediaLibrary(true); }} className="text-[10px] text-primary font-bold hover:underline">Media Library</button>
+                    <span className="text-gray-300">|</span>
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.multiple = true;
+                        input.onchange = async (e) => {
+                          const files = Array.from(e.target.files);
+                          if (files.length === 0) return;
+                          setUploadingImage(true);
+                          try {
+                            const uploadedUrls = await Promise.all(
+                              files.map(async (file) => {
+                                const formData = new FormData();
+                                formData.append('image', file);
+                                const { data } = await api.post('/upload', formData);
+                                return data.mainImage;
+                              })
+                            );
+                            setGallery([...gallery, ...uploadedUrls]);
+                          } catch (err) {
+                            alert('Some uploads failed');
+                          } finally {
+                            setUploadingImage(false);
+                          }
+                        };
+                        input.click();
+                      }}
+                      className="text-[10px] text-primary font-bold hover:underline"
+                    >
+                      + Upload
+                    </button>
+                  </div>
+                </div>
+                <div className="space-y-2 max-h-[120px] overflow-y-auto pr-2 custom-scrollbar">
+                  {gallery.map((img, idx) => (
+                    <div key={idx} className="flex gap-2">
+                      <div className="w-10 h-10 bg-gray-50 rounded-lg border border-gray-100 flex items-center justify-center overflow-hidden shrink-0 relative">
+                        {img ? <img src={getImageUrl(img)} className="w-full h-full object-cover" /> : <ImageIcon className="w-4 h-4 text-gray-300" />}
+                        <input 
+                          type="file" 
+                          onChange={async (e) => {
+                            const file = e.target.files[0];
+                            if (!file) return;
+                            const formData = new FormData();
+                            formData.append('image', file);
+                            try {
+                              const { data } = await api.post('/upload', formData);
+                              const newGallery = [...gallery];
+                              newGallery[idx] = data.mainImage;
+                              setGallery(newGallery);
+                            } catch (err) { alert('Upload failed'); }
+                          }} 
+                          className="absolute inset-0 opacity-0 cursor-pointer" 
+                        />
+                      </div>
+                      <input 
+                        value={img} 
+                        onChange={(e) => {
+                          const newGallery = [...gallery];
+                          newGallery[idx] = e.target.value;
+                          setGallery(newGallery);
+                        }} 
+                        placeholder="Gallery Image URL..." 
+                        className="flex-1 bg-gray-50 border-none rounded-lg px-3 py-1 text-[10px]" 
+                      />
+                      <button type="button" onClick={() => setGallery(gallery.filter((_, i) => i !== idx))} className="text-gray-300 hover:text-red-500"><X className="w-3 h-3" /></button>
+                    </div>
+                  ))}
+                  {gallery.length === 0 && <p className="text-[10px] text-gray-400 italic">No gallery images added.</p>}
+                </div>
               </div>
             </div>
+            <input type="hidden" name="gallery" value={JSON.stringify(gallery.filter(Boolean))} />
           </div>
+
+          <MediaLibraryModal 
+            isOpen={showMediaLibrary} 
+            onClose={() => setShowMediaLibrary(false)} 
+            multiple={mediaTarget === 'gallery'}
+            onSelect={(urls) => {
+              if (mediaTarget === 'main') {
+                setMainImage(urls);
+              } else if (mediaTarget === 'gallery') {
+                setGallery([...gallery, ...(Array.isArray(urls) ? urls : [urls])]);
+              } else if (mediaTarget === 'variant' && activeVariantIdx !== null) {
+                const newVariants = [...variants];
+                newVariants[activeVariantIdx].image = Array.isArray(urls) ? urls[0] : urls;
+                setVariants(newVariants);
+                setActiveVariantIdx(null);
+              }
+            }}
+          />
 
           <div className="pt-4">
             <button type="submit" disabled={uploading} className="w-full py-4 bg-primary hover:bg-primary-dark text-white rounded-2xl font-bold shadow-lg shadow-primary/20 disabled:bg-gray-400 transition-all font-black uppercase tracking-widest">

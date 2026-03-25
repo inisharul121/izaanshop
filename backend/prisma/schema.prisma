@@ -82,6 +82,7 @@ model ProductVariant {
   stock      Int         @default(0)
   options    String      @db.LongText
   image      String?
+  isDefault  Boolean     @default(false)
   productId  Int
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
