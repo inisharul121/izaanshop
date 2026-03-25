@@ -74,11 +74,7 @@ const nextConfig = {
         destination: '/',
         permanent: false,
       },
-      {
-        source: '/about',
-        destination: '/',
-        permanent: false,
-      },
+
       {
         source: '/faq',
         destination: '/',

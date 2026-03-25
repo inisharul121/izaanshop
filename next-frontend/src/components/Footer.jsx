@@ -77,7 +77,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-gray-800 pt-8 text-center text-gray-500 text-xs">
-          <p>© 2024 IzaanShop. All rights reserved. Designed with ❤️ in Bangladesh.</p>
+          <p>© 2024 IzaanShop. All rights reserved.</p>
         </div>
       </div>
     </footer>
