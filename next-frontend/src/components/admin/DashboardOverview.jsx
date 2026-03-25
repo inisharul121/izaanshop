@@ -50,7 +50,23 @@ const DashboardOverview = ({ analytics }) => {
                 x: (i / (data.length - 1)) * 100,
                 y: 100 - (d.revenue / max) * 100
               }));
-              const pathData = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+              
+              // Create a smooth cubic bezier curve
+              const curve = (p1, p2, p3, p4) => {
+                const cp1x = p1.x + (p2.x - p1.x) / 2;
+                const cp2x = p1.x + (p2.x - p1.x) / 2;
+                return `C ${cp1x} ${p1.y} ${cp2x} ${p2.y} ${p2.x} ${p2.y}`;
+              };
+
+              let pathData = `M ${points[0].x} ${points[0].y}`;
+              for (let i = 0; i < points.length - 1; i++) {
+                const p1 = points[i];
+                const p2 = points[i+1];
+                const cp1x = p1.x + (p2.x - p1.x) / 2;
+                const cp2x = p1.x + (p2.x - p1.x) / 2;
+                pathData += ` C ${cp1x} ${p1.y} ${cp2x} ${p2.y} ${p2.x} ${p2.y}`;
+              }
+
               const areaData = `${pathData} L 100 100 L 0 100 Z`;
               
               return (
@@ -61,10 +77,25 @@ const DashboardOverview = ({ analytics }) => {
                       <stop offset="100%" stopColor="#f43f5e" stopOpacity="0" />
                     </linearGradient>
                   </defs>
-                  <path d={areaData} fill="url(#chartGradient)" className="transition-all duration-1000" />
-                  <path d={pathData} fill="none" stroke="#f43f5e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d={areaData} fill="url(#chartGradient)" className="transition-all duration-700" />
+                  <path 
+                    d={pathData} 
+                    fill="none" 
+                    stroke="#f43f5e" 
+                    strokeWidth="6" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    vectorEffect="non-scaling-stroke"
+                    style={{ filter: 'drop-shadow(0 4px 6px rgba(244, 63, 94, 0.2))' }}
+                  />
                   {points.map((p, i) => (
-                    <circle key={i} cx={p.x} cy={p.y} r="2" className="fill-white stroke-[#f43f5e] stroke-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <circle 
+                      key={i} 
+                      cx={p.x} 
+                      cy={p.y} 
+                      r="1.5" 
+                      className="fill-white stroke-[#f43f5e] stroke-[2] opacity-0 group-hover:opacity-100 transition-opacity" 
+                    />
                   ))}
                 </>
               );

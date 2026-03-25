@@ -20,7 +20,7 @@ export const AnalyticsCharts = ({ analytics }) => (
               <span className="text-gray-400">{stat.label}</span>
               <span className="text-dark">{stat.count}</span>
             </div>
-            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div className="h-4 bg-gray-100 rounded-full overflow-hidden">
               <motion.div 
                 initial={{ width: 0 }}
                 animate={{ width: `${(stat.count / (stat.total || 1)) * 100}%` }}
