@@ -283,7 +283,7 @@ const ShopContent = () => {
                   <h2 className="text-xl font-black text-dark">
                     {categoryParam ? categories.find(c => c.slug === categoryParam)?.name : 'All Products'}
                   </h2>
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 h-4">
+                  <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2 h-4">
                     {products.length} Products Found
                     <AnimatePresence>
                       {isFiltering && (
@@ -298,7 +298,7 @@ const ShopContent = () => {
                         </motion.span>
                       )}
                     </AnimatePresence>
-                  </p>
+                  </div>
                 </div>
                 
                 <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-xl border border-gray-100 shadow-sm">

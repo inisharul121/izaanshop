@@ -1,6 +1,8 @@
 import React from 'react';
 import { Globe, Send, Heart, Play, Mail, Phone, MapPin } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
+import logo from '@/assets/logo.png';
 
 const Footer = () => {
   return (
@@ -9,9 +11,17 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
           {/* Brand */}
           <div className="space-y-6">
-            <Link href="/" className="text-2xl font-bold text-primary flex items-center gap-1">
-              <span className="bg-primary text-white px-2 py-0.5 rounded">I</span>
-              IzaanShop
+            <Link href="/" className="inline-block group">
+              <div className="relative">
+                <div className="absolute -inset-1 bg-primary/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                <Image 
+                  src={logo} 
+                  alt="IzaanShop Logo" 
+                  width={48} 
+                  height={48} 
+                  className="relative object-contain transition-transform group-hover:scale-110" 
+                />
+              </div>
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed">
               Premium educational products, books, and toys for the next generation. Quality and learning delivered to your doorstep.

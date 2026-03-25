@@ -30,11 +30,12 @@ const Navbar = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
+          <Link href="/" className="relative group">
+            <div className="absolute -inset-1 bg-primary/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
             <Image 
               src={logo} 
               alt="IzaanShop" 
-              className="h-10 md:h-12 w-auto object-contain transition-transform group-hover:scale-105" 
+              className="relative h-10 md:h-12 w-auto object-contain transition-all duration-300 group-hover:scale-110" 
             />
           </Link>
 

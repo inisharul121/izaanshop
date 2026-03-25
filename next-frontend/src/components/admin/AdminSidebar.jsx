@@ -1,5 +1,5 @@
 'use client';
-
+import Link from 'next/link';
 import React from 'react';
 import { 
   BarChart3, 
@@ -13,8 +13,10 @@ import {
   PieChart, 
   FileText, 
   ShieldCheck,
-  Image as ImageIcon 
+  ImageIcon 
 } from 'lucide-react';
+import Image from 'next/image';
+import logo from '@/assets/logo.png';
 
 const AdminSidebar = ({ activeTab, setActiveTab, onLogout }) => {
   const menuItems = [
@@ -34,11 +36,20 @@ const AdminSidebar = ({ activeTab, setActiveTab, onLogout }) => {
 
   return (
     <aside className="w-64 bg-dark text-white flex flex-col fixed inset-y-0 left-0 z-50 transition-all duration-300">
-      <div className="p-8">
-        <h2 className="text-2xl font-black tracking-tighter flex items-center gap-2">
-          Izaan<span className="text-primary italic">Shop</span>
-        </h2>
-        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1">Admin Control Center</p>
+      <div className="p-8 flex flex-col items-center">
+        <Link href="/" className="relative group block">
+          <div className="absolute -inset-1.5 bg-gradient-to-r from-primary to-orange-400 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+          <div className="relative bg-dark border border-white/10 p-3 rounded-2xl shadow-2xl transition-transform duration-300 group-hover:scale-110">
+            <Image 
+              src={logo} 
+              alt="IzaanShop Logo" 
+              width={56} 
+              height={56} 
+              className="object-contain"
+            />
+          </div>
+        </Link>
+        <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mt-6 opacity-80">Control Center</p>
       </div>
 
       <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto custom-scrollbar">
