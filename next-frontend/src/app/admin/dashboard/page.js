@@ -80,6 +80,7 @@ const AdminDashboard = () => {
 
     try {
       let endpoint = `/${modalType}s`;
+      if (modalType === 'category') endpoint = '/categories';
       if (editingItem?.id) endpoint += `/${editingItem.id}`;
 
       if (modalType === 'product') {

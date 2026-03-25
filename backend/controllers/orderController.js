@@ -183,12 +183,15 @@ const getAnalytics = async (req, res) => {
       totalCustomers,
       totalProducts,
       pendingOrders,
+      processingOrders,
+      shippedOrders,
       deliveredOrders,
       recentOrders,
       allOrders,
       topProductItems,
       lowStockProducts,
       categoryRevenue,
+      topProductRevenues,
     ] = await Promise.all([
       // KPIs
       prisma.order.count(),
@@ -196,6 +199,8 @@ const getAnalytics = async (req, res) => {
       prisma.user.count({ where: { role: 'user' } }),
       prisma.product.count(),
       prisma.order.count({ where: { status: 'Pending' } }),
+      prisma.order.count({ where: { status: 'Processing' } }),
+      prisma.order.count({ where: { status: 'Shipped' } }),
       prisma.order.count({ where: { status: 'Delivered' } }),
 
       // Orders in last 30 days for daily chart
@@ -215,7 +220,7 @@ const getAnalytics = async (req, res) => {
       // Top products aggregated by quantity sold
       prisma.orderItem.groupBy({
         by: ['productId'],
-        _sum: { quantity: true, price: true },
+        _sum: { quantity: true },
         orderBy: { _sum: { quantity: 'desc' } },
         take: 10,
       }),
@@ -242,6 +247,11 @@ const getAnalytics = async (req, res) => {
             }
           }
         }
+      }),
+      // Fetch revenues for top products separately to calculate SUM(price * quantity)
+      prisma.orderItem.findMany({
+        where: { productId: { in: (await prisma.orderItem.groupBy({ by: ['productId'], _sum: { quantity: true }, orderBy: { _sum: { quantity: 'desc' } }, take: 10 })).map(i => i.productId) } },
+        select: { productId: true, price: true, quantity: true }
       }),
     ]);
 
@@ -291,21 +301,35 @@ const getAnalytics = async (req, res) => {
     });
     const paymentBreakdown = Object.values(paymentMap);
 
-    // --- Top selling products (with name) ---
+    // --- Top selling products (with accurate revenue) ---
     const productIds = topProductItems.map(i => i.productId);
     const productsInfo = await prisma.product.findMany({
       where: { id: { in: productIds } },
       select: { id: true, name: true, slug: true, images: true, price: true }
     });
     const productInfoMap = Object.fromEntries(productsInfo.map(p => [p.id, p]));
-    const topProducts = topProductItems.map(item => ({
-      productId: item.productId,
-      name: productInfoMap[item.productId]?.name || 'Unknown',
-      slug: productInfoMap[item.productId]?.slug || '',
-      images: productInfoMap[item.productId]?.images || null,
-      unitsSold: item._sum.quantity || 0,
-      revenue: item._sum.price || 0,
-    }));
+    
+    // Map to aggregate revenue correctly
+    const productRevenueMap = {};
+    topProductRevenues.forEach(oi => {
+      productRevenueMap[oi.productId] = (productRevenueMap[oi.productId] || 0) + (oi.price * oi.quantity);
+    });
+
+    const topProducts = topProductItems.map(item => {
+      const pInfo = productInfoMap[item.productId];
+      let images = pInfo?.images;
+      if (typeof images === 'string') {
+        try { images = JSON.parse(images); } catch (e) { images = { main: '', gallery: [] }; }
+      }
+      return {
+        productId: item.productId,
+        name: pInfo?.name || 'Unknown',
+        slug: pInfo?.slug || '',
+        images: images || null,
+        unitsSold: item._sum.quantity || 0,
+        revenue: productRevenueMap[item.productId] || 0,
+      };
+    });
 
     // --- Category performance ---
     const categoryStats = categoryRevenue.map(cat => {
@@ -326,13 +350,21 @@ const getAnalytics = async (req, res) => {
         totalCustomers,
         totalProducts,
         pendingOrders,
+        processingOrders,
+        shippedOrders,
         deliveredOrders,
       },
       revenueByDay,
       revenueByMonth,
       paymentBreakdown,
       topProducts,
-      lowStockProducts,
+      lowStockProducts: lowStockProducts.map(p => {
+        let images = p.images;
+        if (typeof images === 'string') {
+          try { images = JSON.parse(images); } catch (e) { images = { main: '', gallery: [] }; }
+        }
+        return { ...p, images };
+      }),
       categoryStats,
     });
   } catch (error) {

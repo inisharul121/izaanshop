@@ -13,6 +13,8 @@ export const AnalyticsCharts = ({ analytics }) => (
       <div className="space-y-6">
         {[
           { label: 'Pending', count: analytics?.kpis?.pendingOrders, color: 'bg-orange-500', total: analytics?.kpis?.totalOrders },
+          { label: 'Processing', count: analytics?.kpis?.processingOrders, color: 'bg-blue-500', total: analytics?.kpis?.totalOrders },
+          { label: 'Shipped', count: analytics?.kpis?.shippedOrders, color: 'bg-purple-500', total: analytics?.kpis?.totalOrders },
           { label: 'Delivered', count: analytics?.kpis?.deliveredOrders, color: 'bg-green-500', total: analytics?.kpis?.totalOrders },
         ].map((stat, i) => (
           <div key={i} className="space-y-2">
