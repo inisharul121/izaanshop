@@ -27,10 +27,10 @@ const Footer = () => {
               Premium educational products, books, and toys for the next generation. Quality and learning delivered to your doorstep.
             </p>
             <div className="flex gap-4">
-              <a href="#" className="hover:text-primary transition-colors"><Globe className="w-5 h-5" /></a>
-              <a href="#" className="hover:text-primary transition-colors"><Send className="w-5 h-5" /></a>
-              <a href="#" className="hover:text-primary transition-colors"><Heart className="w-5 h-5" /></a>
-              <a href="#" className="hover:text-primary transition-colors"><Play className="w-5 h-5" /></a>
+              <a href="https://www.facebook.com/izaanshop2" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors"><Globe className="w-5 h-5" /></a>
+              <a href="https://www.facebook.com/izaanshop2" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors"><Send className="w-5 h-5" /></a>
+              <a href="https://www.facebook.com/izaanshop2" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors"><Heart className="w-5 h-5" /></a>
+              <a href="https://www.facebook.com/izaanshop2" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors"><Play className="w-5 h-5" /></a>
             </div>
           </div>
 

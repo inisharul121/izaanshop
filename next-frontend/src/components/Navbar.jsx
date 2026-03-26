@@ -96,7 +96,7 @@ const Navbar = () => {
                 <WhatsAppIcon className="w-4 h-4 text-green-600 group-hover:text-white" />
               </a>
               <a 
-                href="https://facebook.com" 
+                href="https://www.facebook.com/izaanshop2" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="bg-blue-600/10 p-2 rounded-full hover:bg-blue-600 transition-all group shadow-sm"
