@@ -60,7 +60,7 @@ const Navbar = () => {
   return (
     <header className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-100">
       {/* Section 1: Top Bar (Search, Phone, Social) */}
-      <div className="bg-gray-50/80 backdrop-blur-md py-2 border-b border-gray-100/50">
+      <div className="bg-gray-50/80 backdrop-blur-md py-3.5 border-b border-gray-100/50">
         <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-center gap-4 text-center">
           {/* Search Bar - Centered */}
           <div className="w-full md:w-1/2 lg:w-1/3 order-2 md:order-1">
@@ -110,7 +110,7 @@ const Navbar = () => {
       </div>
 
       {/* Section 2: Main Navbar (Logo, Nav Links, Actions) */}
-      <nav className="container mx-auto px-4 py-3">
+      <nav className="container mx-auto px-4 py-6">
         <div className="flex items-center justify-center gap-8 w-full">
           {/* Logo - Start */}
           <Link href="/" className="flex flex-shrink-0 active:scale-95 transition-transform">

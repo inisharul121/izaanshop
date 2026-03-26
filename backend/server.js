@@ -76,6 +76,7 @@ apiRouter.use('/upload', require('./routes/uploadRoutes'));
 apiRouter.use('/media', require('./routes/mediaRoutes'));
 apiRouter.use('/settings', require('./routes/settingsRoutes'));
 apiRouter.use('/analytics', require('./routes/analyticsRoutes'));
+apiRouter.use('/banners', require('./routes/bannerRoutes'));
 
 apiRouter.get('/', (req, res) => {
   res.json({ message: 'Welcome to IzaanShop API' });

@@ -7,6 +7,7 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/utils/api';
 import ProductCard from '@/components/ProductCard';
+import HeroSlider from '@/components/HeroSlider';
 
 import { Suspense } from 'react';
 
@@ -21,6 +22,7 @@ const ShopContent = () => {
   const [initialLoading, setInitialLoading] = React.useState(true);
   const [isFiltering, setIsFiltering] = React.useState(false);
   const [showMobileFilters, setShowMobileFilters] = React.useState(false);
+  const [banners, setBanners] = React.useState([]);
 
   const categoryParam = searchParams.get('category') || '';
   const sortParam = searchParams.get('sort') || 'newest';
@@ -65,6 +67,11 @@ const ShopContent = () => {
     };
     fetchData();
   }, [categoryParam, sortParam, minPriceParam, maxPriceParam, keywordParam]);
+
+  // Fetch banners
+  React.useEffect(() => {
+    api.get('/banners').then(res => setBanners(res.data)).catch(() => {});
+  }, []);
 
   const updateSearchParams = (newParams) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -179,30 +186,29 @@ const ShopContent = () => {
 
   return (
     <div className="pb-20 bg-[#F9FAFB] min-h-screen">
-      {/* Hero Section */}
-      <section className="bg-white border-b border-gray-100 mb-12 py-12">
+      {/* Hero Slider */}
+      {banners.length > 0 && <HeroSlider banners={banners} />}
+
+      {/* Breadcrumb & Title Section */}
+      <section className="bg-white border-b border-gray-100 mb-12 py-8">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-            <div className="space-y-4 max-w-2xl text-center md:text-left">
-              <nav className="flex items-center gap-2 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] mb-4 overflow-x-auto no-scrollbar">
-                <Link href="/" className="hover:text-primary transition-colors">Home</Link>
+          <nav className="flex items-center gap-2 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] mb-4 overflow-x-auto no-scrollbar">
+            <Link href="/" className="hover:text-primary transition-colors">Home</Link>
+            <div className="w-1 h-1 rounded-full bg-gray-200" />
+            <span className="text-primary/40 leading-none">Shop</span>
+            {categoryParam && (
+              <>
                 <div className="w-1 h-1 rounded-full bg-gray-200" />
-                <span className="text-primary/40 leading-none">Shop</span>
-                {categoryParam && (
-                  <>
-                    <div className="w-1 h-1 rounded-full bg-gray-200" />
-                    <span className="text-primary truncate">{categoryParam}</span>
-                  </>
-                )}
-              </nav>
-              <h1 className="text-4xl md:text-6xl font-black text-dark tracking-tight">
-                Explore the <span className="text-primary">Collection</span>
-              </h1>
-              <p className="text-gray-400 font-medium max-w-lg leading-relaxed">
-                Empower your child's journey with our hand-picked selection of educational excellence.
-              </p>
-            </div>
-          </div>
+                <span className="text-primary truncate">{categoryParam}</span>
+              </>
+            )}
+          </nav>
+          <h1 className="text-3xl md:text-5xl font-black text-dark tracking-tight">
+            Explore the <span className="text-primary">Collection</span>
+          </h1>
+          <p className="text-gray-400 font-medium max-w-lg leading-relaxed mt-2 text-sm">
+            Empower your child's journey with our hand-picked selection of educational excellence.
+          </p>
         </div>
       </section>
 

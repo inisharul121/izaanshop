@@ -9,6 +9,7 @@ import OrderSection from '@/components/admin/OrderSection';
 import { CategorySection, CouponSection } from '@/components/admin/OtherManagement';
 import { AnalyticsCharts, FinancialReport, ProductReport } from '@/components/admin/AnalyticsReports';
 import MediaSection from '@/components/admin/MediaSection';
+import BannerSection from '@/components/admin/BannerSection';
 import { UserSection, AdminApprovalsSection } from '@/components/admin/UserManagement';
 import { OrderModal, ProductModal, CategoryModal, CouponModal } from '@/components/admin/Modals';
 import { useAdminDashboard } from '@/hooks/useAdminDashboard';
@@ -241,6 +242,8 @@ const AdminDashboard = () => {
                 </form>
               </div>
             )}
+
+            {activeTab === 'banners' && <BannerSection />}
 
             {activeTab === 'media' && <MediaSection />}
 

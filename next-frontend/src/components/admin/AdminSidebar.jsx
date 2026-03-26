@@ -28,6 +28,7 @@ const AdminSidebar = ({ activeTab, setActiveTab, onLogout }) => {
     { id: 'coupons', label: 'Coupons', icon: CreditCard },
     { id: 'users', label: 'Customers', icon: Users },
     { id: 'admin_approvals', label: 'Admin Approvals', icon: ShieldCheck },
+    { id: 'banners', label: 'Banners', icon: ImageIcon },
     { id: 'media', label: 'Media Library', icon: ImageIcon },
     { id: 'financial_report', label: 'Financials', icon: FileText },
     { id: 'product_report', label: 'Stock Reports', icon: FileText },
