@@ -15,22 +15,22 @@ const AboutPage = () => {
 
   const values = [
     {
-      title: 'Quality First',
-      description: 'We hand-pick every toy and book to ensure it meets our high standards for educational value and durability.',
+      title: 'Safe & Quality Products',
+      description: 'We carefully select every item to support children\'s mental and physical development with the highest safety standards.',
       icon: Shield,
       bg: 'bg-blue-50',
       color: 'text-blue-600',
     },
     {
-      title: 'Made with Love',
-      description: 'We care about your child\'s development as much as you do. Every product is curated with love and care.',
+      title: 'Affordable Prices',
+      description: 'We are committed to offering the best quality at affordable prices so every parent can provide the best for their child.',
       icon: Heart,
       bg: 'bg-pink-50',
       color: 'text-pink-600',
     },
     {
-      title: 'Expert Picked',
-      description: 'Our team of educators and child development experts vet every item in our collection.',
+      title: 'Fast Delivery',
+      description: 'Quick and reliable shipping across the country so your little ones never have to wait long for their new favorites.',
       icon: Star,
       bg: 'bg-orange-50',
       color: 'text-orange-600',
@@ -72,11 +72,11 @@ const AboutPage = () => {
               <span className="text-primary truncate">About Us</span>
             </nav>
             <h1 className="text-5xl md:text-7xl font-black text-dark tracking-tight leading-tight">
-              Empowering the Next <br />
-              <span className="text-primary">Generation of Thinkers</span>
+              Welcome to <br />
+              <span className="text-primary">Izaan Shop</span>
             </h1>
             <p className="text-lg md:text-xl text-gray-500 font-medium max-w-2xl mx-auto leading-relaxed">
-              Izaan Shop is more than just a store. We are a community dedicated to providing the best educational tools for children to explore, learn, and grow.
+              A trusted online store offering quality baby toys, books, learning tools, and other essential items for children. Our goal is to create a fun and educational environment for kids while making it easy for parents to find safe and useful products.
             </p>
           </motion.div>
         </div>
@@ -117,14 +117,23 @@ const AboutPage = () => {
             >
               <div className="h-1 w-20 bg-primary rounded-full" />
               <h2 className="text-4xl font-black text-dark leading-tight">
-                Our Mission is to ignite <br /> curiosity in every child.
+                Our <span className="text-primary">Mission</span>
               </h2>
               <div className="space-y-6 text-gray-500 leading-relaxed font-medium">
                 <p>
-                  Started with a simple vision, Izaan Shop has grown into a destination for parents who value quality over quantity. We believe that play is the most powerful form of research.
+                  Our mission at Izaan Shop is to provide safe, educational, and creative products that help children grow their thinking skills, abilities, and imagination. We are committed to ensuring the best quality, affordable prices, and fast delivery to keep our customers satisfied.
                 </p>
+              </div>
+              <div className="h-1 w-20 bg-primary/30 rounded-full" />
+              <h2 className="text-4xl font-black text-dark leading-tight">
+                Our <span className="text-primary">Vision</span>
+              </h2>
+              <div className="space-y-6 text-gray-500 leading-relaxed font-medium">
                 <p>
-                  Every product in our catalog is carefully selected based on its ability to stimulate cognitive development, creativity, and fine motor skills. We don't just sell toys; we sell building blocks for a brighter future.
+                  Our vision is to become one of the best child-focused online stores in the country. At Izaan Shop, we want to build a platform where every child can enjoy learning, and every parent can shop with trust and confidence.
+                </p>
+                <p className="italic text-primary/70 font-bold">
+                  We believe a child's bright future begins with the right toys and learning tools.
                 </p>
               </div>
               <div className="flex gap-4 pt-4">
