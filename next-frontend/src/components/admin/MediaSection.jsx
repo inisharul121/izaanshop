@@ -33,6 +33,31 @@ const MediaSection = () => {
     setTimeout(() => setCopying(null), 2000);
   };
 
+  const handleUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    setLoading(true);
+    const formData = new FormData();
+    // For single or multiple, but our current backend handles single for /api/media/upload
+    // If we want multiple, we'd need to loop or update backend
+    try {
+      for (const file of files) {
+        const singleFormData = new FormData();
+        singleFormData.append('image', file);
+        await api.post('/media/upload', singleFormData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+      }
+      fetchMedia();
+    } catch (err) {
+      console.error('Upload failed:', err);
+      alert('Upload failed: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredImages = images.filter(img => 
     img.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -50,14 +75,28 @@ const MediaSection = () => {
             className="w-full bg-gray-50 border-none rounded-2xl pl-12 pr-4 py-3.5 text-sm focus:ring-4 focus:ring-primary/10 transition-all outline-none"
           />
         </div>
-        <button 
-          onClick={fetchMedia} 
-          disabled={loading}
-          className="flex items-center gap-2 px-6 py-3.5 bg-gray-50 hover:bg-gray-100 text-gray-500 rounded-2xl text-sm font-bold transition-all disabled:opacity-50"
-        >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          Refresh Library
-        </button>
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 px-6 py-3.5 bg-primary text-white rounded-2xl text-sm font-bold transition-all cursor-pointer hover:bg-primary-dark shadow-lg shadow-primary/20">
+            <ImageIcon className="w-4 h-4" />
+            Upload Image
+            <input 
+              type="file" 
+              multiple 
+              accept="image/*" 
+              className="hidden" 
+              onChange={handleUpload}
+              disabled={loading}
+            />
+          </label>
+          <button 
+            onClick={fetchMedia} 
+            disabled={loading}
+            className="flex items-center gap-2 px-6 py-3.5 bg-gray-50 hover:bg-gray-100 text-gray-500 rounded-2xl text-sm font-bold transition-all disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+        </div>
       </div>
 
       {loading ? (

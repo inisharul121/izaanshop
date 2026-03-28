@@ -179,9 +179,33 @@ const BannerSection = () => {
                     <p className="text-gray-300 text-sm font-medium">No image selected</p>
                   </div>
                 )}
-                <button onClick={openMediaPicker} className="w-full py-2.5 bg-gray-50 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-100 transition-colors border border-gray-100">
-                  Select from Media Library
-                </button>
+                <div className="grid grid-cols-2 gap-3">
+                  <button onClick={openMediaPicker} className="py-2.5 bg-gray-50 rounded-xl text-xs font-bold text-gray-500 hover:bg-gray-100 transition-colors border border-gray-100 flex items-center justify-center gap-2">
+                    <Layers className="w-4 h-4" /> Media Library
+                  </button>
+                  <label className="py-2.5 bg-primary/10 rounded-xl text-xs font-bold text-primary hover:bg-primary/20 transition-colors border border-primary/20 flex items-center justify-center gap-2 cursor-pointer">
+                    <Plus className="w-4 h-4" /> Local Upload
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      onChange={async (e) => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        const formData = new FormData();
+                        formData.append('image', file);
+                        try {
+                          const res = await api.post('/upload', formData, {
+                            headers: { 'Content-Type': 'multipart/form-data' }
+                          });
+                          setImage(res.data.mainImage);
+                        } catch (err) {
+                          alert('Upload failed');
+                        }
+                      }} 
+                    />
+                  </label>
+                </div>
               </div>
 
               <div>
