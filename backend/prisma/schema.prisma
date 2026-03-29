@@ -31,7 +31,7 @@ model Category {
   id          Int       @id @default(autoincrement())
   name        String    @unique
   slug        String    @unique
-  image       String?
+  image       String?   @db.LongText
   description String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -81,7 +81,7 @@ model ProductVariant {
   salePrice  Float?
   stock      Int         @default(0)
   options    String      @db.LongText
-  image      String?
+  image      String?     @db.LongText
   isDefault  Boolean     @default(false)
   productId  Int
   createdAt  DateTime    @default(now())
@@ -145,7 +145,7 @@ model OrderItem {
   id        Int             @id @default(autoincrement())
   name      String
   quantity  Int
-  image     String
+  image     String    @db.LongText
   price     Float
   variantId Int?
   orderId   Int
@@ -183,7 +183,7 @@ model Banner {
   id        Int      @id @default(autoincrement())
   title     String?
   subtitle  String?
-  image     String
+  image     String   @db.LongText
   link      String?
   isActive  Boolean  @default(true)
   order     Int      @default(0)
