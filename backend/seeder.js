@@ -1,14 +1,5 @@
-const mongoose = require('mongoose');
-const dotenv = require('dotenv');
-const Category = require('./models/Category');
-const Product = require('./models/Product');
-const User = require('./models/User');
-
-dotenv.config();
-
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('✅ Connected to MongoDB for seeding'))
-  .catch(err => console.error(err));
+const prisma = require('./utils/prisma');
+const bcrypt = require('bcryptjs');
 
 const categories = [
   { name: 'Books', slug: 'books', description: 'Educational and story books' },
@@ -24,7 +15,7 @@ const products = [
     price: 450,
     salePrice: 350,
     stock: 50,
-    images: ['https://placehold.co/600x400/FF6B35/white?text=Math+Adventure'],
+    images: JSON.stringify({ main: 'https://placehold.co/600x400/FF6B35/white?text=Math+Adventure', gallery: [] }),
   },
   {
     name: 'Story of the World',
@@ -33,7 +24,7 @@ const products = [
     price: 600,
     salePrice: 520,
     stock: 20,
-    images: ['https://placehold.co/600x400/FF6B35/white?text=History+Book'],
+    images: JSON.stringify({ main: 'https://placehold.co/600x400/FF6B35/white?text=History+Book', gallery: [] }),
   },
   {
     name: 'Smart Building Blocks',
@@ -42,27 +33,71 @@ const products = [
     price: 1200,
     salePrice: 950,
     stock: 15,
-    images: ['https://placehold.co/600x400/FF6B35/white?text=Building+Blocks'],
+    images: JSON.stringify({ main: 'https://placehold.co/600x400/FF6B35/white?text=Building+Blocks', gallery: [] }),
   },
+];
+
+const banners = [
+  {
+    title: 'New Arrival',
+    subtitle: 'Educational Toys for Kids',
+    image: 'https://placehold.co/1920x600/FF6B35/white?text=New+Arrivals',
+    link: '/shop',
+    isActive: true,
+    order: 1
+  }
 ];
 
 const seedData = async () => {
   try {
-    await Category.deleteMany();
-    await Product.deleteMany();
+    console.log('🧹 Cleaning existing data...');
+    await prisma.orderItem.deleteMany();
+    await prisma.order.deleteMany();
+    await prisma.productVariant.deleteMany();
+    await prisma.productAttribute.deleteMany();
+    await prisma.product.deleteMany();
+    await prisma.category.deleteMany();
+    await prisma.user.deleteMany();
+    await prisma.banner.deleteMany();
 
-    const createdCategories = await Category.insertMany(categories);
-    
-    const sampleProducts = products.map((p, index) => {
-      return { ...p, category: createdCategories[index % createdCategories.length]._id };
+    console.log('👤 Creating Admin User...');
+    const hashedPassword = await bcrypt.hash('admin123456', 10);
+    await prisma.user.create({
+      data: {
+        name: 'Admin User',
+        email: 'admin@example.com',
+        password: hashedPassword,
+        role: 'admin',
+        isApproved: true
+      }
     });
 
-    await Product.insertMany(sampleProducts);
+    console.log('📁 Seeding Categories...');
+    const createdCategories = [];
+    for (const cat of categories) {
+      const c = await prisma.category.create({ data: cat });
+      createdCategories.push(c);
+    }
 
-    console.log('✅ Data Seeded!');
+    console.log('🛍️ Seeding Products...');
+    for (let i = 0; i < products.length; i++) {
+      await prisma.product.create({
+        data: {
+          ...products[i],
+          categoryId: createdCategories[i % createdCategories.length].id,
+        }
+      });
+    }
+
+    console.log('🖼️ Seeding Banners...');
+    for (const banner of banners) {
+      await prisma.banner.create({ data: banner });
+    }
+
+    console.log('✅ DATABASE SEEDED SUCCESSFULLY!');
     process.exit();
   } catch (error) {
-    console.error(error);
+    console.error('❌ SEEDING FAILED:', error);
     process.exit(1);
   }
 };

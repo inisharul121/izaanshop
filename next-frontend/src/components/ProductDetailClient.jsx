@@ -86,8 +86,8 @@ const ProductDetailClient = ({ initialProduct }) => {
     
     const itemToAdd = {
       ...product,
-      price: displayPrice,
-      salePrice: displaySalePrice,
+      price: basePrice,
+      salePrice: salePrice,
       selectedVariant: activeVariant,
       selectedOptions: selectedOptions
     };

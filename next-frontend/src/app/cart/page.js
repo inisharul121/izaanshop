@@ -59,7 +59,18 @@ const Cart = () => {
                 className="flex gap-4 md:gap-6 bg-white p-4 md:p-6 rounded-2xl border border-gray-100 shadow-sm"
               >
                 <Link href={`/product/${item.slug}`} className="w-24 md:w-32 aspect-square rounded-lg overflow-hidden shrink-0 relative">
-                  <Image src={getImageUrl(item.images?.[0])} alt={item.name} fill className="object-cover" />
+                  {(() => {
+                    const imagesObj = typeof item.images === 'string' ? JSON.parse(item.images) : (item.images || {});
+                    const displayImg = item.selectedVariant?.image || imagesObj.main;
+                    return (
+                      <Image 
+                        src={getImageUrl(displayImg)} 
+                        alt={item.name} 
+                        fill 
+                        className="object-cover" 
+                      />
+                    );
+                  })()}
                 </Link>
                 
                 <div className="flex-1 flex flex-col justify-between">

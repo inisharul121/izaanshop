@@ -1,111 +1,82 @@
-# 🚀 Izaan Shop - cPanel Hosting Guide (Next.js & Node.js)
+# 🚀 Izaan Shop - Universal Master Hosting Guide (cPanel Monolith)
 
-This guide covers how to host your **Next.js Frontend** at `yourdomain.com` and your **Node.js/Prisma Backend** at `yourdomain.com/api` using cPanel.
-
----
-
-## 1. Backend Deployment (Node.js & Express)
-
-### Step 1: Prepare & Upload
-1. Zip your `backend` folder locally (exclude `node_modules`, `.env`, and `prisma/dev.db`).
-2. In cPanel **File Manager**, create a folder named `backend_app` **outside** of `public_html` (e.g., `/home/username/backend_app`).
-3. Upload and extract your zip file there.
-
-### Step 2: Setup Node.js App
-1. In cPanel, find **Setup Node.js App** and click **Create Application**.
-2. **Application root**: `backend_app`.
-3. **Application URL**: Select your domain and type **`api`** in the path box.
-   - *Result*: `https://yourdomain.com/api`
-4. **Application startup file**: `server.js`.
-5. Click **Create**, then click **Run NPM Install**.
-6. **Add Environment Variables** in the Node.js UI:
-   - `DATABASE_URL`: Your MySQL connection string (e.g., `mysql://user:pass@localhost:3306/db_name`)
-   - `JWT_SECRET`: Your secret key.
-   - `NODE_ENV`: `production`
-   - `CLIENT_URL`: `https://yourdomain.com`
-
-### Step 3: Prisma Generation
-If the app fails with a 503 error, ensure Prisma is generated. You can run `npx prisma generate` via the **Terminal** in cPanel within the `backend_app` folder.
+This guide covers the **ultimate stable setup** for Izaan Shop. It allows you to develop on your Mac while using the live cPanel database, and update your site in seconds.
 
 ---
 
-## 2. Frontend Deployment (Next.js - Full Node.js SSR)
+## 🛡️ 1. File Safety Manual (The "Sacred" vs "Disposable")
 
-For the best experience (SSR, SEO, Dynamic Routes), follow these steps to host Next.js as a Node.js app.
+Before you delete anything on cPanel, check this table:
 
-### Step 1: Pre-Build Locally
-1. In `next-frontend/.env.local`, ensure `NEXT_PUBLIC_API_URL` is set to `https://yourdomain.com/api`.
-2. Run `npm run build`. This creates the `.next` folder.
-3. Zip the following files/folders:
-   - `.next`
-   - `public`
-   - `package.json`
-   - `next.config.mjs` (or `.js`)
-   - `jsconfig.json` (if present)
-
-### Step 2: Setup Node.js app for Frontend
-1. Create a folder named `frontend_app` **outside** of `public_html`.
-2. Upload and extract your zipped frontend files there.
-3. In cPanel **Setup Node.js App**, click **Create Application**.
-4. **Application root**: `frontend_app`.
-5. **Application URL**: Select your domain and **leave the path box empty**.
-   - *Result*: `https://yourdomain.com`
-6. **Application startup file**: 
-   - Create a file named `entry.js` in `frontend_app` and paste this:
-     ```javascript
-     const { createServer } = require('http')
-     const { parse } = require('url')
-     const next = require('next')
-     
-     const dev = false
-     const hostname = 'localhost'
-     const port = process.env.PORT || 3000
-     const app = next({ dev, hostname, port })
-     const handle = app.getRequestHandler()
-     
-     app.prepare().then(() => {
-       createServer(async (req, res) => {
-         try {
-           const parsedUrl = parse(req.url, true)
-           await handle(req, res, parsedUrl)
-         } catch (err) {
-           console.error('Error occurred handling', req.url, err)
-           res.statusCode = 500
-           res.end('internal server error')
-         }
-       }).listen(port, (err) => {
-         if (err) throw err
-         console.log(`> Ready on http://${hostname}:${port}`)
-       })
-     })
-     ```
-7. Set **Application startup file** to `entry.js`.
-8. Click **Create**, then click **Run NPM Install**.
+| File / Folder | Status | Action | Why? |
+| :--- | :--- | :--- | :--- |
+| **`.env`** | 🛑 **SACRED** | **NEVER DELETE** | Contains your live database passwords and secrets. |
+| **`uploads/`** | 🛑 **SACRED** | **NEVER DELETE** | Contains all product images uploaded by you/users. |
+| **`node_modules/`** | ⚠️ **STABLE** | **KEEP** | Only delete if you are changing `package.json` dependencies. |
+| **`.next/`** | ♻️ **DISPOSABLE** | **REPLACE** | Replace this folder every time you change the Frontend. |
+| **`public/`** | ♻️ **DISPOSABLE** | **REPLACE** | Replace this if you add new static images or logos. |
+| **`backend/`** | ♻️ **DISPOSABLE** | **REPLACE** | Replace specific `.js` files when fixing API logic. |
 
 ---
 
-## 3. Alternative: Next.js Static Export (Simpler)
+## 🌍 2. The "Universal" Developer Setup (Life-Saver)
 
-If you don't need SSR (Server Side Rendering), use static export.
+We have configured your project so you **never** have to change `.env` files between your Mac and cPanel.
 
-1. In `next-frontend/next.config.mjs`, add `output: 'export'`.
-2. Run `npm run build`. This creates an `out` folder.
-3. Upload the **contents** of the `out` folder directly into `public_html`.
-4. Create a `.htaccess` file in `public_html` to handle routing:
-```apache
-<IfModule mod_rewrite.c>
-  RewriteEngine On
-  RewriteBase /
-  RewriteRule ^index\.html$ - [L]
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteCond %{REQUEST_FILENAME} !-l
-  RewriteRule . /index.html [L]
-</IfModule>
-```
+### **The Requirement (Do this once):**
+1.  Go to cPanel -> **Remote MySQL®**.
+2.  Add **`%`** to the Access Hosts.
+3.  Now your Mac can talk to the cPanel database directly.
+
+### **The Universal Connection:**
+Your `.env` now uses `srv100.servercpanel.com`. This works on your Mac (through the internet) and on cPanel (locally). **DO NOT** change this back to `localhost`.
 
 ---
 
-## 🛰️ Final Check
-- **Main Site**: `https://yourdomain.com` (Served by `frontend_app` or static `out`)
-- **API Backend**: `https://yourdomain.com/api` (Served by `backend_app`)
+## ⚡ 3. The 30-Second Minimal Update Workflow
+
+You don't need to upload a 20MB ZIP every time. Use these "Minimal" paths:
+
+### **Scenario A: You changed the Frontend (React/CSS/Images)**
+1.  **On Mac**: `cd next-frontend && npm run build`
+2.  **On Mac (The Tiny-ZIP Trick)**:
+    ```bash
+    zip -r ../frontend_update.zip .next -x ".next/cache/*"
+    ```
+    *(This creates a 5-10MB ZIP instead of a 1GB one!)*
+3.  **On cPanel**: Delete the old `.next` folder in `izaan_app/next-frontend/`.
+4.  **Upload & Extract** `frontend_update.zip` into `izaan_app/next-frontend/`.
+5.  **Restart** the Node.js App.
+
+### **Scenario B: You changed one API file (e.g. `productController.js`)**
+1.  On Mac: Save your file.
+2.  On cPanel: Upload **only** that single `.js` file to the same folder.
+3.  **Restart** the Node.js App.
+
+### **Scenario C: You changed a Dependency (`package.json`)**
+1.  Upload the new `package.json`.
+2.  On cPanel: Click **"Run NPM Install"**.
+3.  **Restart** the Node.js App.
+
+---
+
+## 🛠️ 4. Essential Commands (Terminal)
+
+Always run these inside the `izaan_app/` folder in the cPanel Terminal:
+
+*   **To sync Database**: `npx prisma@6.2.1 db push --schema=backend/prisma/schema.prisma`
+*   **To update Prisma Client**: `npx prisma@6.2.1 generate --schema=backend/prisma/schema.prisma`
+*   **To test connection**: `node backend/test-db.js`
+*   **To seed data (Caution!)**: `node backend/seeder.js` *(Note: Our seeder is now in "Safety Mode" and won't delete your board books).*
+
+---
+
+## 🛑 5. If "Resource temporarily unavailable" appears:
+1.  **STOP** the Node.js app in cPanel.
+2.  Wait 10 seconds.
+3.  Run `pkill -u your_username -f node` in the terminal.
+4.  **START** the app again.
+
+---
+
+**This is your Master Manual. Keep it safe and follow the "Minimal Update" path to save hours of uploading time!** 🚀✨🚣‍♂️
