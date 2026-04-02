@@ -1,11 +1,12 @@
 'use client';
 
 import React from 'react';
-import { ShoppingCart, User, Search, Menu, X, Heart, LayoutDashboard, Phone } from 'lucide-react';
+import { ShoppingCart, User, Search, Menu, X, Heart, LayoutDashboard, Phone, Mail } from 'lucide-react';
 import Link from 'next/link';
 import { useStore } from '../store/useStore';
 import Image from 'next/image';
 import logo from '../assets/logo.png';
+import CategoryBar from './CategoryBar';
 
 import { usePathname } from 'next/navigation';
 
@@ -75,34 +76,41 @@ const Navbar = () => {
           </div>
           
           {/* Contact & Social - Centered */}
-          <div className="flex flex-wrap items-center justify-center gap-5 order-1 md:order-2">
+          <div className="flex flex-wrap items-center justify-center gap-3 order-1 md:order-2">
             <a 
               href="tel:+8801752530303" 
-              className="flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-primary transition-colors bg-white px-3 py-1.5 rounded-full shadow-sm border border-gray-100"
+              className="flex items-center gap-2 text-[10px] font-bold text-gray-500 hover:text-primary transition-colors bg-white px-3 py-1.5 rounded-full shadow-sm border border-gray-100"
             >
-              <Phone className="w-3.5 h-3.5 text-primary" />
-              <span className="hidden sm:inline">+880 1752-530303</span>
-              <span className="sm:hidden text-[10px]">Call Us</span>
+              <Phone className="w-3 h-3 text-primary" />
+              <span>+880 1752-530303</span>
+            </a>
+
+            <a 
+              href="mailto:info@izaanshop.com" 
+              className="hidden sm:flex items-center gap-2 text-[10px] font-bold text-gray-500 hover:text-primary transition-colors bg-white px-3 py-1.5 rounded-full shadow-sm border border-gray-100"
+            >
+              <Mail className="w-3 h-3 text-primary" />
+              <span>info@izaanshop.com</span>
             </a>
             
-            <div className="flex items-center gap-2 border-l border-gray-200 pl-5">
+            <div className="flex items-center gap-2 border-l border-gray-200 ml-1 pl-4">
               <a 
                 href="https://wa.me/8801752530303" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="bg-green-500/10 p-2 rounded-full hover:bg-green-500 transition-all group shadow-sm"
+                className="bg-green-500/10 p-1.5 rounded-full hover:bg-green-500 transition-all group shadow-sm"
                 title="WhatsApp"
               >
-                <WhatsAppIcon className="w-4 h-4 text-green-600 group-hover:text-white" />
+                <WhatsAppIcon className="w-3.5 h-3.5 text-green-600 group-hover:text-white" />
               </a>
               <a 
                 href="https://www.facebook.com/izaanshop2" 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="bg-blue-600/10 p-2 rounded-full hover:bg-blue-600 transition-all group shadow-sm"
+                className="bg-blue-600/10 p-1.5 rounded-full hover:bg-blue-600 transition-all group shadow-sm"
                 title="Facebook"
               >
-                <FacebookIcon className="w-4 h-4 text-blue-600 group-hover:text-white" />
+                <FacebookIcon className="w-3.5 h-3.5 text-blue-600 group-hover:text-white" />
               </a>
             </div>
           </div>
@@ -209,6 +217,9 @@ const Navbar = () => {
           </nav>
         </div>
       )}
+
+      {/* Section 3: Category Bar */}
+      <CategoryBar />
     </header>
   );
 };
