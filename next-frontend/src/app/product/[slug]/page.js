@@ -44,7 +44,8 @@ export async function generateMetadata({ params }) {
   }
   
   const title = `${product.name} | Izaan Shop`;
-  const description = product.description?.substring(0, 160) || `Buy ${product.name} at Izaan Shop.`;
+  const plainDescription = product.description?.replace(/<[^>]*>/g, '') || '';
+  const description = plainDescription.substring(0, 160) || `Buy ${product.name} at Izaan Shop.`;
   const image = getImageUrl(product.images?.main || product.images?.[0]);
   
   return {

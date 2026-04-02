@@ -4,13 +4,15 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ShoppingCart, Heart, Star, ChevronLeft, ShieldCheck, 
-  Truck, RefreshCcw, Minus, Plus, Share2, Info, ChevronRight 
+  Truck, RefreshCcw, Minus, Plus, Share2, Info, ChevronRight,
+  CreditCard
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useStore } from '@/store/useStore';
 import ProductCard from '@/components/ProductCard';
 import { getImageUrl } from '@/utils/helpers';
+import { useRouter } from 'next/navigation';
 
 const ProductDetailClient = ({ initialProduct }) => {
   const [product, setProduct] = useState(initialProduct);
@@ -20,6 +22,7 @@ const ProductDetailClient = ({ initialProduct }) => {
   const [selectedOptions, setSelectedOptions] = useState({});
   const [activeVariant, setActiveVariant] = useState(null);
   const { addToCart } = useStore();
+  const router = useRouter();
 
   useEffect(() => {
     // Initialize selected options if variable
@@ -92,6 +95,23 @@ const ProductDetailClient = ({ initialProduct }) => {
       selectedOptions: selectedOptions
     };
     addToCart(itemToAdd, quantity);
+  };
+
+  const handleBuyNow = () => {
+    if (product.type === 'VARIABLE' && !activeVariant) {
+      alert('Please select all available options');
+      return;
+    }
+    
+    const itemToAdd = {
+      ...product,
+      price: basePrice,
+      salePrice: salePrice,
+      selectedVariant: activeVariant,
+      selectedOptions: selectedOptions
+    };
+    addToCart(itemToAdd, quantity);
+    router.push('/checkout');
   };
 
   const COLOR_MAP = {
@@ -269,10 +289,18 @@ const ProductDetailClient = ({ initialProduct }) => {
                 <button 
                   onClick={handleAddToCart}
                   disabled={displayStock <= 0}
-                  className={`flex-[3] py-4 rounded-xl font-bold text-base transition-all flex items-center justify-center gap-3 active:scale-95 ${displayStock > 0 ? 'bg-primary text-white hover:bg-primary/90' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
+                  className={`flex-[3] py-4 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-3 active:scale-95 ${displayStock > 0 ? 'bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-white' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
                 >
                   <ShoppingCart className="w-5 h-5" />
                   {displayStock > 0 ? 'Add To Basket' : 'Out of Stock'}
+                </button>
+                <button 
+                  onClick={handleBuyNow}
+                  disabled={displayStock <= 0}
+                  className={`flex-[3] py-4 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-3 active:scale-95 ${displayStock > 0 ? 'bg-dark text-white hover:bg-dark/90 shadow-xl' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
+                >
+                  <CreditCard className="w-5 h-5" />
+                  {displayStock > 0 ? 'Buy Now' : 'Out of Stock'}
                 </button>
                 <button className="flex-1 py-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all flex items-center justify-center text-gray-400 hover:text-red-500">
                   <Heart className="w-5 h-5" />
@@ -300,7 +328,38 @@ const ProductDetailClient = ({ initialProduct }) => {
                 <div className="min-h-[200px] text-gray-500 leading-relaxed text-sm">
                   {activeTab === 'description' && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                      {product.description}
+                      <div 
+                        className="product-description-rich-text"
+                        dangerouslySetInnerHTML={{ __html: product.description }} 
+                      />
+                      <style jsx global>{`
+                        .product-description-rich-text {
+                          line-height: 1.8;
+                          color: #4b5563;
+                        }
+                        .product-description-rich-text p {
+                          margin-bottom: 1rem;
+                        }
+                        .product-description-rich-text ul, 
+                        .product-description-rich-text ol {
+                          margin-bottom: 1rem;
+                          padding-left: 1.5rem;
+                        }
+                        .product-description-rich-text ul {
+                          list-style-type: disc;
+                        }
+                        .product-description-rich-text ol {
+                          list-style-type: decimal;
+                        }
+                        .product-description-rich-text li {
+                          margin-bottom: 0.5rem;
+                        }
+                        .product-description-rich-text b, 
+                        .product-description-rich-text strong {
+                          color: #111827;
+                          font-weight: 700;
+                        }
+                      `}</style>
                     </motion.div>
                   )}
                   {activeTab === 'specifications' && (
