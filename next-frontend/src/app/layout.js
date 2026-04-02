@@ -20,11 +20,15 @@ export default function RootLayout({ children }) {
         className={`${inter.variable} font-sans min-h-screen flex flex-col`}
         suppressHydrationWarning
       >
-        <Navbar />
+        <div className="print:hidden">
+          <Navbar />
+        </div>
         <main className="flex-grow">
           {children}
         </main>
-        <Footer />
+        <div className="print:hidden">
+          <Footer />
+        </div>
       </body>
     </html>
   );

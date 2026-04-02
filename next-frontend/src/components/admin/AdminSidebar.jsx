@@ -13,7 +13,8 @@ import {
   PieChart, 
   FileText, 
   ShieldCheck,
-  ImageIcon 
+  ImageIcon,
+  Truck 
 } from 'lucide-react';
 import Image from 'next/image';
 import logo from '@/assets/logo.png';
@@ -29,6 +30,7 @@ const AdminSidebar = ({ activeTab, setActiveTab, onLogout }) => {
     { id: 'users', label: 'Customers', icon: Users },
     { id: 'admin_approvals', label: 'Admin Approvals', icon: ShieldCheck },
     { id: 'banners', label: 'Banners', icon: ImageIcon },
+    { id: 'shipping', label: 'Shipping', icon: Truck },
     { id: 'media', label: 'Media Library', icon: ImageIcon },
     { id: 'financial_report', label: 'Financials', icon: FileText },
     { id: 'product_report', label: 'Stock Reports', icon: FileText },

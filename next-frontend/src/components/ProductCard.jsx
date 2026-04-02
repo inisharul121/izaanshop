@@ -3,17 +3,32 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { getImageUrl } from '../utils/helpers';
-import { ShoppingCart, Star } from 'lucide-react';
+import { ShoppingCart, Star, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useStore } from '../store/useStore';
+import { useRouter } from 'next/navigation';
 
 const ProductCard = ({ product }) => {
   const { addToCart } = useStore();
+  const router = useRouter();
 
   const discount = product.salePrice 
     ? Math.round(((product.price - product.salePrice) / product.price) * 100)
     : null;
+
+  const handleBuyNow = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart(product);
+    router.push('/checkout');
+  };
+
+  const handleAddToCart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart(product);
+  };
 
   return (
     <motion.div 
@@ -61,17 +76,27 @@ const ProductCard = ({ product }) => {
             )}
           </div>
 
-          <button 
-            onClick={() => addToCart(product)}
-            className="w-full btn-primary py-1.5 text-xs flex items-center justify-center gap-2"
-          >
-            <ShoppingCart className="w-3.5 h-3.5" />
-            Add to Cart
-          </button>
+          <div className="flex flex-col gap-1.5">
+            <button 
+              onClick={handleAddToCart}
+              className="w-full bg-primary/10 text-primary border border-primary/20 py-1.5 rounded-lg text-[10px] font-bold flex items-center justify-center gap-2 hover:bg-primary hover:text-white transition-all duration-300"
+            >
+              <ShoppingCart className="w-3 h-3" />
+              Add to Cart
+            </button>
+            <button 
+              onClick={handleBuyNow}
+              className="w-full bg-dark text-white py-1.5 rounded-lg text-[10px] font-bold flex items-center justify-center gap-2 hover:bg-dark/90 transition-all active:scale-95"
+            >
+              <CreditCard className="w-3 h-3" />
+              Buy Now
+            </button>
+          </div>
         </div>
       </div>
     </motion.div>
   );
 };
+
 
 export default ProductCard;
