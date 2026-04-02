@@ -16,7 +16,9 @@ const checkoutSchema = z.object({
   name: z.string().min(2, 'Full name is required'),
   address: z.string().min(10, 'Full address is required'),
   phone: z.string().min(11, 'Valid phone number is required'),
+  email: z.string().email('Invalid email address').optional().or(z.literal('')),
   paymentMethod: z.enum(['Cash on Delivery', 'bKash', 'Nagad', 'Card']),
+  shippingMethodId: z.string().min(1, 'Please select a shipping method'),
 });
 
 const Checkout = () => {
@@ -42,25 +44,33 @@ const Checkout = () => {
     defaultValues: {
       name: user?.name || '',
       phone: user?.phone || '',
+      email: user?.email || '',
       address: user?.address?.street ? `${user.address.street}, ${user.address.city}` : '',
       paymentMethod: 'Cash on Delivery',
+      shippingMethodId: '',
     }
   });
 
+  const [shippingMethods, setShippingMethods] = React.useState([]);
   const [paymentSettings, setPaymentSettings] = React.useState({ bkash_number: '', nagad_number: '' });
   const selectedPaymentMethod = watch('paymentMethod');
+  const selectedShippingMethodId = watch('shippingMethodId');
   const [transactionId, setTransactionId] = React.useState('');
 
   React.useEffect(() => {
-    const fetchSettings = async () => {
+    const fetchData = async () => {
       try {
-        const { data } = await api.get('/settings');
-        setPaymentSettings(data);
+        const [settingsRes, shippingRes] = await Promise.all([
+          api.get('/settings'),
+          api.get('/shipping')
+        ]);
+        setPaymentSettings(settingsRes.data);
+        setShippingMethods(shippingRes.data);
       } catch (error) {
-        console.error('Failed to fetch payment settings');
+        console.error('Failed to fetch checkout data');
       }
     };
-    fetchSettings();
+    fetchData();
   }, []);
 
   const applyCoupon = async () => {
@@ -90,17 +100,22 @@ const Checkout = () => {
   
   let discount = 0;
   if (appliedCoupon) {
-    if (appliedCoupon.discountType === 'percentage') {
+    if (appliedCoupon.discountType?.toLowerCase() === 'percentage') {
       discount = (subtotal * appliedCoupon.discountValue) / 100;
     } else {
       discount = appliedCoupon.discountValue;
     }
   }
 
-  const shipping = subtotal > 2000 ? 0 : 60;
+  const selectedShipping = shippingMethods.find(m => String(m.id) === selectedShippingMethodId);
+  const shipping = selectedShipping ? selectedShipping.price : 0;
   const total = Math.max(0, subtotal - discount + shipping);
 
   const onSubmit = async (data) => {
+    if (!selectedShipping) {
+      alert('Please select a shipping method');
+      return;
+    }
     setLoading(true);
     try {
       const orderData = {
@@ -122,6 +137,8 @@ const Checkout = () => {
         paymentMethod: data.paymentMethod,
         itemsPrice: subtotal,
         shippingPrice: shipping,
+        shippingMethod: selectedShipping.name,
+        shippingEmail: data.email || null,
         totalPrice: total,
         transactionId: transactionId,
         ...(appliedCoupon ? { couponCode: appliedCoupon.code } : {}),
@@ -255,6 +272,36 @@ const Checkout = () => {
                 />
                 {errors.phone && <p className={errorClass}>{errors.phone.message}</p>}
               </div>
+
+              <div>
+                <label className={labelClass}>
+                  Email Address <span className="lowercase font-medium opacity-50">(Optional)</span>
+                </label>
+                <input 
+                  {...register('email')} 
+                  className={`${inputClass} ${errors.email ? 'border-red-300 bg-red-50/10' : ''}`} 
+                  placeholder="your@email.com" 
+                />
+                {errors.email && <p className={errorClass}>{errors.email.message}</p>}
+              </div>
+
+              <div className="pt-4 border-t border-gray-100">
+                <label className={labelClass}>
+                  <Truck className="w-3 h-3 inline mr-1 mb-0.5" /> Shipping Method
+                </label>
+                <select
+                  {...register('shippingMethodId')}
+                  className={`${inputClass} appearance-none cursor-pointer ${errors.shippingMethodId ? 'border-red-300 bg-red-50/10' : ''}`}
+                >
+                  <option value="">Select Shipping Method</option>
+                  {shippingMethods.map((method) => (
+                    <option key={method.id} value={method.id}>
+                      {method.name} — {method.price}৳
+                    </option>
+                  ))}
+                </select>
+                {errors.shippingMethodId && <p className={errorClass}>{errors.shippingMethodId.message}</p>}
+              </div>
             </div>
           </div>
 
@@ -379,7 +426,7 @@ const Checkout = () => {
                     <div>
                       <div className="text-xs font-black text-white">{appliedCoupon.code}</div>
                       <div className="text-[10px] text-green-400 font-bold uppercase tracking-tight">
-                        {appliedCoupon.discountType === 'percentage' ? `${appliedCoupon.discountValue}% Off` : `${appliedCoupon.discountValue}৳ Off`}
+                        {appliedCoupon.discountType?.toLowerCase() === 'percentage' ? `${appliedCoupon.discountValue}% Off` : `${appliedCoupon.discountValue}৳ Off`}
                       </div>
                     </div>
                   </div>
@@ -407,7 +454,7 @@ const Checkout = () => {
               )}
               <div className="flex justify-between text-sm font-bold opacity-40 uppercase tracking-widest">
                 <span>Delivery</span>
-                <span>{shipping === 0 ? <span className="text-green-400">Free</span> : `${shipping}৳`}</span>
+                <span>{selectedShipping ? (shipping === 0 ? <span className="text-green-400">Free</span> : `${shipping}৳`) : <span className="italic text-[10px]">Select Method</span>}</span>
               </div>
               
               <div className="pt-6 mt-6 border-t border-white/10 flex justify-between items-end">
@@ -416,7 +463,9 @@ const Checkout = () => {
                   <div className="text-4xl font-black text-white">{total}৳</div>
                 </div>
                 <div className="text-right pb-1">
-                  <div className="text-[10px] font-bold text-green-400 uppercase tracking-widest">{shipping === 0 ? 'Free Shipping' : 'Standard Rate'}</div>
+                  <div className="text-[10px] font-bold text-green-400 uppercase tracking-widest">
+                    {selectedShipping ? selectedShipping.name : 'Shipping Required'}
+                  </div>
                 </div>
               </div>
             </div>
