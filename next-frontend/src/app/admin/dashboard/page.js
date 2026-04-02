@@ -11,7 +11,8 @@ import { AnalyticsCharts, FinancialReport, ProductReport } from '@/components/ad
 import MediaSection from '@/components/admin/MediaSection';
 import BannerSection from '@/components/admin/BannerSection';
 import { UserSection, AdminApprovalsSection } from '@/components/admin/UserManagement';
-import { OrderModal, ProductModal, CategoryModal, CouponModal } from '@/components/admin/Modals';
+import ShippingSection from '@/components/admin/ShippingSection';
+import { OrderModal, ProductModal, CategoryModal, CouponModal, InvoiceModal } from '@/components/admin/Modals';
 import { useAdminDashboard } from '@/hooks/useAdminDashboard';
 import { Loader2, RefreshCw, ShieldCheck } from 'lucide-react';
 import api, { getImageUrl } from '@/utils/api';
@@ -59,6 +60,12 @@ const AdminDashboard = () => {
   const [slug, setSlug] = useState('');
   const [uploading, setUploading] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+
+  const handlePrintInvoice = (order) => {
+    setSelectedOrder(order);
+    setShowInvoiceModal(true);
+  };
 
   const handleOpenModal = (type, item = null) => {
     setModalType(type);
@@ -146,18 +153,22 @@ const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={handleLogout} />
+      <div className="print:hidden">
+        <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} onLogout={handleLogout} />
+      </div>
       
-      <div className="flex-1 ml-64 min-h-screen flex flex-col">
-        <AdminHeader user={user} />
+      <div className="flex-1 ml-64 min-h-screen flex flex-col print:ml-0 print:bg-white">
+        <div className="print:hidden">
+          <AdminHeader user={user} />
+        </div>
         
-        <main className="p-8 flex-1">
-          <div className="mb-8">
+        <main className="p-8 flex-1 print:p-0">
+          <div className="mb-8 print:hidden">
             <h1 className="text-3xl font-black text-dark capitalize">{activeTab.replace('_', ' ')}</h1>
             <p className="text-gray-400 font-medium mt-1">Manage your shop operations and analytics.</p>
           </div>
 
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 print:hidden">
             {activeTab === 'dashboard' && <DashboardOverview analytics={analytics} />}
             
             {activeTab === 'products' && (
@@ -187,6 +198,7 @@ const AdminDashboard = () => {
                 filterStatus={filterStatus}
                 setFilterStatus={setFilterStatus}
                 onViewOrder={(o) => { setSelectedOrder(o); setShowOrderModal(true); }}
+                onPrintInvoice={handlePrintInvoice}
                 onDeliver={handleDeliver}
               />
             )}
@@ -245,6 +257,8 @@ const AdminDashboard = () => {
 
             {activeTab === 'banners' && <BannerSection />}
 
+            {activeTab === 'shipping' && <ShippingSection />}
+
             {activeTab === 'media' && <MediaSection />}
 
             {activeTab === 'users' && <UserSection users={users} />}
@@ -265,6 +279,12 @@ const AdminDashboard = () => {
         isOpen={showOrderModal} 
         onClose={() => setShowOrderModal(false)} 
         onDeliver={handleDeliver} 
+      />
+
+      <InvoiceModal 
+        order={selectedOrder} 
+        isOpen={showInvoiceModal} 
+        onClose={() => setShowInvoiceModal(false)} 
       />
 
       <ProductModal 
