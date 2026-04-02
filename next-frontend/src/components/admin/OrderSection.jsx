@@ -1,12 +1,13 @@
 'use client';
 
 import React from 'react';
-import { Package, Eye, Truck, CheckCircle2, Clock, Search, Filter } from 'lucide-react';
+import { Package, Eye, Truck, CheckCircle2, Clock, Search, Filter, Printer } from 'lucide-react';
 import { format } from 'date-fns';
 
 const OrderSection = ({ 
   orders, 
   onViewOrder, 
+  onPrintInvoice,
   onDeliver, 
   filterStatus, 
   setFilterStatus 
@@ -61,7 +62,7 @@ const OrderSection = ({
                     <p className="text-[10px] text-gray-400 font-medium">{order.phone}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-xs font-bold text-gray-500">{format(new Date(order.createdAt), 'dd MMM yyyy')}</p>
+                    <p className="text-xs font-bold text-gray-500">{format(new Date(order.createdAt), 'dd MMM yyyy, hh:mm a')}</p>
                   </td>
                   <td className="px-6 py-4">
                     <p className="text-sm font-black text-dark">{order.totalPrice.toLocaleString()}৳</p>
@@ -76,12 +77,22 @@ const OrderSection = ({
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <button 
-                      onClick={() => onViewOrder(order)}
-                      className="p-2 hover:bg-white rounded-xl text-gray-400 hover:text-primary transition-all shadow-sm border border-transparent hover:border-gray-100"
-                    >
-                      <Eye className="w-5 h-5" />
-                    </button>
+                    <div className="flex justify-end gap-2">
+                      <button 
+                        onClick={() => onPrintInvoice(order)}
+                        className="p-2 hover:bg-white rounded-xl text-gray-400 hover:text-blue-500 transition-all shadow-sm border border-transparent hover:border-gray-100"
+                        title="Print Invoice"
+                      >
+                        <Printer className="w-5 h-5" />
+                      </button>
+                      <button 
+                        onClick={() => onViewOrder(order)}
+                        className="p-2 hover:bg-white rounded-xl text-gray-400 hover:text-primary transition-all shadow-sm border border-transparent hover:border-gray-100"
+                        title="View Details"
+                      >
+                        <Eye className="w-5 h-5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -1,10 +1,196 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, CreditCard, Users, Phone, MapPin, Check, Truck, ShieldCheck, RefreshCw, Image as ImageIcon, Upload } from 'lucide-react';
+import { 
+  X, CreditCard, Users, Phone, MapPin, Check, Truck, ShieldCheck, 
+  RefreshCw, Image as ImageIcon, Upload, Printer 
+} from 'lucide-react';
 import api, { getImageUrl } from '@/utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
+import dynamic from 'next/dynamic';
+const ReactQuill = dynamic(() => import('react-quill-new'), { ssr: false });
+import 'react-quill-new/dist/quill.snow.css';
+
+// ... other modals ...
+
+export const InvoiceModal = ({ order, isOpen, onClose }) => {
+  if (!isOpen || !order) return null;
+
+  const handlePrint = () => {
+    const printContent = document.getElementById('invoice-content');
+    const orderNumber = String(order.id).padStart(6, '0');
+    
+    const printWindow = window.open('', '', 'height=1000,width=800');
+    
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Invoice-Order-#${orderNumber}</title>
+          <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+            body { 
+              font-family: 'Inter', sans-serif;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+              background: white !important;
+              color: black !important;
+            }
+            @media print {
+              @page { margin: 0; size: a4 portrait; }
+              body { margin: 0; padding: 0; }
+              .custom-padding { padding: 1.5cm !important; }
+            }
+            .text-dark { color: #111827 !important; }
+            .text-gray-400 { color: #6b7280 !important; }
+            .text-gray-100 { color: #f3f4f6 !important; }
+            .border-dark { border-color: #111827 !important; }
+            .bg-dark\/60 { display: none !important; }
+          </style>
+        </head>
+        <body class="custom-padding p-8">
+          ${printContent.innerHTML}
+          <script>
+            window.onload = function() {
+              setTimeout(() => {
+                window.print();
+                window.close();
+              }, 800);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+  };
+
+  return (
+    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-dark/60 backdrop-blur-sm">
+      <motion.div 
+        initial={{ scale: 0.9, opacity: 0 }} 
+        animate={{ scale: 1, opacity: 1 }} 
+        className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+      >
+        {/* Modal Header - Hidden on Print */}
+        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 text-dark">
+          <h4 className="text-xl font-bold flex items-center gap-2">Order Invoice</h4>
+          <div className="flex gap-2">
+            <button 
+              onClick={handlePrint}
+              className="px-4 py-2 bg-dark text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-dark/20 hover:bg-black transition-all"
+            >
+              <Printer className="w-4 h-4" /> Print Now
+            </button>
+            <button onClick={onClose} className="p-2 hover:bg-white rounded-full transition-colors shadow-sm text-gray-400"><X className="w-5 h-5" /></button>
+          </div>
+        </div>
+
+        {/* Invoice Content */}
+        <div className="p-8 overflow-y-auto custom-scrollbar" id="invoice-content">
+          {/* Header */}
+          <div className="flex justify-between items-start mb-8">
+            <div>
+              <h1 className="text-2xl font-black text-dark mb-1 uppercase">IZAAN SHOP</h1>
+              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider leading-relaxed">
+                Toys, Book & Learning Tools<br/>
+                Dhaka, Bangladesh<br/>
+                Support: +880 1752-530303<br/>
+                Email: info@izaanshop.com
+              </p>
+            </div>
+            <div className="text-right">
+              <h2 className="text-2xl font-black text-gray-100 uppercase tracking-tighter mb-1">INVOICE</h2>
+              <p className="text-xs font-bold text-dark">#{String(order.id).padStart(6, '0')}</p>
+              <p className="text-[10px] text-gray-400 font-medium">{format(new Date(order.createdAt), 'dd MMM yyyy')}</p>
+            </div>
+          </div>
+
+          {/* Info Blocks */}
+          <div className="grid grid-cols-2 gap-12 mb-8 py-6 border-t border-b border-gray-100">
+            <div className="space-y-3">
+              <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Bill To:</h5>
+              <div>
+                <p className="text-sm font-black text-dark uppercase">{order.user?.name || order.guestName || 'Guest'}</p>
+                <p className="text-xs text-gray-400 mt-1">{order.phone}</p>
+                {(order.shippingEmail || order.guestEmail) && (
+                  <p className="text-[10px] text-gray-400 font-medium italic mt-0.5">{order.shippingEmail || order.guestEmail}</p>
+                )}
+                <p className="text-xs text-gray-400 leading-relaxed mt-2 italic max-w-[200px]">
+                  {order.street}, {order.city}<br/>
+                  {order.state} {order.zipCode}, {order.country}
+                </p>
+              </div>
+            </div>
+            <div className="space-y-3 text-right">
+               <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Order Info:</h5>
+               <div>
+                  <p className="text-xs font-bold text-dark uppercase">Pay: {order.paymentMethod}</p>
+                  <p className="text-xs font-bold text-dark mt-1 uppercase">Ship: {order.shippingMethod || 'Standard'}</p>
+                  <p className="text-xs font-bold text-dark mt-1 uppercase">Status: {order.status}</p>
+                  <p className="text-xs font-bold text-dark mt-1 uppercase">Date: {format(new Date(order.createdAt), 'hh:mm a')}</p>
+               </div>
+            </div>
+          </div>
+
+          {/* Table */}
+          <table className="w-full mb-8">
+            <thead>
+              <tr className="border-b-2 border-dark text-left">
+                <th className="py-3 text-[10px] font-black uppercase tracking-widest text-gray-400">Description</th>
+                <th className="py-3 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Price</th>
+                <th className="py-3 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Qty</th>
+                <th className="py-3 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {order.orderItems?.map((item, idx) => (
+                <tr key={idx}>
+                  <td className="py-3 min-w-[200px]">
+                    <p className="text-[13px] font-bold text-dark">{item.name}</p>
+                  </td>
+                  <td className="py-3 text-xs font-bold text-gray-500 text-center">{item.price}৳</td>
+                  <td className="py-3 text-xs font-bold text-gray-500 text-center">{item.quantity}</td>
+                  <td className="py-3 text-sm font-black text-dark text-right">{item.quantity * item.price}৳</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {/* Footer Totals */}
+          <div className="flex justify-end gap-12 pt-6 border-t-2 border-gray-100">
+            <div className="space-y-2 text-right min-w-[150px]">
+              <div className="flex justify-between items-center text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                <span>Subtotal:</span>
+                <span>{order.totalPrice}৳</span>
+              </div>
+              <div className="flex justify-between items-center text-[10px] text-gray-400 font-bold uppercase tracking-wider">
+                <span>Shipping:</span>
+                <span>{order.shippingPrice}৳</span>
+              </div>
+              <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+                <span className="text-[10px] font-black uppercase tracking-widest text-dark">Grand Total:</span>
+                <span className="text-xl font-black text-dark">{order.totalPrice}৳</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Signature / Footer - Only on Print */}
+          <div className="hidden print:flex justify-between items-end mt-16 text-dark px-4">
+             <div className="text-center w-40 border-t border-gray-200 pt-1">
+                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Customer Signature</p>
+             </div>
+             <div className="text-center w-40 border-t border-gray-200 pt-1">
+                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Store Manager</p>
+             </div>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
 
 export const MediaLibraryModal = ({ isOpen, onClose, onSelect, multiple = false }) => {
   const [images, setImages] = useState([]);
@@ -137,6 +323,21 @@ export const OrderModal = ({ order, isOpen, onClose, onDeliver }) => {
             </div>
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10">
+              <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">Shipping Method</p>
+              <p className="text-sm font-black text-dark flex items-center gap-2 uppercase">
+                <Truck className="w-4 h-4 text-primary" /> {order.shippingMethod || 'Standard'}
+              </p>
+            </div>
+            <div className="p-4 bg-primary/5 rounded-2xl border border-primary/10">
+              <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1">Shipping Price</p>
+              <p className="text-sm font-black text-dark">
+                {order.shippingPrice}৳
+              </p>
+            </div>
+          </div>
+
           <div className="space-y-4">
             <h5 className="text-xs font-black text-gray-400 uppercase tracking-widest">Customer info</h5>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -146,7 +347,10 @@ export const OrderModal = ({ order, isOpen, onClose, onDeliver }) => {
                 </div>
                 <div>
                   <p className="text-sm font-bold text-dark">{order.user?.name || order.guestName || 'Guest'}</p>
-                  <p className="text-xs text-gray-400">{order.user?.email || order.guestEmail}</p>
+                  <p className="text-xs text-gray-400">{order.shippingEmail || order.user?.email || order.guestEmail || 'No email provided'}</p>
+                  {order.shippingEmail && order.shippingEmail !== (order.user?.email || order.guestEmail) && (
+                    <p className="text-[10px] text-primary font-bold mt-1 uppercase tracking-tight">Specified for Shipping</p>
+                  )}
                 </div>
               </div>
               <div className="flex items-start gap-3">
@@ -157,6 +361,25 @@ export const OrderModal = ({ order, isOpen, onClose, onDeliver }) => {
                   <p className="text-sm font-bold text-dark">{order.phone}</p>
                   <p className="text-xs text-gray-400">Contact Phone</p>
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h5 className="text-xs font-black text-gray-400 uppercase tracking-widest">Shipping Address</h5>
+            <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+              <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center shrink-0 text-blue-600">
+                <MapPin className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-dark leading-relaxed">
+                  {order.street ? (
+                    <>
+                      {order.street}, {order.city}, {order.state} {order.zipCode}, {order.country}
+                    </>
+                  ) : 'No address provided'}
+                </p>
+                <p className="text-xs text-gray-400 mt-1">Delivery Location</p>
               </div>
             </div>
           </div>
@@ -227,6 +450,7 @@ export const ProductModal = ({
   const [basePrice, setBasePrice] = useState('');
   const [baseSalePrice, setBaseSalePrice] = useState('');
   const [baseStock, setBaseStock] = useState('');
+  const [description, setDescription] = useState('');
 
   React.useEffect(() => {
     if (isOpen) {
@@ -249,6 +473,7 @@ export const ProductModal = ({
       setBasePrice(editingItem?.price || '');
       setBaseSalePrice(editingItem?.salePrice || '');
       setBaseStock(editingItem?.stock || 0);
+      setDescription(editingItem?.description || '');
     }
   }, [editingItem, isOpen]);
 
@@ -556,7 +781,41 @@ export const ProductModal = ({
 
           <div className="space-y-1">
             <label className="text-xs font-bold text-gray-400 uppercase">Description</label>
-            <textarea name="description" defaultValue={editingItem?.description} className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm min-h-[100px]" placeholder="Product details..."></textarea>
+            <div className="quill-wrapper">
+              <input type="hidden" name="description" value={description} />
+              <ReactQuill 
+                theme="snow" 
+                value={description} 
+                onChange={setDescription}
+                placeholder="Product details, features, and specifications..."
+                className="bg-gray-50 rounded-xl overflow-hidden border-none text-sm"
+              />
+            </div>
+            <style jsx global>{`
+              .quill-wrapper .ql-container {
+                border-bottom-left-radius: 0.75rem;
+                border-bottom-right-radius: 0.75rem;
+                border: none !important;
+                background: #f9fafb;
+                min-height: 150px;
+                font-family: inherit;
+              }
+              .quill-wrapper .ql-toolbar {
+                border-top-left-radius: 0.75rem;
+                border-top-right-radius: 0.75rem;
+                border: none !important;
+                border-bottom: 1px solid #f3f4f6 !important;
+                background: #f9fafb;
+              }
+              .quill-wrapper .ql-editor {
+                font-size: 0.875rem;
+                line-height: 1.5;
+              }
+              .quill-wrapper .ql-editor.ql-blank::before {
+                color: #9ca3af;
+                font-style: normal;
+              }
+            `}</style>
           </div>
 
           <div className="space-y-1">
