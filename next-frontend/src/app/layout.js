@@ -2,6 +2,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const inter = Inter({
   variable: "--font-inter",
@@ -9,8 +10,13 @@ const inter = Inter({
 });
 
 export const metadata = {
+  metadataBase: new URL("https://izaanshop.com"),
   title: "Izaan Shop | Toys, Book & Learning Tools",
   description: "Shop for the best educational toys and books for children at Izaan Shop.",
+  icons: {
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export default function RootLayout({ children }) {
@@ -29,6 +35,7 @@ export default function RootLayout({ children }) {
         <div className="print:hidden">
           <Footer />
         </div>
+        <SpeedInsights />
       </body>
     </html>
   );

@@ -42,6 +42,14 @@ cenv.txt
 .envrailway
 izaan_monolith
 frontend_production.zip
+frontend_update.zip
+latest_schema.sql
+cpanel_updates.sql
+cpannelPrisma/
+CPANEL_LOCAL_SYNC.md
+SESSION_SUMMARY.md
+DEPLOYMENT_CHECKLIST.md
+current_task_for_cpannel.md
 
 # Uploads and temporary files
 backend/uploads/

@@ -4,11 +4,12 @@ import React from 'react';
 import { ShoppingBag, Package, Tag, RefreshCw, BarChart3 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
+import { getImageUrl } from '@/utils/api';
 
 export const AnalyticsCharts = ({ analytics }) => (
   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
     {/* Order Status Breakdown */}
-    <div className="p-8 bg-white border border-gray-100 rounded-3xl shadow-sm">
+    <div className="p-4 md:p-8 bg-white border border-gray-100 rounded-2xl md:rounded-3xl shadow-sm">
       <h4 className="font-bold text-lg mb-6">Order Status Breakdown</h4>
       <div className="space-y-6">
         {[
@@ -35,7 +36,7 @@ export const AnalyticsCharts = ({ analytics }) => (
     </div>
 
     {/* Payment Breakdown */}
-    <div className="p-8 bg-white border border-gray-100 rounded-3xl shadow-sm">
+    <div className="p-4 md:p-8 bg-white border border-gray-100 rounded-2xl md:rounded-3xl shadow-sm">
       <h4 className="font-bold text-lg mb-6">Payment Methods</h4>
       <div className="space-y-4">
         {analytics?.paymentBreakdown?.map((pay, i) => (
@@ -45,8 +46,8 @@ export const AnalyticsCharts = ({ analytics }) => (
               <span className="text-sm font-bold">{pay.method}</span>
             </div>
             <div className="text-right">
-              <p className="text-sm font-black text-dark">{pay.revenue.toLocaleString()}৳</p>
-              <p className="text-[10px] font-bold text-gray-400">{pay.orders} Orders</p>
+              <p className="text-sm font-black text-dark">{(pay.revenue || 0).toLocaleString()}৳</p>
+              <p className="text-[10px] font-bold text-gray-400">{pay.orders || 0} Orders</p>
             </div>
           </div>
         ))}
@@ -79,7 +80,7 @@ export const FinancialReport = ({ analytics, orders }) => {
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-center bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-5 md:p-6 rounded-2xl md:rounded-3xl border border-gray-100 shadow-sm">
         <div>
           <h4 className="font-bold text-lg">Financial Summary</h4>
           <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">Monthly metrics & exports</p>
@@ -90,7 +91,7 @@ export const FinancialReport = ({ analytics, orders }) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 p-8 bg-white border border-gray-100 rounded-3xl shadow-sm overflow-x-auto">
+        <div className="lg:col-span-2 p-4 md:p-8 bg-white border border-gray-100 rounded-2xl md:rounded-3xl shadow-sm overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="text-[10px] text-gray-400 uppercase tracking-widest border-b border-gray-100">
@@ -104,14 +105,14 @@ export const FinancialReport = ({ analytics, orders }) => {
                 <tr key={i}>
                   <td className="py-4 font-bold text-dark">{m.month} {m.year}</td>
                   <td className="py-4 text-center font-medium text-gray-500">{m.orders}</td>
-                  <td className="py-4 text-right font-black text-dark">{m.revenue.toLocaleString()}৳</td>
+                  <td className="py-4 text-right font-black text-dark">{(m.revenue || 0).toLocaleString()}৳</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        <div className="p-8 bg-white border border-gray-100 rounded-3xl shadow-sm space-y-6">
+        <div className="p-4 md:p-8 bg-white border border-gray-100 rounded-2xl md:rounded-3xl shadow-sm space-y-6">
           <h4 className="font-bold text-base">Payment Share</h4>
           <div className="flex justify-center py-4">
              <div className="w-32 h-32 rounded-full border-8 border-primary/10 flex items-center justify-center">
@@ -135,7 +136,7 @@ export const FinancialReport = ({ analytics, orders }) => {
 export const ProductReport = ({ analytics, onEditProduct }) => (
   <div className="space-y-8">
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <div className="p-8 bg-white border border-gray-100 rounded-3xl shadow-sm">
+      <div className="p-4 md:p-8 bg-white border border-gray-100 rounded-2xl md:rounded-3xl shadow-sm">
         <h4 className="font-bold text-base mb-6 flex items-center gap-2">
           <ShoppingBag className="w-5 h-5 text-primary" /> Top Selling Products
         </h4>
@@ -144,20 +145,20 @@ export const ProductReport = ({ analytics, onEditProduct }) => (
             <div key={i} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-2xl border border-gray-100 hover:bg-white transition-all">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 bg-white rounded-xl border border-gray-100 flex items-center justify-center p-1">
-                  <img src={p.images?.main || '/placeholder.png'} alt={p.name} className="w-full h-full object-contain" />
+                  <img src={getImageUrl(p.images?.main || '/placeholder.png')} alt={p.name} className="w-full h-full object-contain" />
                 </div>
                 <div>
                   <p className="text-sm font-bold text-dark line-clamp-1">{p.name}</p>
                   <p className="text-[10px] font-bold text-gray-400 uppercase">{p.unitsSold} Sold</p>
                 </div>
               </div>
-              <p className="text-sm font-black text-dark">{p.revenue.toLocaleString()}৳</p>
+              <p className="text-sm font-black text-dark">{(p.revenue || 0).toLocaleString()}৳</p>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="p-8 bg-white border border-gray-100 rounded-3xl shadow-sm">
+      <div className="p-4 md:p-8 bg-white border border-gray-100 rounded-2xl md:rounded-3xl shadow-sm">
         <h4 className="font-bold text-base mb-6 flex items-center gap-2">
           <Package className="w-5 h-5 text-orange-500" /> Low Stock Alerts
         </h4>

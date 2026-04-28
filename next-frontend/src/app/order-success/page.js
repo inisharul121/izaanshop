@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Package, CheckCircle, Truck, Clock, MapPin, ChevronLeft, Phone } from 'lucide-react';
 import api from '@/utils/api';
+import { getImageUrl } from '@/utils/helpers';
 import Image from 'next/image';
 
 const OrderSuccessContent = () => {
@@ -52,7 +53,7 @@ const OrderSuccessContent = () => {
               {order.orderItems.map((item, i) => (
                 <div key={i} className="py-4 flex items-center gap-4">
                   <div className="w-12 h-12 bg-gray-50 rounded-lg overflow-hidden border border-gray-100 relative">
-                    <Image src={item.image || item.images?.[0]} alt={item.name} fill className="object-cover" />
+                    <Image src={getImageUrl(item.image)} alt={item.name} fill className="object-cover" />
                   </div>
                   <div className="flex-1">
                     <p className="font-bold text-sm line-clamp-1">{item.name}</p>

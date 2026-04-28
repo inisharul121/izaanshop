@@ -4,32 +4,64 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import SafeImage from './SafeImage';
 import { getImageUrl } from '@/utils/helpers';
+import api from '@/utils/api';
 
 const HeroSlider = ({ banners = [] }) => {
   const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(1);
+  const [bannersWithImages, setBannersWithImages] = useState(banners);
+
+  // 🚀 Fetch banner images separately to keep SSR cache small
+  // banners from SSR come without .image field to prevent 2MB cache bloat
+  // We fetch full banners with images on client mount
+  useEffect(() => {
+    if (banners.length === 0) return;
+    
+    // If banners already have images, use them directly
+    if (banners[0]?.image) {
+      setBannersWithImages(banners);
+      return;
+    }
+
+    // Otherwise, fetch banners with images from API
+    const fetchBannerImages = async () => {
+      try {
+        const response = await api.get('/banners');
+        if (response.data && Array.isArray(response.data)) {
+          setBannersWithImages(response.data);
+        }
+      } catch (error) {
+        console.warn('Failed to fetch banner images:', error);
+        // Fall back to banners from SSR (they'll show placeholder)
+        setBannersWithImages(banners);
+      }
+    };
+
+    fetchBannerImages();
+  }, [banners]);
 
   const next = useCallback(() => {
     setDirection(1);
-    setCurrent((prev) => (prev + 1) % banners.length);
-  }, [banners.length]);
+    setCurrent((prev) => (prev + 1) % bannersWithImages.length);
+  }, [bannersWithImages.length]);
 
   const prev = useCallback(() => {
     setDirection(-1);
-    setCurrent((prev) => (prev - 1 + banners.length) % banners.length);
-  }, [banners.length]);
+    setCurrent((prev) => (prev - 1 + bannersWithImages.length) % bannersWithImages.length);
+  }, [bannersWithImages.length]);
 
   // Auto-slide every 5 seconds
   useEffect(() => {
-    if (banners.length <= 1) return;
+    if (bannersWithImages.length <= 1) return;
     const timer = setInterval(next, 5000);
     return () => clearInterval(timer);
-  }, [next, banners.length]);
+  }, [next, bannersWithImages.length]);
 
-  if (!banners.length) return null;
+  if (!bannersWithImages.length) return null;
 
-  const slide = banners[current];
+  const slide = bannersWithImages[current];
 
   const variants = {
     enter: (dir) => ({ x: dir > 0 ? '100%' : '-100%', opacity: 0 }),
@@ -38,8 +70,9 @@ const HeroSlider = ({ banners = [] }) => {
   };
 
   return (
-    <section className="relative w-full overflow-hidden bg-gray-100">
-      <div className="relative aspect-[16/5] md:aspect-[16/5] w-full">
+    <section className="relative w-full overflow-hidden bg-gray-100 py-3 md:py-0">
+      <div className="container mx-auto px-4 md:px-0">
+        <div className="relative aspect-[2.5/1] sm:aspect-[16/5] w-full rounded-2xl md:rounded-none overflow-hidden shadow-sm md:shadow-none">
         <AnimatePresence custom={direction} mode="wait">
           <motion.div
             key={current}
@@ -51,10 +84,13 @@ const HeroSlider = ({ banners = [] }) => {
             transition={{ duration: 0.5, ease: 'easeInOut' }}
             className="absolute inset-0"
           >
-            <img
+            <SafeImage
               src={getImageUrl(slide.image)}
               alt={slide.title || 'Promotional banner'}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
+              priority={current === 0}
+              sizes="100vw"
             />
             {/* Optional text overlay */}
             {(slide.title || slide.subtitle) && (
@@ -120,6 +156,7 @@ const HeroSlider = ({ banners = [] }) => {
             ))}
           </div>
         )}
+      </div>
       </div>
     </section>
   );

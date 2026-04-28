@@ -3,9 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '@/store/useStore';
 import api from '@/utils/api';
+import Link from 'next/link';
 import { Package, User as UserIcon, MapPin, ChevronRight, Clock, CheckCircle2, Save, Loader2, Phone, Globe, Home, ChevronUp, ChevronDown, CreditCard } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getImageUrl } from '@/utils/helpers';
 
 const ProfilePage = () => {
   const [mounted, setMounted] = useState(false);
@@ -20,35 +22,55 @@ const ProfilePage = () => {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
-  // Form states
-  const [profileData, setProfileData] = useState({
-    name: user?.name || '',
-    phone: user?.phone || '',
-  });
-
-  const [addressData, setAddressData] = useState({
-    street: user?.address?.street || '',
-    city: user?.address?.city || '',
-    state: user?.address?.state || '',
-    zipCode: user?.address?.zipCode || '',
-    country: user?.address?.country || 'Bangladesh',
-  });
-
   const [expandedOrderId, setExpandedOrderId] = useState(null);
+  const [profileData, setProfileData] = useState({ name: '', phone: '' });
+  const [addressData, setAddressData] = useState({
+    street: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    country: 'Bangladesh',
+  });
+
+  // Sync form state when user data changes
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        name: user.name || '',
+        phone: user.phone || '',
+      });
+      setAddressData({
+        street: user.address?.street || '',
+        city: user.address?.city || '',
+        state: user.address?.state || '',
+        zipCode: user.address?.zipCode || '',
+        country: user.address?.country || 'Bangladesh',
+      });
+    }
+  }, [user]);
 
   useEffect(() => {
-    const fetchOrders = async () => {
+    const fetchData = async () => {
+      setLoading(true);
       try {
-        const { data } = await api.get('/orders/myorders');
-        setOrders(data);
+        const [ordersRes, profileRes] = await Promise.all([
+          api.get('/orders/myorders'),
+          // Only fetch profile if address is missing
+          (!user?.address?.street) ? api.get('/auth/profile') : Promise.resolve({ data: null })
+        ]);
+        
+        setOrders(ordersRes.data);
+        if (profileRes.data) {
+          setUser({ ...user, ...profileRes.data });
+        }
       } catch (error) {
-        console.error('Failed to fetch orders', error);
+        console.error('Failed to fetch profile data', error);
       } finally {
         setLoading(false);
       }
     };
-    fetchOrders();
-  }, []);
+    fetchData();
+  }, [user?.id]); // Only refetch when user ID changes (or initial load)
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
@@ -107,6 +129,14 @@ const ProfilePage = () => {
         
         {/* Sidebar */}
         <aside className="w-full lg:w-72 space-y-6">
+          <Link 
+            href="/" 
+            className="flex items-center justify-center gap-2 w-full py-4 bg-gray-900 text-white rounded-3xl font-black text-sm uppercase tracking-widest hover:bg-primary transition-all shadow-xl shadow-gray-900/10 group"
+          >
+            <Home className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            Back to Home
+          </Link>
+
           <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm flex flex-col items-center text-center">
             <div className="w-20 h-20 bg-primary/10 text-primary rounded-2xl flex items-center justify-center font-black text-3xl mb-4">
               {user?.name?.charAt(0)}
@@ -141,7 +171,7 @@ const ProfilePage = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
-              className="bg-white rounded-3xl border border-gray-100 p-8 lg:p-10 shadow-sm"
+              className="bg-white rounded-3xl border border-gray-100 p-5 lg:p-10 shadow-sm"
             >
               <div className="flex justify-between items-center mb-8">
                 <h3 className="text-2xl font-black text-dark">
@@ -203,15 +233,15 @@ const ProfilePage = () => {
                                 className="border-t border-gray-50 bg-gray-50/30 overflow-hidden"
                               >
                                 <div className="p-8 space-y-10">
-                                  <div className="relative pt-8 px-4">
-                                     <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-gray-200 -translate-y-1/2" />
-                                     <div className="relative flex justify-between">
+                                  <div className="relative pt-4 md:pt-8 px-4">
+                                     <div className="hidden md:block absolute top-1/2 left-4 right-4 h-0.5 bg-gray-200 -translate-y-1/2" />
+                                     <div className="relative flex flex-col md:flex-row justify-between gap-6 md:gap-0">
                                         {getStatusSteps(order.status).map((step, i) => (
-                                          <div key={i} className="flex flex-col items-center gap-3 bg-gray-50 px-2 z-10">
-                                             <div className={`w-6 h-6 rounded-full border-4 flex items-center justify-center transition-all ${step.isDone ? 'bg-primary border-primary/20 text-white' : 'bg-white border-gray-100 text-gray-200'}`}>
-                                                {step.isDone && <CheckCircle2 className="w-3 h-3" />}
+                                          <div key={i} className="flex md:flex-col items-center gap-4 md:gap-3 bg-white md:bg-transparent px-2 z-10 transition-all">
+                                             <div className={`w-8 h-8 md:w-6 md:h-6 rounded-full border-4 flex items-center justify-center transition-all ${step.isDone ? 'bg-primary border-primary/20 text-white' : 'bg-white border-gray-100 text-gray-200'}`}>
+                                                {step.isDone && <CheckCircle2 className="w-3 h-3 md:w-3 md:h-3" />}
                                              </div>
-                                             <span className={`text-[10px] font-black uppercase tracking-widest ${step.isCurrent ? 'text-primary' : step.isDone ? 'text-dark' : 'text-gray-300'}`}>
+                                             <span className={`text-[10px] font-black uppercase tracking-widest ${step.isCurrent ? 'text-primary font-bold' : step.isDone ? 'text-dark' : 'text-gray-300'}`}>
                                                {step.name}
                                              </span>
                                           </div>
@@ -220,13 +250,13 @@ const ProfilePage = () => {
                                   </div>
 
                                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 pt-4">
-                                    <div className="space-y-4">
+                              <div className="space-y-4">
                                        <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Items Ordered</h4>
                                        <div className="space-y-3">
                                          {order.orderItems?.map((item, i) => (
                                            <div key={i} className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-50 shadow-sm">
                                               <div className="w-14 h-14 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-center p-1 relative">
-                                                 <img src={item.image} alt={item.name} className="w-full h-full object-contain" />
+                                                 <img src={getImageUrl(item.image)} alt={item.name} className="w-full h-full object-contain" />
                                               </div>
                                               <div className="flex-1">
                                                 <p className="text-sm font-bold text-dark">{item.name}</p>

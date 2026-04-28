@@ -58,6 +58,17 @@ const MediaSection = () => {
     }
   };
 
+  const handleDelete = async (fileName) => {
+    if (!window.confirm('Are you sure you want to delete this image permanently?')) return;
+    try {
+      await api.delete(`/media/${fileName}`);
+      fetchMedia();
+    } catch (err) {
+      console.error('Delete failed:', err);
+      alert('Delete failed: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
   const filteredImages = images.filter(img => 
     img.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -98,7 +109,7 @@ const MediaSection = () => {
           </button>
         </div>
       </div>
-
+ 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-32 gap-4 text-gray-400">
            <RefreshCw className="w-10 h-10 animate-spin text-primary" />
@@ -115,7 +126,7 @@ const MediaSection = () => {
                        <button onClick={() => handleCopy(img.url)} className="p-2 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-lg text-white transition-colors" title="Copy Path">
                           {copying === img.url ? <Check className="w-4 h-4 text-green-400" /> : <ExternalLink className="w-4 h-4" />}
                        </button>
-                       <button className="p-2 bg-red-400/20 hover:bg-red-400/40 backdrop-blur-md rounded-lg text-red-200 transition-colors" title="Delete">
+                       <button onClick={() => handleDelete(img.name)} className="p-2 bg-red-400/20 hover:bg-red-400/40 backdrop-blur-md rounded-lg text-red-200 transition-colors" title="Delete">
                           <Trash2 className="w-4 h-4" />
                        </button>
                    </div>

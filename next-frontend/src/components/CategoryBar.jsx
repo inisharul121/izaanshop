@@ -52,9 +52,29 @@ const CategoryBar = () => {
 
   useEffect(() => {
     const fetchCategories = async () => {
+      const CACHE_KEY = 'izaan-categories';
+      const CACHE_TIME_KEY = 'izaan-categories-timestamp';
+      const FIVE_MINUTES = 5 * 60 * 1000;
+
+      try {
+        const cached = sessionStorage.getItem(CACHE_KEY);
+        const timestamp = sessionStorage.getItem(CACHE_TIME_KEY);
+        const now = Date.now();
+
+        if (cached && timestamp && (now - parseInt(timestamp) < FIVE_MINUTES)) {
+          setCategories(JSON.parse(cached));
+          setLoading(false);
+          return;
+        }
+      } catch (e) { /* sessionStorage not available */ }
+
       try {
         const { data } = await api.get('/categories');
         setCategories(data);
+        try {
+          sessionStorage.setItem(CACHE_KEY, JSON.stringify(data));
+          sessionStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+        } catch (e) { /* sessionStorage not available */ }
       } catch (err) {
         console.error('Failed to fetch categories into navbar:', err);
       } finally {
@@ -70,23 +90,10 @@ const CategoryBar = () => {
     <div className="bg-gray-50/50 border-b border-gray-100 overflow-hidden">
       <div className="container mx-auto px-4">
         <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-2 md:justify-center">
-          {/* Shop By Age - Special Static or Dynamic Item if exists */}
-          {!categories.some(c => c.name.toUpperCase().includes('AGE')) && (
-            <Link 
-              href="/categories" 
-              className="flex items-center gap-2 px-4 py-2 text-[11px] font-black text-gray-500 uppercase tracking-widest hover:text-primary transition-all shrink-0 group"
-            >
-              <div className="p-1.5 bg-white rounded-lg shadow-sm border border-gray-100 group-hover:border-primary/20 group-hover:scale-110 transition-all">
-                <Baby className="w-4 h-4 text-primary" />
-              </div>
-              <span className="flex items-center gap-0.5">Shop By Age <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all" /></span>
-            </Link>
-          )}
-
           {categories.map((cat) => (
             <Link 
               key={cat.id}
-              href={`/categories?id=${cat.id}`}
+              href={`/?category=${cat.slug}#shop-now`}
               className="flex items-center gap-2 px-4 py-2 text-[11px] font-black text-gray-500 uppercase tracking-widest hover:text-primary transition-all shrink-0 group"
             >
               <div className="p-1.5 bg-white rounded-lg shadow-sm border border-gray-100 group-hover:border-primary/20 group-hover:scale-110 transition-all">

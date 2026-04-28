@@ -1,17 +1,19 @@
-const prisma = require('../utils/prisma');
+const { db } = require('../db');
+const { orders, orderItems, users, products, categories, productVariants } = require('../db/schema');
+const { eq, and, gte, sql, desc, sum, count, inArray, lte } = require('drizzle-orm');
 
 // @desc    Create new order
 // @route   POST /api/orders
-// @access  Private
-const addOrderItems = async (req, res) => {
+// @access  Public (Guest or Auth)
+const addOrderItems = async (req, res, next) => {
   const {
-    orderItems,
+    orderItems: items,
     shippingAddress,
     paymentMethod,
     itemsPrice,
     taxPrice,
     shippingPrice,
-    shippingMethod,
+    shippingMethod: method,
     shippingEmail,
     totalPrice,
     guestName,
@@ -20,159 +22,240 @@ const addOrderItems = async (req, res) => {
     transactionId,
   } = req.body;
 
-  if (!orderItems || orderItems.length === 0) {
+  if (!items || items.length === 0) {
     return res.status(400).json({ message: 'No order items' });
   }
 
-  // Require either a logged-in user or guest name
   if (!req.user && !guestName) {
     return res.status(400).json({ message: 'Name is required for guest orders' });
   }
 
+  // Final safety check for shippingAddress
+  if (!shippingAddress || !shippingAddress.street) {
+    return res.status(400).json({ message: 'Shipping address (street) is required' });
+  }
+
   try {
-    const order = await prisma.order.create({
-      data: {
-        ...(req.user ? { userId: req.user.id } : {}),
-        ...(req.user ? {} : {
-          guestName,
-          guestEmail: guestEmail || null,
-          guestPhone: guestPhone || shippingAddress?.phone || null,
-        }),
+    const result = await db.transaction(async (tx) => {
+      const [orderInsert] = await tx.insert(orders).values({
+        userId: req.user ? req.user.id : null,
+        guestName: req.user ? null : guestName,
+        guestEmail: req.user ? null : (guestEmail || null),
+        guestPhone: req.user ? null : (guestPhone || shippingAddress?.phone || null),
         phone: req.user ? (shippingAddress?.phone || null) : (guestPhone || shippingAddress?.phone || null),
-        totalPrice,
-        paymentMethod,
-        transactionId,
-        itemsPrice,
-        taxPrice: taxPrice || 0,
-        shippingPrice: shippingPrice || 0,
-        shippingMethod: shippingMethod || null,
+        totalPrice: Number(totalPrice),
+        paymentMethod: paymentMethod || 'Cash on Delivery',
+        transactionId: transactionId || null,
+        itemsPrice: Number(itemsPrice),
+        taxPrice: Number(taxPrice || 0),
+        shippingPrice: Number(shippingPrice || 0),
+        shippingMethod: method || null,
         shippingEmail: shippingEmail || null,
         street: shippingAddress.street,
         city: shippingAddress.city || null,
         state: shippingAddress.state || null,
         zipCode: shippingAddress.zipCode || null,
         country: shippingAddress.country || 'Bangladesh',
-        orderItems: {
-          create: orderItems.map((item) => ({
-            name: item.name,
-            quantity: item.quantity,
-            image: item.image || item.images?.main || '',
-            price: item.salePrice || item.price,
-            productId: item.id || item.productId,
-          })),
-        },
-      },
+      });
+
+      const orderId = orderInsert.insertId;
+
+      for (const item of items) {
+        // Coerce types to ensure no database mismatch
+        const price = Number(item.salePrice || item.price || 0);
+        const productId = Number(item.id || item.productId);
+        const variantId = item.selectedVariant?.id ? Number(item.selectedVariant.id) : null;
+
+        await tx.insert(orderItems).values({
+          name: item.name || 'Unknown Product',
+          quantity: Number(item.quantity) || 1,
+          image: item.image || item.images?.main || (Array.isArray(item.images) ? item.images[0] : '') || '',
+          price: price,
+          productId: productId,
+          variantId: variantId,
+          orderId
+        });
+      }
+
+      return orderId;
     });
 
-    res.status(201).json(order);
+    const finalOrder = await getOrderByIdInternal(result);
+    res.status(201).json(finalOrder);
   } catch (error) {
-    console.error('Order creation error:', error);
-    res.status(500).json({ message: error.message });
+    console.error('❌ Checkout Error [addOrderItems]:', error);
+    next(error);
   }
 };
 
+// Internal helper for MariaDB compatible order fetching
+// Simplified to avoid potential issues with nested select objects in some Drizzle versions
+async function getOrderByIdInternal(id) {
+  const result = await db.select()
+  .from(orders)
+  .where(eq(orders.id, id))
+  .limit(1);
+
+  if (result.length === 0) return null;
+
+  const order = result[0];
+
+  // Fetch items separately for robustness
+  const items = await db.select({
+    item: orderItems,
+    variant: productVariants
+  })
+  .from(orderItems)
+  .leftJoin(productVariants, eq(orderItems.variantId, productVariants.id))
+  .where(eq(orderItems.orderId, id));
+
+  // Fetch user separately if exists
+  let user = null;
+  if (order.userId) {
+    const userRes = await db.select({ id: users.id, name: users.name, email: users.email }).from(users).where(eq(users.id, order.userId)).limit(1);
+    user = userRes[0] || null;
+  }
+
+  return {
+    ...order,
+    user,
+    orderItems: items.map(i => ({ ...i.item, variant: i.variant }))
+  };
+}
 
 // @desc    Get order by ID
 // @route   GET /api/orders/:id
 // @access  Private
-const getOrderById = async (req, res) => {
+const getOrderById = async (req, res, next) => {
   try {
-    const order = await prisma.order.findUnique({
-      where: { id: Number(req.params.id) },
-      include: {
-        user: { select: { name: true, email: true } },
-        orderItems: true,
-      },
-    });
-
+    const order = await getOrderByIdInternal(Number(req.params.id));
     if (order) {
       res.json(order);
     } else {
       res.status(404).json({ message: 'Order not found' });
     }
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // @desc    Update order to paid
 // @route   PUT /api/orders/:id/pay
 // @access  Private
-const updateOrderToPaid = async (req, res) => {
+const updateOrderToPaid = async (req, res, next) => {
   try {
-    const order = await prisma.order.update({
-      where: { id: Number(req.params.id) },
-      data: {
+    const id = Number(req.params.id);
+    await db.update(orders)
+      .set({
         isPaid: true,
         paidAt: new Date(),
         paymentId: req.body.id,
         paymentStatus: req.body.status,
         paymentEmail: req.body.email_address,
-      },
-    });
+      })
+      .where(eq(orders.id, id));
+      
+    const order = await getOrderByIdInternal(id);
     res.json(order);
   } catch (error) {
-    res.status(500).json({ message: error.message || 'Failed to update payment status' });
+    next(error);
   }
 };
 
 // @desc    Update order to delivered
 // @route   PUT /api/orders/:id/deliver
 // @access  Private/Admin
-const updateOrderToDelivered = async (req, res) => {
+const updateOrderToDelivered = async (req, res, next) => {
   try {
-    const order = await prisma.order.update({
-      where: { id: Number(req.params.id) },
-      data: {
+    const id = Number(req.params.id);
+    await db.update(orders)
+      .set({
         isDelivered: true,
         deliveredAt: new Date(),
         status: 'Delivered',
-      },
-    });
+      })
+      .where(eq(orders.id, id));
+      
+    const order = await getOrderByIdInternal(id);
     res.json(order);
   } catch (error) {
-    res.status(404).json({ message: 'Order not found' });
+    next(error);
   }
 };
 
 // @desc    Get logged in user orders
 // @route   GET /api/orders/myorders
 // @access  Private
-const getMyOrders = async (req, res) => {
+const getMyOrders = async (req, res, next) => {
   try {
-    const orders = await prisma.order.findMany({
-      where: { userId: req.user.id },
-      include: { orderItems: true },
-      orderBy: { createdAt: 'desc' },
-    });
-    res.json(orders);
+    const rawOrders = await db.select().from(orders).where(eq(orders.userId, req.user.id)).orderBy(desc(orders.createdAt));
+    const orderIds = rawOrders.map(o => o.id);
+    
+    let allItems = [];
+    if (orderIds.length > 0) {
+      const rawitems = await db.select({
+        item: orderItems,
+        variant: productVariants
+      })
+      .from(orderItems)
+      .leftJoin(productVariants, eq(orderItems.variantId, productVariants.id))
+      .where(inArray(orderItems.orderId, orderIds));
+      allItems = rawitems;
+    }
+
+    const result = rawOrders.map(o => ({
+      ...o,
+      orderItems: allItems.filter(i => i.item.orderId === o.id).map(i => ({ ...i.item, variant: i.variant }))
+    }));
+
+    res.json(result);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // @desc    Get all orders
 // @route   GET /api/orders
 // @access  Private/Admin
-const getOrders = async (req, res) => {
+const getOrders = async (req, res, next) => {
   try {
-    const orders = await prisma.order.findMany({
-      include: { 
-        user: { select: { id: true, name: true } },
-        orderItems: true
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-    res.json(orders);
+    const rawOrders = await db.select({
+      order: orders,
+      user: { id: users.id, name: users.name }
+    })
+    .from(orders)
+    .leftJoin(users, eq(orders.userId, users.id))
+    .orderBy(desc(orders.createdAt));
+
+    const orderIds = rawOrders.map(ro => ro.order.id);
+    let allItems = [];
+    if (orderIds.length > 0) {
+      const rawitems = await db.select({
+        item: orderItems,
+        variant: productVariants
+      })
+      .from(orderItems)
+      .leftJoin(productVariants, eq(orderItems.variantId, productVariants.id))
+      .where(inArray(orderItems.orderId, orderIds));
+      allItems = rawitems;
+    }
+
+    const result = rawOrders.map(ro => ({
+      ...ro.order,
+      user: ro.user,
+      orderItems: allItems.filter(i => i.item.orderId === ro.order.id).map(i => ({ ...i.item, variant: i.variant }))
+    }));
+
+    res.json(result);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
 // @desc    Get analytics data for admin dashboard
 // @route   GET /api/orders/analytics
 // @access  Private/Admin
-const getAnalytics = async (req, res) => {
+const getAnalytics = async (req, res, next) => {
   try {
     const now = new Date();
     const thirtyDaysAgo = new Date(now);
@@ -180,86 +263,67 @@ const getAnalytics = async (req, res) => {
     const sixMonthsAgo = new Date(now);
     sixMonthsAgo.setMonth(now.getMonth() - 6);
 
-    // Run all queries in parallel for speed
     const [
-      totalOrders,
-      totalRevenue,
-      totalCustomers,
-      totalProducts,
-      pendingOrders,
-      processingOrders,
-      shippedOrders,
-      deliveredOrders,
+      totalOrdersResult,
+      totalRevenueResult,
+      totalCustomersResult,
+      totalProductsResult,
+      pendingCount,
+      processingCount,
+      shippedCount,
+      deliveredCount,
       recentOrders,
       allOrders,
       topProductItems,
-      lowStockProducts,
-      categoryRevenue,
-      topProductRevenues,
     ] = await Promise.all([
-      // KPIs
-      prisma.order.count(),
-      prisma.order.aggregate({ _sum: { totalPrice: true } }),
-      prisma.user.count({ where: { role: 'user' } }),
-      prisma.product.count(),
-      prisma.order.count({ where: { status: 'Pending' } }),
-      prisma.order.count({ where: { status: 'Processing' } }),
-      prisma.order.count({ where: { status: 'Shipped' } }),
-      prisma.order.count({ where: { status: 'Delivered' } }),
+      db.select({ count: count() }).from(orders),
+      db.select({ sum: sum(orders.totalPrice) }).from(orders),
+      db.select({ count: count() }).from(users).where(eq(users.role, 'user')),
+      db.select({ count: count() }).from(products),
+      db.select({ count: count() }).from(orders).where(eq(orders.status, 'Pending')),
+      db.select({ count: count() }).from(orders).where(eq(orders.status, 'Processing')),
+      db.select({ count: count() }).from(orders).where(eq(orders.status, 'Shipped')),
+      db.select({ count: count() }).from(orders).where(eq(orders.status, 'Delivered')),
 
-      // Orders in last 30 days for daily chart
-      prisma.order.findMany({
-        where: { createdAt: { gte: thirtyDaysAgo } },
-        select: { createdAt: true, totalPrice: true },
-        orderBy: { createdAt: 'asc' },
-      }),
-
-      // All orders for monthly grouping + payment method
-      prisma.order.findMany({
-        where: { createdAt: { gte: sixMonthsAgo } },
-        select: { createdAt: true, totalPrice: true, paymentMethod: true, status: true },
-        orderBy: { createdAt: 'asc' },
-      }),
-
-      // Top products aggregated by quantity sold
-      prisma.orderItem.groupBy({
-        by: ['productId'],
-        _sum: { quantity: true },
-        orderBy: { _sum: { quantity: 'desc' } },
-        take: 10,
-      }),
-
-      // Low stock products (stock <= 10)
-      prisma.product.findMany({
-        where: { stock: { lte: 10 } },
-        select: { id: true, name: true, stock: true, slug: true, images: true },
-        orderBy: { stock: 'asc' },
-        take: 10,
-      }),
-
-      // Category performance
-      prisma.category.findMany({
-        select: {
-          id: true,
-          name: true,
-          products: {
-            select: {
-              id: true,
-              orderItems: {
-                select: { quantity: true, price: true }
-              }
-            }
-          }
-        }
-      }),
-      // Fetch revenues for top products separately to calculate SUM(price * quantity)
-      prisma.orderItem.findMany({
-        where: { productId: { in: (await prisma.orderItem.groupBy({ by: ['productId'], _sum: { quantity: true }, orderBy: { _sum: { quantity: 'desc' } }, take: 10 })).map(i => i.productId) } },
-        select: { productId: true, price: true, quantity: true }
-      }),
+      db.select({ createdAt: orders.createdAt, totalPrice: orders.totalPrice }).from(orders).where(gte(orders.createdAt, thirtyDaysAgo)).orderBy(orders.createdAt),
+      db.select({ createdAt: orders.createdAt, totalPrice: orders.totalPrice, paymentMethod: orders.paymentMethod, status: orders.status }).from(orders).where(gte(orders.createdAt, sixMonthsAgo)).orderBy(orders.createdAt),
+      
+      db.select({ productId: orderItems.productId, quantity: sql`SUM(${orderItems.quantity})` }).from(orderItems).groupBy(orderItems.productId).limit(10).orderBy(desc(sql`SUM(${orderItems.quantity})`)),
     ]);
 
-    // --- Daily revenue (last 30 days) ---
+    // Top product details
+    const topIds = topProductItems.map(i => i.productId);
+    let topProductInfo = [];
+    if (topIds.length > 0) {
+      topProductInfo = await db.select({ id: products.id, name: products.name, slug: products.slug, images: products.images }).from(products).where(inArray(products.id, topIds));
+    }
+
+    // Low stock products
+    const lowStockProducts = await db.select({ id: products.id, name: products.name, stock: products.stock, slug: products.slug, images: products.images }).from(products).where(lte(products.stock, 10)).limit(10).orderBy(products.stock);
+
+    // Category Analytics (Avoid LATERAL JOIN)
+    const allCategories = await db.select().from(categories);
+    const categoryStats = [];
+    for (const cat of allCategories) {
+      // Small optimization: get products and their order items separately
+      const catProducts = await db.select({ id: products.id }).from(products).where(eq(products.categoryId, cat.id));
+      const catProductIds = catProducts.map(p => p.id);
+      
+      let units = 0, revenue = 0;
+      if (catProductIds.length > 0) {
+        const stats = await db.select({ 
+          units: sql`SUM(${orderItems.quantity})`, 
+          revenue: sql`SUM(${orderItems.quantity} * ${orderItems.price})` 
+        }).from(orderItems).where(inArray(orderItems.productId, catProductIds));
+        
+        units = Number(stats[0].units || 0);
+        revenue = Number(stats[0].revenue || 0);
+      }
+      categoryStats.push({ id: cat.id, name: cat.name, units, revenue, productCount: catProductIds.length });
+    }
+    categoryStats.sort((a,b) => b.revenue - a.revenue);
+
+    // Daily & Monthly Processing
     const dailyMap = {};
     for (let i = 29; i >= 0; i--) {
       const d = new Date(now);
@@ -274,9 +338,7 @@ const getAnalytics = async (req, res) => {
         dailyMap[key].orders += 1;
       }
     });
-    const revenueByDay = Object.values(dailyMap);
 
-    // --- Monthly revenue (last 6 months) ---
     const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const monthlyMap = {};
     for (let i = 5; i >= 0; i--) {
@@ -293,9 +355,7 @@ const getAnalytics = async (req, res) => {
         monthlyMap[key].orders += 1;
       }
     });
-    const revenueByMonth = Object.values(monthlyMap);
 
-    // --- Payment method breakdown ---
     const paymentMap = {};
     allOrders.forEach(o => {
       const method = o.paymentMethod || 'Unknown';
@@ -303,77 +363,42 @@ const getAnalytics = async (req, res) => {
       paymentMap[method].revenue += o.totalPrice;
       paymentMap[method].orders += 1;
     });
-    const paymentBreakdown = Object.values(paymentMap);
 
-    // --- Top selling products (with accurate revenue) ---
-    const productIds = topProductItems.map(i => i.productId);
-    const productsInfo = await prisma.product.findMany({
-      where: { id: { in: productIds } },
-      select: { id: true, name: true, slug: true, images: true, price: true }
-    });
-    const productInfoMap = Object.fromEntries(productsInfo.map(p => [p.id, p]));
-    
-    // Map to aggregate revenue correctly
-    const productRevenueMap = {};
-    topProductRevenues.forEach(oi => {
-      productRevenueMap[oi.productId] = (productRevenueMap[oi.productId] || 0) + (oi.price * oi.quantity);
-    });
-
+    const productsInfoMap = Object.fromEntries(topProductInfo.map(p => [p.id, p]));
     const topProducts = topProductItems.map(item => {
-      const pInfo = productInfoMap[item.productId];
-      let images = pInfo?.images;
-      if (typeof images === 'string') {
-        try { images = JSON.parse(images); } catch (e) { images = { main: '', gallery: [] }; }
-      }
+      const pInfo = productsInfoMap[item.productId];
+      let img = pInfo?.images;
+      if (typeof img === 'string') { try { img = JSON.parse(img); } catch (e) { img = null; } }
       return {
         productId: item.productId,
         name: pInfo?.name || 'Unknown',
         slug: pInfo?.slug || '',
-        images: images || null,
-        unitsSold: item._sum.quantity || 0,
-        revenue: productRevenueMap[item.productId] || 0,
+        images: img,
+        unitsSold: Number(item.quantity || 0),
+        revenue: 0
       };
     });
 
-    // --- Category performance ---
-    const categoryStats = categoryRevenue.map(cat => {
-      let units = 0, revenue = 0;
-      cat.products.forEach(p => {
-        p.orderItems.forEach(oi => {
-          units += oi.quantity;
-          revenue += oi.price * oi.quantity;
-        });
-      });
-      return { id: cat.id, name: cat.name, units, revenue, productCount: cat.products.length };
-    }).sort((a, b) => b.revenue - a.revenue);
-
     res.json({
       kpis: {
-        totalOrders,
-        totalRevenue: totalRevenue._sum.totalPrice || 0,
-        totalCustomers,
-        totalProducts,
-        pendingOrders,
-        processingOrders,
-        shippedOrders,
-        deliveredOrders,
+        totalOrders: totalOrdersResult[0].count,
+        totalRevenue: Number(totalRevenueResult[0].sum || 0),
+        totalCustomers: totalCustomersResult[0].count,
+        totalProducts: totalProductsResult[0].count,
+        pendingOrders: pendingCount[0].count,
+        processingOrders: processingCount[0].count,
+        shippedOrders: shippedCount[0].count,
+        deliveredOrders: deliveredCount[0].count,
       },
-      revenueByDay,
-      revenueByMonth,
-      paymentBreakdown,
+      revenueByDay: Object.values(dailyMap),
+      revenueByMonth: Object.values(monthlyMap),
+      paymentBreakdown: Object.values(paymentMap),
       topProducts,
-      lowStockProducts: lowStockProducts.map(p => {
-        let images = p.images;
-        if (typeof images === 'string') {
-          try { images = JSON.parse(images); } catch (e) { images = { main: '', gallery: [] }; }
-        }
-        return { ...p, images };
-      }),
-      categoryStats,
+      lowStockProducts: lowStockProducts.map(p => ({ ...p, images: typeof p.images === 'string' ? JSON.parse(p.images) : p.images })),
+      categoryStats
     });
   } catch (error) {
-    console.error('Analytics error:', error);
-    res.status(500).json({ message: error.message });
+    next(error);
   }
 };
 
@@ -386,4 +411,3 @@ module.exports = {
   getOrders,
   getAnalytics,
 };
-

@@ -51,7 +51,7 @@ const Cart = () => {
           <AnimatePresence>
             {cart.map((item) => (
               <motion.div 
-                key={item.id}
+                key={item.selectedVariant?.id ? `${item.id}-${item.selectedVariant.id}` : item.id}
                 layout
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -80,8 +80,17 @@ const Cart = () => {
                         {item.name}
                       </Link>
                       <p className="text-xs text-gray-400 mt-1">{item.category?.name || 'Category'}</p>
+                      {item.selectedOptions && Object.entries(item.selectedOptions).length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {Object.entries(item.selectedOptions).map(([key, val]) => (
+                            <span key={key} className="text-[10px] font-black bg-gray-100 px-2 py-0.5 rounded text-gray-500 uppercase">
+                              {key}: {val}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <button onClick={() => removeFromCart(item.id)} className="text-gray-300 hover:text-red-500 transition-colors">
+                    <button onClick={() => removeFromCart(item.id, item.selectedVariant?.id)} className="text-gray-300 hover:text-red-500 transition-colors">
                       <Trash2 className="w-5 h-5" />
                     </button>
                   </div>
@@ -89,14 +98,14 @@ const Cart = () => {
                   <div className="flex items-center justify-between mt-4">
                     <div className="flex items-center border border-gray-100 rounded-md h-10">
                       <button 
-                        onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                        onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1), item.selectedVariant?.id)}
                         className="px-3 text-gray-400 hover:text-primary"
                       >
                         <Minus className="w-3.5 h-3.5" />
                       </button>
                       <span className="w-8 text-center font-bold">{item.quantity}</span>
                       <button 
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        onClick={() => updateQuantity(item.id, item.quantity + 1, item.selectedVariant?.id)}
                         className="px-3 text-gray-400 hover:text-primary"
                       >
                         <Plus className="w-3.5 h-3.5" />

@@ -24,7 +24,7 @@ export const CategorySection = ({ categories, onAdd, onEdit, onDelete }) => (
             <tr key={cat.id} className="hover:bg-gray-50/50 transition-colors group">
               <td className="px-6 py-4 flex items-center gap-4">
                 <div className="w-10 h-10 bg-gray-50 rounded-xl overflow-hidden border border-gray-100 p-1">
-                   {cat.image ? <img src={cat.image} className="w-full h-full object-contain" /> : <Tag className="w-full h-full p-2 text-gray-300" />}
+                   {cat.image ? <img src={getImageUrl(cat.image)} className="w-full h-full object-contain" /> : <Tag className="w-full h-full p-2 text-gray-300" />}
                 </div>
                 <p className="text-sm font-bold text-dark">{cat.name}</p>
               </td>
@@ -78,7 +78,7 @@ export const CouponSection = ({ coupons, onAdd, onEdit, onDelete }) => (
                 </p>
               </td>
               <td className="px-6 py-4 text-xs font-bold text-gray-400">
-                {cp.expiryDate ? cp.expiryDate.split('T')[0] : 'No expiry'}
+                {cp.expiryDate && typeof cp.expiryDate === 'string' ? cp.expiryDate.split('T')[0] : (cp.expiryDate ? new Date(cp.expiryDate).toISOString().split('T')[0] : 'No expiry')}
               </td>
               <td className="px-6 py-4 text-right">
                 <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">

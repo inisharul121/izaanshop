@@ -26,9 +26,9 @@ const OrderSection = ({
             <button
               key={status}
               onClick={() => setFilterStatus(status)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+              className={`px-3 md:px-4 py-2 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-widest transition-all ${
                 filterStatus === status 
-                  ? 'bg-dark text-white shadow-lg' 
+                  ? 'bg-dark text-white shadow-lg shadow-dark/20' 
                   : 'bg-white text-gray-400 hover:text-dark border border-gray-100'
               }`}
             >
@@ -58,15 +58,16 @@ const OrderSection = ({
                     <p className="text-sm font-black text-dark">#{String(order.id).padStart(6, '0')}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-sm font-bold text-dark">{order.user?.name || order.guestName || 'Guest'}</p>
+                    <p className="text-sm font-bold text-dark truncate max-w-[120px]">{order.user?.name || order.guestName || 'Guest'}</p>
                     <p className="text-[10px] text-gray-400 font-medium">{order.phone}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-xs font-bold text-gray-500">{format(new Date(order.createdAt), 'dd MMM yyyy, hh:mm a')}</p>
+                    <p className="text-xs font-bold text-gray-500 whitespace-nowrap">{format(new Date(order.createdAt), 'dd MMM yyyy')}</p>
+                    <p className="text-[10px] text-gray-400">{format(new Date(order.createdAt), 'hh:mm a')}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-sm font-black text-dark">{order.totalPrice.toLocaleString()}৳</p>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase">{order.paymentMethod}</p>
+                    <p className="text-sm font-black text-dark">{(order.totalPrice || 0).toLocaleString()}৳</p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase whitespace-nowrap">{order.paymentMethod || 'N/A'}</p>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest ${
@@ -76,21 +77,21 @@ const OrderSection = ({
                       {order.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex justify-end gap-2">
+                  <td className="px-3 md:px-6 py-4 text-right">
+                    <div className="flex justify-end gap-1 md:gap-2">
                       <button 
                         onClick={() => onPrintInvoice(order)}
-                        className="p-2 hover:bg-white rounded-xl text-gray-400 hover:text-blue-500 transition-all shadow-sm border border-transparent hover:border-gray-100"
+                        className="p-2 md:p-2 bg-white md:bg-transparent rounded-xl text-gray-400 hover:text-blue-500 transition-all shadow-sm md:shadow-none border border-gray-100 md:border-transparent hover:border-gray-100"
                         title="Print Invoice"
                       >
-                        <Printer className="w-5 h-5" />
+                        <Printer className="w-4 h-4 md:w-5 md:h-5" />
                       </button>
                       <button 
                         onClick={() => onViewOrder(order)}
-                        className="p-2 hover:bg-white rounded-xl text-gray-400 hover:text-primary transition-all shadow-sm border border-transparent hover:border-gray-100"
+                        className="p-2 md:p-2 bg-white md:bg-transparent rounded-xl text-gray-400 hover:text-primary transition-all shadow-sm md:shadow-none border border-gray-100 md:border-transparent hover:border-gray-100"
                         title="View Details"
                       >
-                        <Eye className="w-5 h-5" />
+                        <Eye className="w-4 h-4 md:w-5 md:h-5" />
                       </button>
                     </div>
                   </td>

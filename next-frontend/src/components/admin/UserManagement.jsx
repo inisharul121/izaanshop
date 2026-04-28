@@ -23,19 +23,19 @@ export const UserSection = ({ users }) => {
                 <td className="p-6">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary font-bold">
-                      {user.name.charAt(0).toUpperCase()}
+                      {user.name ? user.name.charAt(0).toUpperCase() : '?'}
                     </div>
-                    <p className="font-bold text-dark">{user.name}</p>
+                    <p className="font-bold text-dark">{user.name || 'Anonymous'}</p>
                   </div>
                 </td>
-                <td className="p-6 text-sm text-gray-500">{user.email}</td>
+                <td className="p-6 text-sm text-gray-500">{user.email || 'No email provided'}</td>
                 <td className="p-6">
                   <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
                     {user.role}
                   </span>
                 </td>
                 <td className="p-6 text-sm text-gray-400">
-                  {format(new Date(user.createdAt), 'dd MMM yyyy')}
+                  {user.createdAt ? format(new Date(user.createdAt), 'dd MMM yyyy') : 'N/A'}
                 </td>
               </tr>
             ))}
@@ -75,7 +75,7 @@ export const AdminApprovalsSection = ({ pendingAdmins, onApprove }) => {
                 </td>
                 <td className="p-6 text-sm text-gray-500">{admin.email}</td>
                 <td className="p-6 text-sm text-gray-400">
-                  {format(new Date(admin.createdAt), 'dd MMM yyyy')}
+                  {admin.createdAt ? format(new Date(admin.createdAt), 'dd MMM yyyy') : 'N/A'}
                 </td>
                 <td className="p-6 text-right">
                   <button

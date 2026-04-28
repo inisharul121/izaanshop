@@ -14,23 +14,33 @@ export const useStore = create(
       // Cart State
       cart: [],
       addToCart: (product, quantity = 1) => set((state) => {
-        const existingItem = state.cart.find((item) => item.id === product.id);
+        const productKey = product.selectedVariant?.id ? `${product.id}-${product.selectedVariant.id}` : `${product.id}-simple`;
+        const existingItem = state.cart.find((item) => {
+          const itemKey = item.selectedVariant?.id ? `${item.id}-${item.selectedVariant.id}` : `${item.id}-simple`;
+          return itemKey === productKey;
+        });
+
         if (existingItem) {
           return {
-            cart: state.cart.map((item) =>
-              item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
-            ),
+            cart: state.cart.map((item) => {
+              const itemKey = item.selectedVariant?.id ? `${item.id}-${item.selectedVariant.id}` : `${item.id}-simple`;
+              return itemKey === productKey ? { ...item, quantity: item.quantity + quantity } : item;
+            }),
           };
         }
         return { cart: [...state.cart, { ...product, quantity }] };
       }),
-      removeFromCart: (productId) => set((state) => ({
-        cart: state.cart.filter((item) => item.id !== productId),
+      removeFromCart: (productId, variantId = null) => set((state) => ({
+        cart: state.cart.filter((item) => {
+          const isMatch = item.id === productId && (variantId ? item.selectedVariant?.id === variantId : !item.selectedVariant?.id);
+          return !isMatch;
+        }),
       })),
-      updateQuantity: (productId, quantity) => set((state) => ({
-        cart: state.cart.map((item) =>
-          item.id === productId ? { ...item, quantity } : item
-        ),
+      updateQuantity: (productId, quantity, variantId = null) => set((state) => ({
+        cart: state.cart.map((item) => {
+          const isMatch = item.id === productId && (variantId ? item.selectedVariant?.id === variantId : !item.selectedVariant?.id);
+          return isMatch ? { ...item, quantity } : item;
+        }),
       })),
       clearCart: () => set({ cart: [] }),
       

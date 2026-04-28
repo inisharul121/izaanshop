@@ -66,12 +66,23 @@ const Checkout = () => {
         ]);
         setPaymentSettings(settingsRes.data);
         setShippingMethods(shippingRes.data);
+
+        // Fetch user profile if logged in but address is missing
+        if (user && !user.address?.street) {
+          try {
+            const { data } = await api.get('/auth/profile');
+            const { setUser } = useStore.getState();
+            setUser({ ...user, ...data });
+          } catch (profileError) {
+            console.error('Failed to fetch user profile', profileError);
+          }
+        }
       } catch (error) {
         console.error('Failed to fetch checkout data');
       }
     };
     fetchData();
-  }, []);
+  }, [user]);
 
   const applyCoupon = async () => {
     if (!couponCode.trim()) return;
@@ -90,11 +101,16 @@ const Checkout = () => {
   };
 
   React.useEffect(() => {
-    if (useSavedAddress && user?.address?.street) {
-      setValue('address', `${user.address.street}, ${user.address.city}, ${user.address.state} ${user.address.zipCode}`);
-      setValue('phone', user.phone || '');
+    if (user) {
+      if (user.name) setValue('name', user.name);
+      if (user.phone) setValue('phone', user.phone);
+      if (user.email) setValue('email', user.email);
+      
+      if (useSavedAddress && user.address?.street) {
+        setValue('address', `${user.address.street}, ${user.address.city}, ${user.address.state} ${user.address.zipCode}`);
+      }
     }
-  }, [useSavedAddress, user, setValue]);
+  }, [user, useSavedAddress, setValue]);
 
   const subtotal = cart.reduce((acc, item) => acc + (item.salePrice || item.price) * item.quantity, 0);
   
@@ -142,10 +158,8 @@ const Checkout = () => {
         totalPrice: total,
         transactionId: transactionId,
         ...(appliedCoupon ? { couponCode: appliedCoupon.code } : {}),
-        ...(isGuest ? {
-          guestName: data.name,
-          guestPhone: data.phone,
-        } : {}),
+        guestName: data.name,
+        guestPhone: data.phone,
       };
 
       const response = await api.post('/orders', orderData);
@@ -195,7 +209,7 @@ const Checkout = () => {
       <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
         <div className="lg:col-span-7 space-y-8">
           
-          <div className="bg-white p-8 md:p-10 rounded-[2.5rem] border border-gray-100 shadow-[0_20px_50px_rgba(0,0,0,0.02)]">
+          <div className="bg-white p-5 md:p-10 rounded-2xl md:rounded-[2.5rem] border border-gray-100 shadow-[0_20px_50px_rgba(0,0,0,0.02)]">
             <h2 className="text-xl font-black mb-8 flex items-center gap-3 text-dark">
               <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
                 <Truck className="w-5 h-5 text-primary" />
@@ -305,7 +319,7 @@ const Checkout = () => {
             </div>
           </div>
 
-          <div className="bg-white p-8 md:p-10 rounded-[2.5rem] border border-gray-100 shadow-[0_20px_50px_rgba(0,0,0,0.02)]">
+          <div className="bg-white p-5 md:p-10 rounded-2xl md:rounded-[2.5rem] border border-gray-100 shadow-[0_20px_50px_rgba(0,0,0,0.02)]">
             <h2 className="text-xl font-black mb-8 flex items-center gap-3 text-dark">
               <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
                 <CreditCard className="w-5 h-5 text-orange-500" />
@@ -372,7 +386,7 @@ const Checkout = () => {
         </div>
 
         <div className="lg:col-span-5">
-          <div className="bg-dark text-white p-10 rounded-[2.5rem] shadow-2xl sticky top-12 overflow-hidden">
+          <div className="bg-dark text-white p-6 md:p-10 rounded-2xl md:rounded-[2.5rem] shadow-2xl sticky top-12 overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-[80px] rounded-full -mr-16 -mt-16 pointer-events-none" />
             
             <h2 className="text-2xl font-black mb-8 relative z-10">Order Summary</h2>

@@ -1,15 +1,21 @@
 'use client';
 
 import React from 'react';
-import { Search, Bell, User } from 'lucide-react';
+import { Search, Bell, User, Menu } from 'lucide-react';
 import Image from 'next/image';
 import logo from '@/assets/logo.png';
 
-const AdminHeader = ({ user }) => {
+const AdminHeader = ({ user, onToggleSidebar }) => {
   return (
-    <header className="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-8 sticky top-0 z-40">
+    <header className="h-16 md:h-20 bg-white border-b border-gray-100 flex items-center justify-between px-4 md:px-8 sticky top-0 z-40">
       <div className="flex items-center gap-4 flex-1">
-        <div className="relative max-w-md w-full">
+        <button 
+          onClick={onToggleSidebar}
+          className="lg:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-xl transition-colors"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+        <div className="relative max-w-md w-full hidden sm:block">
           <input
             type="text"
             placeholder="Search products, orders..."

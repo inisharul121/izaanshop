@@ -36,7 +36,8 @@ const ShippingSection = () => {
       setIsAdding(false);
       fetchMethods();
     } catch (error) {
-      console.error('Failed to create shipping method');
+      const errorMessage = error.response?.data?.message || 'Failed to create shipping method';
+      alert(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -49,7 +50,8 @@ const ShippingSection = () => {
       setIsEditing(null);
       fetchMethods();
     } catch (error) {
-      console.error('Failed to update shipping method');
+      const errorMessage = error.response?.data?.message || 'Failed to update shipping method';
+      alert(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -61,7 +63,8 @@ const ShippingSection = () => {
       await api.delete(`/shipping/${id}`);
       fetchMethods();
     } catch (error) {
-      console.error('Failed to delete shipping method');
+      const errorMessage = error.response?.data?.message || 'Failed to delete shipping method';
+      alert(errorMessage);
     }
   };
 

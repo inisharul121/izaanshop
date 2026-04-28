@@ -1,15 +1,29 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useStore } from '@/store/useStore';
 import api from '@/utils/api';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export const useAdminDashboard = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, logout, _hasHydrated } = useStore();
   
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const currentTab = searchParams.get('tab') || 'dashboard';
+  const [activeTab, setActiveTabState] = useState(currentTab);
+
+  const setActiveTab = (tab) => {
+    setActiveTabState(tab);
+    router.push(`?tab=${tab}`, { scroll: false });
+  };
+
+  // Sync state with URL if it changes (e.g. Back button)
+  useEffect(() => {
+    if (currentTab !== activeTab) {
+      setActiveTabState(currentTab);
+    }
+  }, [currentTab, activeTab]);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -76,10 +90,12 @@ export const useAdminDashboard = () => {
   const handleDelete = async (type, id) => {
     if (!window.confirm(`Are you sure you want to delete this ${type}?`)) return;
     try {
-      await api.delete(`/${type}s/${id}`);
+      const endpoint = type === 'category' ? '/categories' : `/${type}s`;
+      await api.delete(`${endpoint}/${id}`);
       fetchData();
     } catch (err) {
-      alert(`Failed to delete ${type}`);
+      const errorMessage = err.response?.data?.message || `Failed to delete ${type}`;
+      alert(errorMessage);
     }
   };
 

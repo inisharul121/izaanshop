@@ -14,12 +14,13 @@ import {
   FileText, 
   ShieldCheck,
   ImageIcon,
-  Truck 
+  Truck,
+  X
 } from 'lucide-react';
-import Image from 'next/image';
+import SafeImage from '../SafeImage';
 import logo from '@/assets/logo.png';
 
-const AdminSidebar = ({ activeTab, setActiveTab, onLogout }) => {
+const AdminSidebar = ({ activeTab, setActiveTab, onLogout, isOpen, setIsOpen }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Overview', icon: BarChart3 },
     { id: 'analytics', label: 'Analytics', icon: PieChart },
@@ -38,17 +39,35 @@ const AdminSidebar = ({ activeTab, setActiveTab, onLogout }) => {
   ];
 
   return (
-    <aside className="w-64 bg-dark text-white flex flex-col fixed inset-y-0 left-0 z-50 transition-all duration-300">
-      <div className="p-8 flex flex-col items-center">
-        <Link href="/" className="relative group block">
+    <>
+      {/* Mobile Backdrop */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-dark/40 backdrop-blur-sm z-[45] lg:hidden"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      <aside className={`w-72 md:w-64 bg-dark text-white flex flex-col fixed inset-y-0 left-0 z-50 transition-all duration-300 transform ${
+        isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+      }`}>
+        <div className="p-8 flex flex-col items-center relative">
+          <button 
+            onClick={() => setIsOpen(false)}
+            className="lg:hidden absolute top-4 right-4 p-2 text-gray-500 hover:text-white"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <Link href="/" className="relative group block">
           <div className="absolute -inset-1.5 bg-gradient-to-r from-primary to-orange-400 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
           <div className="relative bg-dark border border-white/10 p-3 rounded-2xl shadow-2xl transition-transform duration-300 group-hover:scale-110">
-            <Image 
+            <SafeImage 
               src={logo} 
               alt="IzaanShop Logo" 
               width={56} 
-              height={56} 
+              height={25} 
               className="object-contain"
+              style={{ width: 'auto', height: 'auto' }}
             />
           </div>
         </Link>
@@ -81,7 +100,8 @@ const AdminSidebar = ({ activeTab, setActiveTab, onLogout }) => {
           Sign Out
         </button>
       </div>
-    </aside>
+      </aside>
+    </>
   );
 };
 

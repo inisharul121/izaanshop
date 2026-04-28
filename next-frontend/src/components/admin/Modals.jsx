@@ -72,7 +72,7 @@ export const InvoiceModal = ({ order, isOpen, onClose }) => {
       <motion.div 
         initial={{ scale: 0.9, opacity: 0 }} 
         animate={{ scale: 1, opacity: 1 }} 
-        className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+        className="bg-white w-full md:w-[95%] lg:max-w-3xl rounded-2xl md:rounded-3xl shadow-2xl overflow-hidden max-h-[95vh] flex flex-col"
       >
         {/* Modal Header - Hidden on Print */}
         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 text-dark">
@@ -109,7 +109,7 @@ export const InvoiceModal = ({ order, isOpen, onClose }) => {
           </div>
 
           {/* Info Blocks */}
-          <div className="grid grid-cols-2 gap-12 mb-8 py-6 border-t border-b border-gray-100">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 mb-8 py-6 border-t border-b border-gray-100">
             <div className="space-y-3">
               <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Bill To:</h5>
               <div>
@@ -150,6 +150,11 @@ export const InvoiceModal = ({ order, isOpen, onClose }) => {
                 <tr key={idx}>
                   <td className="py-3 min-w-[200px]">
                     <p className="text-[13px] font-bold text-dark">{item.name}</p>
+                    {item.variant?.options && (
+                      <p className="text-[10px] text-gray-400 mt-0.5 italic">
+                        {Object.entries(typeof item.variant.options === 'string' ? JSON.parse(item.variant.options) : item.variant.options).map(([k, v]) => `${k}: ${v}`).join(', ')}
+                      </p>
+                    )}
                   </td>
                   <td className="py-3 text-xs font-bold text-gray-500 text-center">{item.price}৳</td>
                   <td className="py-3 text-xs font-bold text-gray-500 text-center">{item.quantity}</td>
@@ -230,7 +235,7 @@ export const MediaLibraryModal = ({ isOpen, onClose, onSelect, multiple = false 
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-dark/60 backdrop-blur-sm">
-      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white w-full md:w-[95%] lg:max-w-3xl rounded-2xl md:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
           <h4 className="text-xl font-bold flex items-center gap-2">Media Library <span className="text-xs font-medium text-gray-400">({images.length} images)</span></h4>
           <button onClick={onClose} className="p-2 hover:bg-white rounded-full transition-colors"><X className="w-5 h-5" /></button>
@@ -293,7 +298,7 @@ export const OrderModal = ({ order, isOpen, onClose, onDeliver }) => {
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+        className="bg-white w-full md:w-[95%] lg:max-w-2xl rounded-2xl md:rounded-3xl shadow-2xl overflow-hidden max-h-[95vh] flex flex-col"
       >
         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
           <div>
@@ -392,9 +397,18 @@ export const OrderModal = ({ order, isOpen, onClose, onDeliver }) => {
                   <div className="w-12 h-12 bg-white rounded-lg overflow-hidden border border-gray-100 shrink-0">
                     <img src={getImageUrl(item.image)} className="w-full h-full object-cover" />
                   </div>
-                  <div className="flex-1 min-w-0">
+                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-dark truncate">{item.name}</p>
-                    <p className="text-xs text-gray-400 uppercase">{item.quantity} x {item.price}৳</p>
+                    {item.variant?.options && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {Object.entries(typeof item.variant.options === 'string' ? JSON.parse(item.variant.options) : item.variant.options).map(([k, v]) => (
+                          <span key={k} className="text-[9px] font-black bg-gray-200 px-1.5 py-0.5 rounded text-gray-400 uppercase">
+                            {k}: {v}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    <p className="text-xs text-gray-400 uppercase mt-1">{item.quantity} x {item.price}৳</p>
                   </div>
                   <p className="text-sm font-black text-dark">{item.quantity * item.price}৳</p>
                 </div>
@@ -451,6 +465,7 @@ export const ProductModal = ({
   const [baseSalePrice, setBaseSalePrice] = useState('');
   const [baseStock, setBaseStock] = useState('');
   const [description, setDescription] = useState('');
+  const [categoryId, setCategoryId] = useState(''); // Track selected category
 
   React.useEffect(() => {
     if (isOpen) {
@@ -474,6 +489,7 @@ export const ProductModal = ({
       setBaseSalePrice(editingItem?.salePrice || '');
       setBaseStock(editingItem?.stock || 0);
       setDescription(editingItem?.description || '');
+      setCategoryId(editingItem?.categoryId || ''); // Sync category selection
     }
   }, [editingItem, isOpen]);
 
@@ -577,14 +593,16 @@ export const ProductModal = ({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-dark/60 backdrop-blur-sm">
-      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white w-full md:w-[95%] lg:max-w-2xl rounded-2xl md:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
         <div className="p-6 border-b border-gray-100 flex justify-between items-center">
           <h4 className="text-xl font-bold">{editingItem?.id ? 'Edit' : 'Add'} Product</h4>
           <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors"><X className="w-5 h-5" /></button>
         </div>
         
-        <form onSubmit={onSave} className="p-6 space-y-4 overflow-y-auto custom-scrollbar">
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={onSave} className="p-4 md:p-6 space-y-4 overflow-y-auto custom-scrollbar">
+          {/* Hidden input to ensure categoryId is captured by FormData */}
+          <input type="hidden" name="category" value={categoryId} />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-bold text-gray-400 uppercase">Product Name</label>
               <input name="name" defaultValue={editingItem?.name} onChange={handleNameChange} required className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm" />
@@ -737,7 +755,7 @@ export const ProductModal = ({
              </div>
           )}
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1">
               <label className="text-xs font-bold text-gray-400 uppercase">Base Price</label>
               <input name="price" type="number" value={basePrice} onChange={(e) => setBasePrice(e.target.value)} required className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm" />
@@ -773,7 +791,7 @@ export const ProductModal = ({
 
           <div className="space-y-1">
             <label className="text-xs font-bold text-gray-400 uppercase">Category</label>
-            <select name="category" defaultValue={editingItem?.categoryId} required className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm">
+            <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} required className="w-full bg-gray-50 border-none rounded-xl p-3 text-sm">
               <option value="">Select Category</option>
               {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>

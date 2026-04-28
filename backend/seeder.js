@@ -1,13 +1,23 @@
-const prisma = require('./utils/prisma');
+const { db } = require('./db');
+const { 
+  users, 
+  categories, 
+  products, 
+  banners, 
+  orderItems, 
+  orders, 
+  productVariants, 
+  productAttributes 
+} = require('./db/schema');
 const bcrypt = require('bcryptjs');
 
-const categories = [
+const seedCategories = [
   { name: 'Books', slug: 'books', description: 'Educational and story books' },
   { name: 'Educational Toys', slug: 'educational-toys', description: 'Learning toys for kids' },
   { name: 'Stationery', slug: 'stationery', description: 'School and office supplies' },
 ];
 
-const products = [
+const seedProducts = [
   {
     name: 'Kids Math Adventure',
     slug: 'kids-math-adventure',
@@ -37,7 +47,7 @@ const products = [
   },
 ];
 
-const banners = [
+const seedBanners = [
   {
     title: 'New Arrival',
     subtitle: 'Educational Toys for Kids',
@@ -51,47 +61,45 @@ const banners = [
 const seedData = async () => {
   try {
     console.log('🧹 Cleaning existing data...');
-    await prisma.orderItem.deleteMany();
-    await prisma.order.deleteMany();
-    await prisma.productVariant.deleteMany();
-    await prisma.productAttribute.deleteMany();
-    await prisma.product.deleteMany();
-    await prisma.category.deleteMany();
-    await prisma.user.deleteMany();
-    await prisma.banner.deleteMany();
+    // Delete in reverse order of dependencies
+    await db.delete(orderItems);
+    await db.delete(orders);
+    await db.delete(productVariants);
+    await db.delete(productAttributes);
+    await db.delete(products);
+    await db.delete(categories);
+    await db.delete(users);
+    await db.delete(banners);
 
     console.log('👤 Creating Admin User...');
     const hashedPassword = await bcrypt.hash('admin123456', 10);
-    await prisma.user.create({
-      data: {
-        name: 'Admin User',
-        email: 'admin@example.com',
-        password: hashedPassword,
-        role: 'admin',
-        isApproved: true
-      }
+    await db.insert(users).values({
+      name: 'Admin User',
+      email: 'admin@example.com',
+      password: hashedPassword,
+      role: 'admin',
+      isApproved: true
     });
 
     console.log('📁 Seeding Categories...');
     const createdCategories = [];
-    for (const cat of categories) {
-      const c = await prisma.category.create({ data: cat });
-      createdCategories.push(c);
+    for (const cat of seedCategories) {
+      const [result] = await db.insert(categories).values(cat);
+      createdCategories.push({ id: result.insertId, ...cat });
     }
 
     console.log('🛍️ Seeding Products...');
-    for (let i = 0; i < products.length; i++) {
-      await prisma.product.create({
-        data: {
-          ...products[i],
-          categoryId: createdCategories[i % createdCategories.length].id,
-        }
-      });
+    for (let i = 0; i < seedProducts.length; i++) {
+        const cat = createdCategories[i % createdCategories.length];
+        await db.insert(products).values({
+          ...seedProducts[i],
+          categoryId: cat.id,
+        });
     }
 
     console.log('🖼️ Seeding Banners...');
-    for (const banner of banners) {
-      await prisma.banner.create({ data: banner });
+    for (const banner of seedBanners) {
+      await db.insert(banners).values(banner);
     }
 
     console.log('✅ DATABASE SEEDED SUCCESSFULLY!');

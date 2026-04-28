@@ -11,9 +11,28 @@ const upload = require('../middleware/uploadMiddleware');
 router.get('/', (req, res) => {
   const directoryPath = path.join(__dirname, '../uploads/products');
 
+  // Check if directory exists, create if not
+  if (!fs.existsSync(directoryPath)) {
+    console.log('📁 Creating uploads/products directory...');
+    try {
+      fs.mkdirSync(directoryPath, { recursive: true });
+    } catch (mkdirErr) {
+      console.error('❌ Failed to create directory:', mkdirErr);
+      return res.status(500).json({ 
+        message: 'Failed to create uploads directory', 
+        error: mkdirErr.message 
+      });
+    }
+  }
+
   fs.readdir(directoryPath, (err, files) => {
     if (err) {
-      return res.status(500).json({ message: 'Unable to scan directory', error: err.message });
+      console.error('❌ Failed to read media directory:', err);
+      return res.status(500).json({ 
+        message: 'Unable to scan directory', 
+        error: err.message,
+        path: directoryPath 
+      });
     }
 
     const fileList = files
@@ -23,6 +42,7 @@ router.get('/', (req, res) => {
         url: `/uploads/products/${file}`
       }));
 
+    console.log(`✅ Found ${fileList.length} media files`);
     res.json(fileList);
   });
 });
@@ -60,6 +80,31 @@ router.post('/upload', upload.single('image'), (req, res) => {
     console.error('MEDIA UPLOAD ERROR:', error);
     res.status(500).json({ message: 'Server error during upload', error: error.message });
   }
+});
+
+// @desc    Delete image from media library
+// @route   DELETE /api/media/:filename
+// @access  Private/Admin
+router.delete('/:filename', (req, res) => {
+  const fileName = req.params.filename;
+  
+  // Security check: prevent directory traversal
+  if (fileName.includes('..') || fileName.includes('/') || fileName.includes('\\')) {
+    return res.status(400).json({ message: 'Invalid file name' });
+  }
+
+  const filePath = path.join(__dirname, '../uploads/products', fileName);
+
+  fs.unlink(filePath, (err) => {
+    if (err) {
+      if (err.code === 'ENOENT') {
+        return res.status(404).json({ message: 'File not found' });
+      }
+      return res.status(500).json({ message: 'Error deleting file', error: err.message });
+    }
+    
+    res.json({ message: 'File deleted successfully' });
+  });
 });
 
 module.exports = router;

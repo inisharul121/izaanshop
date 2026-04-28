@@ -2,8 +2,15 @@ import axios from 'axios';
 import { getImageUrl } from './helpers';
 
 const getBaseUrl = () => {
-  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
-  if (process.env.NODE_ENV === 'development') return 'http://localhost:5001/api';
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    console.log('✅ Using NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL);
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔧 Using development API URL: http://localhost:5001/api');
+    return 'http://localhost:5001/api';
+  }
+  console.warn('⚠️ No API URL configured for production');
   return ''; // Production must have env variable
 };
 

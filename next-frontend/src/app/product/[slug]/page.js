@@ -2,30 +2,20 @@ import React from 'react';
 import { notFound } from 'next/navigation';
 import ProductDetailClient from '@/components/ProductDetailClient';
 import { getImageUrl } from '@/utils/helpers';
+import { getProductBySlug } from '@/lib/shopData';
 
-// Server-side data fetching
+// Cache product pages for 1 hour — products rarely change, this is safe and very fast.
+// Revalidation happens in the background; visitors always get near-instant HTML.
+export const revalidate = 3600;
+
+/**
+ * Server-side data fetching — calls Drizzle DIRECTLY.
+ * Same reason as page.js: HTTP loopback is broken on cPanel/Passenger.
+ */
 async function getProduct(slug) {
-  // Use absolute URL for server-side fetch
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:5001/api' : '');
-  
-  if (!baseUrl) {
-    console.error('❌ Base URL for API is missing.');
-    return null;
-  }
-
   try {
-    const url = `${baseUrl.replace(/\/$/, '')}/products/${slug}`;
-    const res = await fetch(url, {
-      cache: 'no-store'
-    });
-    
-    if (!res.ok) {
-      console.warn(`⚠️ API responded with ${res.status} for URL: ${url}`);
-      if (res.status === 404) return null;
-      throw new Error(`Failed to fetch product: ${res.statusText}`);
-    }
-    
-    return res.json();
+    const product = await getProductBySlug(slug);
+    return product;
   } catch (error) {
     console.error('❌ Error in getProduct:', error.message);
     return null;
@@ -38,9 +28,7 @@ export async function generateMetadata({ params }) {
   const product = await getProduct(slug);
   
   if (!product) {
-    return {
-      title: 'Product Not Found | Izaan Shop',
-    };
+    return { title: 'Product Not Found | Izaan Shop' };
   }
   
   const title = `${product.name} | Izaan Shop`;
@@ -51,18 +39,8 @@ export async function generateMetadata({ params }) {
   return {
     title,
     description,
-    openGraph: {
-      title,
-      description,
-      images: [image],
-      type: 'website',
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      images: [image],
-    },
+    openGraph: { title, description, images: [image], type: 'website' },
+    twitter: { card: 'summary_large_image', title, description, images: [image] },
   };
 }
 
@@ -70,9 +48,7 @@ export default async function ProductPage({ params }) {
   const { slug } = await params;
   const product = await getProduct(slug);
   
-  if (!product) {
-    notFound();
-  }
+  if (!product) notFound();
 
   return <ProductDetailClient initialProduct={product} />;
 }

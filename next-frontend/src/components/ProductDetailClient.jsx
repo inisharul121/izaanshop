@@ -8,7 +8,7 @@ import {
   CreditCard
 } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
+import SafeImage from './SafeImage';
 import { useStore } from '@/store/useStore';
 import ProductCard from '@/components/ProductCard';
 import { getImageUrl } from '@/utils/helpers';
@@ -129,9 +129,9 @@ const ProductDetailClient = ({ initialProduct }) => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16">
           
           {/* Left: Gallery */}
-          <div className="lg:col-span-6 space-y-6">
-            <div className="sticky top-24 space-y-6">
-              <motion.div className="aspect-square bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 relative group">
+          <div className="lg:col-span-6 space-y-4 md:space-y-6">
+            <div className="lg:sticky lg:top-24 space-y-4 md:space-y-6">
+              <motion.div className="aspect-[4/5] md:aspect-square bg-gray-50 rounded-2xl overflow-hidden border border-gray-100 relative group">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={activeImg}
@@ -147,10 +147,13 @@ const ProductDetailClient = ({ initialProduct }) => {
                       </div>
                     )}
                     {gallery[activeImg] ? (
-                      <img 
+                      <SafeImage 
                         src={getImageUrl(gallery[activeImg])} 
                         alt={product.name}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        priority
+                        sizes="(max-width: 1024px) 100vw, 50vw"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-300">
@@ -168,7 +171,7 @@ const ProductDetailClient = ({ initialProduct }) => {
                     onClick={() => setActiveImg(i)}
                     className={`relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden border transition-all ${activeImg === i ? 'border-primary ring-2 ring-primary/10' : 'border-gray-100 hover:border-gray-200'}`}
                   >
-                    <img src={getImageUrl(img)} alt={`Thumb ${i}`} className="w-full h-full object-cover" />
+                    <SafeImage src={getImageUrl(img)} alt={`Thumb ${i}`} fill className="object-cover" sizes="80px" />
                   </button>
                 ))}
               </div>
@@ -387,20 +390,44 @@ const ProductDetailClient = ({ initialProduct }) => {
 
         {/* Related Products */}
         {product.relatedProducts?.length > 0 && (
-          <section className="mt-24 pt-24 border-t border-gray-100">
-            <div className="flex items-center justify-between mb-10">
-              <h2 className="text-2xl font-bold text-dark tracking-tight">You Might Also Like</h2>
-              <Link href="/shop" className="text-primary text-sm font-bold hover:underline flex items-center gap-1">
+          <section className="mt-16 md:mt-24 pt-16 md:pt-24 border-t border-gray-100">
+            <div className="flex items-center justify-between mb-8 md:mb-10">
+              <h2 className="text-xl md:text-2xl font-bold text-dark tracking-tight">You Might Also Like</h2>
+              <Link href="/shop" className="text-primary text-xs md:text-sm font-bold hover:underline flex items-center gap-1">
                 View All <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
               {product.relatedProducts.map((p) => (
                 <ProductCard key={p.id} product={p} />
               ))}
             </div>
           </section>
         )}
+      </div>
+
+      {/* Sticky Mobile Action Bar */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-gray-100 p-4 z-[99] animate-in slide-in-from-bottom duration-500 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+        <div className="flex items-center gap-3">
+          <div className="flex flex-col min-w-[100px]">
+             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Price</span>
+             <span className="text-lg font-black text-primary">{finalPrice}৳</span>
+          </div>
+          <button 
+            onClick={handleBuyNow}
+            disabled={displayStock <= 0}
+            className={`flex-1 py-3.5 rounded-2xl font-black text-xs transition-all active:scale-95 shadow-lg shadow-dark/10 ${displayStock > 0 ? 'bg-dark text-white' : 'bg-gray-200 text-gray-400'}`}
+          >
+            {displayStock > 0 ? 'Buy Now' : 'Out of Stock'}
+          </button>
+          <button 
+            onClick={handleAddToCart}
+            disabled={displayStock <= 0}
+            className={`p-3.5 rounded-2xl transition-all active:scale-95 border ${displayStock > 0 ? 'bg-primary/10 text-primary border-primary/20' : 'bg-gray-50 text-gray-300 border-gray-100'}`}
+          >
+            <ShoppingCart className="w-5 h-5" />
+          </button>
+        </div>
       </div>
     </div>
   );
