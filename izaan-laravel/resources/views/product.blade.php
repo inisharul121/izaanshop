@@ -117,9 +117,9 @@
                                 </div>
                                 <div class="h-4 w-px bg-gray-200"></div>
                                 <div class="flex items-center gap-2">
-                                    <div class="w-1.5 h-1.5 rounded-full {{ $product->stock > 0 ? 'bg-green-500' : 'bg-red-500' }}"></div>
-                                    <span class="text-xs font-bold uppercase tracking-wider {{ $product->stock > 0 ? 'text-green-600' : 'text-red-600' }}">
-                                        {{ $product->stock > 0 ? 'In Stock' : 'Out of Stock' }}
+                                    <div class="w-1.5 h-1.5 rounded-full {{ ($product->stock === null || $product->stock > 0) ? 'bg-green-500' : 'bg-red-500' }}"></div>
+                                    <span class="text-xs font-bold uppercase tracking-wider {{ ($product->stock === null || $product->stock > 0) ? 'text-green-600' : 'text-red-600' }}">
+                                        {{ ($product->stock === null || $product->stock > 0) ? 'In Stock' : 'Out of Stock' }}
                                     </span>
                                 </div>
                             </div>
@@ -166,11 +166,23 @@
                         </div>
 
                         <div class="flex flex-col sm:flex-row gap-3 pt-2">
-                             <form action="/cart/add" method="POST" class="flex-1">
-                                @csrf
-                                <input type="hidden" name="product_id" value="{{ $product->id }}">
-                                <input type="hidden" name="quantity" :value="quantity">
-                                <input type="hidden" name="variant_id" :value="activeVariant?.id">
+                             <form @submit.prevent="
+                                let btn = $event.target.querySelector('button');
+                                let origHTML = btn.innerHTML;
+                                btn.disabled = true;
+                                btn.innerHTML = '<svg class=\'w-5 h-5 animate-spin\' viewBox=\'0 0 24 24\'><circle cx=\'12\' cy=\'12\' r=\'10\' stroke=\'currentColor\' stroke-width=\'3\' fill=\'none\' stroke-dasharray=\'31.4 31.4\'/></svg> Adding...';
+                                fetch('/cart/add', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                                    body: JSON.stringify({ product_id: {{ $product->id }}, quantity: quantity, variant_id: activeVariant?.id || null })
+                                }).then(r => r.json()).then(data => {
+                                    document.querySelectorAll('[data-cart-count]').forEach(el => { el.textContent = data.cartCount; el.closest('[data-cart-badge]').style.display = 'flex'; });
+                                    btn.innerHTML = '<svg xmlns=\'http://www.w3.org/2000/svg\' class=\'w-5 h-5\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\'><polyline points=\'20 6 9 17 4 12\'/></svg> Added to Basket!';
+                                    btn.classList.add('!bg-green-500', '!text-white', '!border-green-500');
+                                    window.showCartToast && window.showCartToast(data.message || 'Added to cart!');
+                                    setTimeout(() => { btn.innerHTML = origHTML; btn.disabled = false; btn.classList.remove('!bg-green-500', '!text-white', '!border-green-500'); }, 2000);
+                                }).catch(() => { btn.innerHTML = origHTML; btn.disabled = false; });
+                            " class="flex-1">
                                 <button type="submit" class="w-full py-4 rounded-xl bg-primary/10 text-primary border border-primary/20 hover:bg-primary hover:text-white font-bold text-sm flex items-center justify-center gap-3 transition-all">
                                     <i data-lucide="shopping-cart" class="w-5 h-5"></i>
                                     Add To Basket

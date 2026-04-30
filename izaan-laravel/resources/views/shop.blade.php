@@ -1,8 +1,4 @@
 <x-shop-layout>
-    <!-- Category Bar -->
-    <div class="bg-white border-b border-gray-100 shadow-sm sticky top-[72px] md:top-[88px] z-40">
-        <x-category-bar />
-    </div>
 
     <!-- Hero Section -->
     <x-hero-slider :banners="$banners" />

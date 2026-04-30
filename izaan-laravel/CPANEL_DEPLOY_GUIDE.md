@@ -114,5 +114,17 @@ For a premium experience, you must optimize how the browser loads your site:
 
 ---
 
+
+
+# 1. Go to your Laravel root folder first
+cd ~/izaan_laravel
+
+# 2. Then run these commands ONE BY ONE:
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan optimize
+
+
 ## ✅ SUCCESS
 Your Laravel site should now be live at **https://izaanshop.com**.

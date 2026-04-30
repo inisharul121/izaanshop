@@ -1,26 +1,6 @@
 <footer class="bg-dark text-white pt-16 pb-8">
     <div class="container mx-auto px-4 lg:max-w-5xl lg:px-10">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12 text-center md:text-left">
-            <!-- Brand -->
-            <div class="space-y-6 flex flex-col items-center md:items-start">
-                <a href="/" class="inline-block group">
-                    <div class="relative">
-                        <div class="absolute -inset-1 bg-primary/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
-                        <img src="{{ asset('images/logo.png') }}" alt="IzaanShop Logo" class="h-10 w-auto opacity-100 object-contain transition-transform group-hover:scale-110" />
-                    </div>
-                </a>
-                <p class="text-gray-400 text-sm leading-relaxed max-w-xs md:max-w-none mx-auto md:mx-0">
-                    Premium educational products, books, and toys for the next generation. Quality and learning delivered to your doorstep.
-                </p>
-                <div class="flex justify-center md:justify-start gap-4">
-                    <a href="https://wa.me/8801752530303" target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors border border-white/10 p-2.5 rounded-full hover:border-primary/50 bg-white/5" title="WhatsApp">
-                        <i data-lucide="phone" class="w-5 h-5"></i>
-                    </a>
-                    <a href="https://www.facebook.com/izaanshop2" target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors border border-white/10 p-2.5 rounded-full hover:border-primary/50 bg-white/5" title="Facebook">
-                        <i data-lucide="facebook" class="w-5 h-5"></i>
-                    </a>
-                </div>
-            </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 mb-12 text-center md:text-left">
 
             <!-- Quick Links -->
             <div>

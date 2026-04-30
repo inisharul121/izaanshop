@@ -125,9 +125,9 @@ class ProductController extends Controller
                 foreach ($validated['variants'] as $variant) {
                     ProductVariant::create([
                         'sku' => $variant['sku'] ?? null,
-                        'price' => $variant['price'],
-                        'salePrice' => $variant['salePrice'] ?? null,
-                        'stock' => $variant['stock'] ?? 0,
+                        'price' => (float)($variant['price'] ?? 0),
+                        'salePrice' => isset($variant['salePrice']) && $variant['salePrice'] !== '' ? (float)$variant['salePrice'] : null,
+                        'stock' => (int)($variant['stock'] ?? 0),
                         'options' => $variant['options'],
                         'image' => $variant['image'] ?? '',
                         'isDefault' => $variant['isDefault'] ?? false,
@@ -238,9 +238,9 @@ class ProductController extends Controller
                     foreach ($validated['variants'] as $variant) {
                         ProductVariant::create([
                             'sku' => $variant['sku'] ?? null,
-                            'price' => $variant['price'],
-                            'salePrice' => $variant['salePrice'] ?? null,
-                            'stock' => $variant['stock'] ?? 0,
+                            'price' => (float)($variant['price'] ?? 0),
+                            'salePrice' => isset($variant['salePrice']) && $variant['salePrice'] !== '' ? (float)$variant['salePrice'] : null,
+                            'stock' => (int)($variant['stock'] ?? 0),
                             'options' => $variant['options'],
                             'image' => $variant['image'] ?? '',
                             'isDefault' => $variant['isDefault'] ?? false,

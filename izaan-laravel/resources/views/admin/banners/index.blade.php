@@ -102,7 +102,7 @@
 
                     <div>
                         <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Main Title</label>
-                        <input type="text" name="title" x-model="title" class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all" required placeholder="e.g. Summer Collection">
+                        <input type="text" name="title" x-model="title" class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all" placeholder="e.g. Summer Collection">
                     </div>
 
                     <div>

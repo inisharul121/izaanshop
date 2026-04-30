@@ -65,6 +65,14 @@ class CartController extends Controller
         session(['cart' => $cart]);
         session(['cart_count' => array_sum(array_column($cart, 'quantity'))]);
 
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Product added to cart',
+                'cartCount' => session('cart_count'),
+            ]);
+        }
+
         return redirect()->back()->with('success', 'Product added to cart');
     }
 

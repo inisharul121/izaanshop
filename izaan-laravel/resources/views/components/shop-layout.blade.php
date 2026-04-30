@@ -12,15 +12,8 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
     <link rel="manifest" href="/site.webmanifest">
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
         /* Multi-range slider styles */
@@ -67,16 +60,17 @@
 <body class="font-sans antialiased bg-secondary text-dark">
     <div class="min-h-screen">
         <x-navbar />
-
-        <main>
+        
+        <main style="padding-top: 205px;" class="md:hidden">
+            {{ $slot }}
+        </main>
+        <main style="padding-top: 245px;" class="hidden md:block">
             {{ $slot }}
         </main>
 
         <x-footer />
     </div>
 
-    <script>
-        lucide.createIcons();
-    </script>
+
 </body>
 </html>

@@ -1,10 +1,11 @@
-<header x-data="{ isScrolled: false, isOpen: false }" @scroll.window="isScrolled = (window.pageYOffset > 20)"
-    class="sticky top-0 left-0 z-[100] w-full bg-white shadow-sm">
+<header x-data="{ isScrolled: false, isOpen: false }" 
+    @scroll.window="isScrolled = (window.scrollY > 40)"
+    class="fixed top-0 left-0 z-[100] w-full bg-white shadow-sm">
 
     <!-- Premium Utility Bar (Orange Section) -->
-    <div :class="isScrolled ? 'max-h-0 py-0 opacity-0' : 'max-h-20 py-2.5 opacity-100'"
-        class="bg-[#E67E22] transition-all duration-300 origin-top overflow-hidden">
-        <div class="max-w-4xl mx-auto px-4 flex justify-between items-center text-white">
+    <div :class="isScrolled ? 'max-h-0 opacity-0' : 'max-h-[50px] opacity-100'"
+         class="bg-[#E67E22] overflow-hidden transition-all duration-300 ease-in-out">
+        <div class="h-full py-2.5 max-w-4xl mx-auto px-4 flex justify-between items-center text-white">
             <div class="flex items-center gap-6 md:gap-10">
                 <a href="tel:+8801752530303"
                     class="flex items-center gap-2 text-[11px] md:text-sm font-bold tracking-tight">
@@ -44,7 +45,7 @@
 
     <!-- Main Navbar Section -->
     <nav :class="isScrolled ? 'bg-white/95 backdrop-blur-md py-2 shadow-lg border-b border-gray-100' : 'bg-white py-4 md:py-6 shadow-sm border-b border-gray-100'"
-        class="transition-all duration-300">
+        class="transition-[padding,background-color,box-shadow] duration-300">
         <div class="container mx-auto px-4 lg:max-w-5xl lg:px-10 flex items-center justify-between gap-4">
             <!-- Logo -->
             <a href="/" class="flex items-center active:scale-95 transition-all shrink-0">
@@ -85,12 +86,11 @@
 
                 <a href="/cart" class="relative p-1.5 text-dark hover:text-primary transition-all group">
                     <i data-lucide="shopping-cart" class="w-5 h-5 group-hover:scale-110 transition-all"></i>
-                    @if($cartCount > 0)
-                        <span
-                            class="absolute -top-1 -right-1 bg-primary text-white text-[9px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border border-white">
-                            {{ $cartCount }}
+                    <span data-cart-badge
+                            style="min-width:24px;height:24px;padding:0 6px;font-size:11px;top:-10px;right:-12px;{{ $cartCount > 0 ? '' : 'display:none;' }}"
+                            class="absolute bg-primary text-white font-black rounded-full flex items-center justify-center border-2 border-white shadow-md">
+                            <span data-cart-count>{{ $cartCount }}</span>
                         </span>
-                    @endif
                 </a>
 
                 @auth
@@ -113,12 +113,11 @@
             <div class="lg:hidden flex items-center gap-1 sm:gap-2">
                 <a href="/cart" class="relative p-1.5 text-dark">
                     <i data-lucide="shopping-cart" class="w-5.5 h-5.5"></i>
-                    @if($cartCount > 0)
-                        <span
-                            class="absolute -top-0.5 -right-0.5 bg-primary text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center border border-white">
-                            {{ $cartCount }}
+                    <span data-cart-badge
+                            style="min-width:24px;height:24px;padding:0 6px;font-size:11px;top:-10px;right:-12px;{{ $cartCount > 0 ? '' : 'display:none;' }}"
+                            class="absolute bg-primary text-white font-black rounded-full flex items-center justify-center border-2 border-white shadow-md">
+                            <span data-cart-count>{{ $cartCount }}</span>
                         </span>
-                    @endif
                 </a>
                 <button @click="isOpen = !isOpen" class="p-1.5 bg-gray-50 rounded-xl active:scale-90 transition-all">
                     <template x-if="!isOpen">
@@ -198,4 +197,37 @@
         </div>
     </div>
 
+    <!-- Category Bar (Bottom of Navbar) -->
+    <x-category-bar />
+
 </header>
+
+<!-- Cart Toast Notification -->
+<div id="cart-toast" 
+     style="display:none; position:fixed; bottom:24px; right:24px; z-index:9999; transform:translateY(20px); opacity:0; transition:all 0.3s ease;"
+     class="bg-dark text-white px-5 py-3.5 rounded-xl shadow-2xl flex items-center gap-3 text-sm font-bold">
+    <span style="width:28px;height:28px;background:#22c55e;border-radius:50%;display:flex;align-items:center;justify-content:center;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    </span>
+    <span id="cart-toast-msg">Added to cart!</span>
+</div>
+
+<script>
+window.showCartToast = function(msg) {
+    const toast = document.getElementById('cart-toast');
+    const msgEl = document.getElementById('cart-toast-msg');
+    if (!toast) return;
+    msgEl.textContent = msg || 'Added to cart!';
+    toast.style.display = 'flex';
+    requestAnimationFrame(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateY(0)';
+    });
+    clearTimeout(window._toastTimer);
+    window._toastTimer = setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(20px)';
+        setTimeout(() => { toast.style.display = 'none'; }, 300);
+    }, 2500);
+};
+</script>

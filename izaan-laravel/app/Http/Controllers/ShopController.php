@@ -16,7 +16,7 @@ class ShopController extends Controller
     public function getShopData(Request $request)
     {
         $pageSize = $request->input('pageSize', 12);
-        $page = $request->input('pageNumber', 1);
+        $page = $request->input('page', 1);
 
         // 1. CACHE GLOBAL DATA
         $bannerData = \Cache::remember('shop_banners', 3600, function () {
@@ -89,7 +89,7 @@ class ShopController extends Controller
     public function index(Request $request)
     {
         $pageSize = $request->input('pageSize', 12);
-        $page = $request->input('pageNumber', 1);
+        $page = $request->input('page', 1);
 
         // 1. CACHE GLOBAL DATA (Banners, Categories, Store Max Price)
         // This avoids 3 expensive DB queries on every single page load

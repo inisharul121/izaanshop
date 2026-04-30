@@ -36,9 +36,23 @@
             </div>
 
             <div class="flex flex-col gap-1.5">
-                <form action="/cart/add" method="POST">
-                    @csrf
-                    <input type="hidden" name="product_id" value="{{ $product->id }}">
+                <form @submit.prevent="
+                    let btn = $event.target.querySelector('button');
+                    let origHTML = btn.innerHTML;
+                    btn.disabled = true;
+                    btn.innerHTML = '<svg class=\'w-3 h-3 animate-spin\' viewBox=\'0 0 24 24\'><circle cx=\'12\' cy=\'12\' r=\'10\' stroke=\'currentColor\' stroke-width=\'3\' fill=\'none\' stroke-dasharray=\'31.4 31.4\'/></svg> Adding...';
+                    fetch('/cart/add', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                        body: JSON.stringify({ product_id: {{ $product->id }} })
+                    }).then(r => r.json()).then(data => {
+                        document.querySelectorAll('[data-cart-count]').forEach(el => { el.textContent = data.cartCount; el.closest('[data-cart-badge]').style.display = 'flex'; });
+                        btn.innerHTML = '<svg xmlns=\'http://www.w3.org/2000/svg\' class=\'w-3 h-3\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\'><polyline points=\'20 6 9 17 4 12\'/></svg> Added!';
+                        btn.classList.add('bg-green-500', 'text-white', 'border-green-500');
+                        window.showCartToast && window.showCartToast(data.message || 'Added to cart!');
+                        setTimeout(() => { btn.innerHTML = origHTML; btn.disabled = false; btn.classList.remove('bg-green-500', 'text-white', 'border-green-500'); }, 1500);
+                    }).catch(() => { btn.innerHTML = origHTML; btn.disabled = false; });
+                ">
                     <button type="submit" class="w-full bg-primary/10 text-primary border border-primary/20 py-1.5 rounded-lg text-[10px] font-bold flex items-center justify-center gap-2 hover:bg-primary hover:text-white transition-all duration-300">
                         <i data-lucide="shopping-cart" class="w-3 h-3"></i>
                         Add to Cart

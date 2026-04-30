@@ -120,7 +120,7 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div class="space-y-1">
                             <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Max Uses</label>
-                            <input type="number" name="maxUses" :value="editingCoupon?.maxUses" placeholder="100" class="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm font-bold">
+                            <input type="number" name="maxUses" :value="editingCoupon?.maxUses" placeholder="Unlimited (leave empty)" class="w-full bg-gray-50 border-none rounded-2xl p-4 text-sm font-bold">
                         </div>
                         <div class="space-y-1">
                             <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Expiry Date</label>

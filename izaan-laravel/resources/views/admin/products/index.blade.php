@@ -58,8 +58,8 @@
                             </td>
                             <td class="px-8 py-6">
                                 <div class="flex items-center gap-2">
-                                    <div class="w-2 h-2 rounded-full {{ $product->stock > 0 ? ($product->stock < 10 ? 'bg-orange-500' : 'bg-green-500') : 'bg-red-500' }}"></div>
-                                    <span class="font-bold text-dark text-sm">{{ $product->stock }}</span>
+                                    <div class="w-2 h-2 rounded-full {{ $product->stock === null || $product->stock > 0 ? ($product->stock !== null && $product->stock < 10 ? 'bg-orange-500' : 'bg-green-500') : 'bg-red-500' }}"></div>
+                                    <span class="font-bold text-dark text-sm">{{ $product->stock === null ? 'Unlimited' : $product->stock }}</span>
                                 </div>
                             </td>
                             <td class="px-8 py-6">

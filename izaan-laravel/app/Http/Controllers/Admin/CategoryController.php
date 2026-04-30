@@ -25,12 +25,19 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:100|unique:Category',
+            'name' => 'required|string|max:100|unique:Category,name',
             'image' => 'nullable|string',
             'description' => 'nullable|string',
         ]);
 
-        $validated['slug'] = Str::slug($validated['name']);
+        $slug = Str::slug($validated['name']);
+        
+        // Check if slug exists
+        if (Category::where('slug', $slug)->exists()) {
+            return back()->withErrors(['name' => 'A category with a similar name already exists.'])->withInput();
+        }
+
+        $validated['slug'] = $slug;
 
         Category::create($validated);
 
@@ -53,7 +60,14 @@ class CategoryController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        $validated['slug'] = Str::slug($validated['name']);
+        $slug = Str::slug($validated['name']);
+
+        // Check if slug exists for other categories
+        if (Category::where('slug', $slug)->where('id', '!=', $id)->exists()) {
+            return back()->withErrors(['name' => 'A category with a similar name already exists.'])->withInput();
+        }
+
+        $validated['slug'] = $slug;
 
         $category->update($validated);
 

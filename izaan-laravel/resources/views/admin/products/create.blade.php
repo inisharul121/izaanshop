@@ -1,6 +1,6 @@
 <x-admin-layout>
     <div x-data="productForm()" @izaan-media-selected.window="handleMediaSelection($event.detail)">
-        <form action="{{ route('admin.products.store') }}" method="POST" class="space-y-8 max-w-5xl mx-auto pb-20">
+        <form action="{{ route('admin.products.store') }}" method="POST" @submit.prevent="if(validate()) $el.submit()" class="space-y-8 max-w-5xl mx-auto pb-20">
             @csrf
             <template x-if="editingItem">
                 @method('PUT')
@@ -23,6 +23,20 @@
                     </button>
                 </div>
             </div>
+            
+            @if ($errors->any())
+                <div class="bg-red-50 border-2 border-red-100 p-6 rounded-[2rem] space-y-2">
+                    <div class="flex items-center gap-3 text-red-500 font-black uppercase tracking-widest text-xs">
+                        <i data-lucide="alert-circle" class="w-5 h-5"></i>
+                        Please fix the following errors
+                    </div>
+                    <ul class="list-disc list-inside text-sm font-bold text-red-400 ml-1">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
 
             <!-- Main Content Grid -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -77,9 +91,9 @@
                                     class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold text-primary focus:ring-4 focus:ring-primary/10 transition-all outline-none">
                             </div>
                             <div class="space-y-1">
-                                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Stock Qty</label>
-                                <input type="number" name="stock" x-model="formData.stock" required 
-                                    class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-4 focus:ring-primary/10 transition-all outline-none">
+                                <label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Stock Qty (Empty = Unlimited)</label>
+                                <input type="number" name="stock" x-model="formData.stock" 
+                                    class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:ring-4 focus:ring-primary/10 transition-all outline-none" placeholder="Unlimited">
                             </div>
                         </div>
                     </div>
@@ -260,20 +274,20 @@
             return {
                 editingItem: @json($product ?? null),
                 formData: {
-                    name: '',
-                    slug: '',
-                    description: '',
-                    price: '',
-                    salePrice: '',
-                    stock: '',
-                    type: 'SIMPLE',
-                    categoryId: '',
-                    isFeatured: false,
-                    mainImage: '',
-                    gallery: []
+                    name: @json(old('name', '')),
+                    slug: @json(old('slug', '')),
+                    description: @json(old('description', '')),
+                    price: @json(old('price', '')),
+                    salePrice: @json(old('salePrice', '')),
+                    stock: @json(old('stock', '')),
+                    type: @json(old('type', 'SIMPLE')),
+                    categoryId: @json(old('categoryId', '')),
+                    isFeatured: @json(old('isFeatured') ? true : false),
+                    mainImage: @json(old('mainImage', '')),
+                    gallery: @json(json_decode(old('gallery', '[]'), true))
                 },
-                attributes: [],
-                variants: [],
+                attributes: @json(json_decode(old('attributes', '[]'), true)),
+                variants: @json(json_decode(old('variants', '[]'), true)),
                 activeVariantIdx: null,
                 mediaTarget: 'main', // main, gallery, variant
                 isMultiple: false,
@@ -408,6 +422,18 @@
 
                 setDefault(idx) {
                     this.variants = this.variants.map((v, i) => ({ ...v, isDefault: i === idx }));
+                },
+
+                validate() {
+                    if (!this.formData.description || this.formData.description.trim() === '' || this.formData.description === '<p><br></p>') {
+                        alert('Product description is required before saving.');
+                        return false;
+                    }
+                    if (this.formData.type === 'VARIABLE' && this.variants.length === 0) {
+                        alert('Please generate variants for variable products.');
+                        return false;
+                    }
+                    return true;
                 }
             }
         }

@@ -48,7 +48,7 @@ class ProductController extends Controller
             'slug' => 'required|string|unique:Product,slug',
             'price' => 'required|numeric',
             'salePrice' => 'nullable|numeric',
-            'stock' => 'required|integer',
+            'stock' => 'nullable|integer',
             'categoryId' => 'required|exists:Category,id',
             'type' => 'required|in:SIMPLE,VARIABLE',
             'description' => 'required|string',
@@ -99,9 +99,9 @@ class ProductController extends Controller
                     foreach ($variants as $variant) {
                         ProductVariant::create([
                             'sku' => $variant['sku'] ?? ($product->slug . '-' . Str::random(5)),
-                            'price' => $variant['price'] ?? $product->price,
-                            'salePrice' => $variant['salePrice'] ?? $product->salePrice,
-                            'stock' => $variant['stock'] ?? 0,
+                            'price' => (float)($variant['price'] ?? $product->price),
+                            'salePrice' => isset($variant['salePrice']) && $variant['salePrice'] !== '' ? (float)$variant['salePrice'] : null,
+                            'stock' => (int)($variant['stock'] ?? 0),
                             'options' => $variant['options'],
                             'image' => $variant['image'] ?? $product->images['main'],
                             'productId' => $product->id,
@@ -140,7 +140,7 @@ class ProductController extends Controller
             'slug' => 'required|string|unique:Product,slug,' . $id,
             'price' => 'required|numeric',
             'salePrice' => 'nullable|numeric',
-            'stock' => 'required|integer',
+            'stock' => 'nullable|integer',
             'categoryId' => 'required|exists:Category,id',
             'type' => 'required|in:SIMPLE,VARIABLE',
             'description' => 'required|string',
@@ -189,12 +189,12 @@ class ProductController extends Controller
                     $variants = json_decode($request->input('variants'), true);
                     foreach ($variants as $variant) {
                         ProductVariant::create([
-                            'sku' => $variant['sku'],
-                            'price' => $variant['price'],
-                            'salePrice' => $variant['salePrice'],
-                            'stock' => $variant['stock'],
+                            'sku' => $variant['sku'] ?? ($product->slug . '-' . Str::random(5)),
+                            'price' => (float)($variant['price'] ?? $product->price),
+                            'salePrice' => isset($variant['salePrice']) && $variant['salePrice'] !== '' ? (float)$variant['salePrice'] : null,
+                            'stock' => (int)($variant['stock'] ?? 0),
                             'options' => $variant['options'],
-                            'image' => $variant['image'],
+                            'image' => $variant['image'] ?? $product->images['main'],
                             'productId' => $product->id,
                             'isDefault' => $variant['isDefault'] ?? false,
                         ]);

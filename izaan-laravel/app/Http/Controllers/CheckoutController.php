@@ -69,14 +69,21 @@ class CheckoutController extends Controller
         }, 0);
 
         $discount = 0;
+        $coupon = null;
         if ($request->coupon_code) {
             $coupon = Coupon::where('code', $request->coupon_code)->first();
-            if ($coupon && $coupon->isActive && (!$coupon->expiryDate || now()->lessThan($coupon->expiryDate))) {
+            if ($coupon && $coupon->isActive && 
+                (!$coupon->expiryDate || now()->lessThan($coupon->expiryDate)) &&
+                (!$coupon->maxUses || $coupon->usedCount < $coupon->maxUses)) {
+                
                 if ($coupon->discountType === 'percentage') {
                     $discount = ($subtotal * $coupon->discountValue) / 100;
                 } else {
                     $discount = $coupon->discountValue;
                 }
+            } else {
+                // If coupon is invalid or expired or reached limit, we null it out
+                $coupon = null;
             }
         }
 
@@ -119,6 +126,14 @@ class CheckoutController extends Controller
                 ]);
             }
 
+            // Increment Coupon usage
+            if ($request->coupon_code) {
+                $couponToUpdate = Coupon::where('code', $request->coupon_code)->first();
+                if ($couponToUpdate) {
+                    $couponToUpdate->increment('usedCount');
+                }
+            }
+
             // Clear Cart
             session()->forget('cart');
             session()->forget('cart_count');
@@ -149,20 +164,31 @@ class CheckoutController extends Controller
 
         $id = $variantId ? "v{$variantId}" : "p{$product->id}";
 
-        // Clear cart for direct buy
-        $cart = [];
-        $cart[$id] = [
-            'id' => $id,
-            'product_id' => $product->id,
-            'variant_id' => $variantId,
-            'name' => $name,
-            'price' => $price,
-            'quantity' => $quantity,
-            'image' => $image,
-        ];
+        // Add to existing cart (preserve existing items)
+        $cart = session()->get('cart', []);
+        
+        // Ensure $cart is an array
+        if (!is_array($cart)) {
+            $cart = [];
+        }
 
-        session(['cart' => $cart]);
-        session(['cart_count' => array_sum(array_column($cart, 'quantity'))]);
+        if (isset($cart[$id])) {
+            $cart[$id]['quantity'] += $quantity;
+        } else {
+            $cart[$id] = [
+                'id' => $id,
+                'product_id' => $product->id,
+                'variant_id' => $variantId,
+                'name' => $name,
+                'price' => $price,
+                'quantity' => $quantity,
+                'image' => $image,
+            ];
+        }
+
+        session()->put('cart', $cart);
+        session()->put('cart_count', array_sum(array_column($cart, 'quantity')));
+        session()->save(); // Explicitly save session before redirect
 
         return redirect()->route('checkout.index');
     }

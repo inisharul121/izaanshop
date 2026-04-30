@@ -51,11 +51,11 @@ class ReportController extends Controller
         });
 
         $lowStockProducts = $products->filter(function ($product) {
-            return $product->stock < 5 && $product->stock > 0;
+            return $product->stock !== null && $product->stock < 5 && $product->stock > 0;
         });
 
         $outOfStockProducts = $products->filter(function ($product) {
-            return $product->stock <= 0;
+            return $product->stock !== null && $product->stock <= 0;
         });
 
         return view('admin.reports.stock', compact('totalProducts', 'totalInventoryValue', 'lowStockProducts', 'outOfStockProducts'));
